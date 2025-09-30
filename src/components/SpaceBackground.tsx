@@ -2,10 +2,10 @@ import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Points, PointMaterial } from '@react-three/drei';
 
-function Stars(props: any) {
+function Stars() {
   const ref = useRef<any>();
   
-  const [sphere] = useMemo(() => {
+  const sphere = useMemo(() => {
     const positions = new Float32Array(5000 * 3);
     for (let i = 0; i < 5000; i++) {
       const radius = 1.5;
@@ -30,7 +30,7 @@ function Stars(props: any) {
 
   return (
     <group rotation={[0, 0, Math.PI / 4]}>
-      <Points ref={ref} positions={sphere} stride={3} frustumCulled={false} {...props}>
+      <Points ref={ref} positions={sphere} stride={3} frustumCulled={false}>
         <PointMaterial
           transparent
           color="#3b82f6"
