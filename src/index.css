@@ -114,23 +114,23 @@
   /* Cosmic Button Variants */
   .btn-cosmic {
     @apply bg-gradient-to-r from-primary to-secondary text-primary-foreground;
-    @apply hover:shadow-cosmic transform hover:scale-105 transition-smooth;
+    @apply hover:shadow-cosmic transform hover:scale-105 transition-all duration-300 ease-smooth;
   }
 
   .btn-achievement {
     @apply bg-gradient-to-r from-achievement to-amber-400 text-achievement-foreground;
-    @apply hover:shadow-achievement transform hover:scale-105 transition-bounce;
+    @apply hover:shadow-achievement transform hover:scale-105 transition-all duration-500 ease-bounce;
   }
 
   .btn-ghost-cosmic {
     @apply bg-transparent border border-primary/20 text-primary;
-    @apply hover:bg-primary/10 hover:border-primary/40 transition-smooth;
+    @apply hover:bg-primary/10 hover:border-primary/40 transition-all duration-300 ease-smooth;
   }
 
   /* Space Cards */
   .card-cosmic {
     @apply bg-gradient-card backdrop-blur-sm border border-border/50;
-    @apply hover:border-primary/30 transition-smooth;
+    @apply hover:border-primary/30 transition-all duration-300 ease-smooth;
   }
 
   .card-achievement {
