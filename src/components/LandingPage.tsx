@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import {
   Target
 } from 'lucide-react';
 import SpaceBackground from './SpaceBackground';
+import AuthModal from './AuthModal';
 
 const features = [
   {
@@ -49,6 +50,8 @@ const stats = [
 ];
 
 export default function LandingPage() {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       <SpaceBackground />
@@ -68,8 +71,8 @@ export default function LandingPage() {
         </div>
         
         <div className="flex gap-4">
-          <Button variant="ghostCosmic">Sign In</Button>
-          <Button variant="cosmic">Get Started</Button>
+          <Button variant="ghostCosmic" onClick={() => setShowAuthModal(true)}>Sign In</Button>
+          <Button variant="cosmic" onClick={() => setShowAuthModal(true)}>Get Started</Button>
         </div>
       </motion.nav>
 
@@ -97,7 +100,7 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="xl" className="group">
+            <Button variant="hero" size="xl" className="group" onClick={() => setShowAuthModal(true)}>
               <Zap className="w-5 h-5 group-hover:animate-pulse" />
               Start Learning
             </Button>
@@ -214,7 +217,7 @@ export default function LandingPage() {
                 Join thousands of learners who have already discovered the power of AI-assisted science education.
               </p>
               
-              <Button variant="hero" size="xl" className="group">
+              <Button variant="hero" size="xl" className="group" onClick={() => setShowAuthModal(true)}>
                 <Zap className="w-5 h-5 group-hover:animate-pulse" />
                 Start Learning Now
                 <Sparkles className="w-5 h-5 group-hover:animate-pulse" />
@@ -237,6 +240,9 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Auth Modal */}
+      <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
     </div>
   );
 }

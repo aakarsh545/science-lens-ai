@@ -14,7 +14,138 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          achievement_type: string
+          description: string | null
+          earned_at: string
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          achievement_type: string
+          description?: string | null
+          earned_at?: string
+          id?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          achievement_type?: string
+          description?: string | null
+          earned_at?: string
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_streaks: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          questions_answered: number | null
+          streak_maintained: boolean | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          id?: string
+          questions_answered?: number | null
+          streak_maintained?: boolean | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          questions_answered?: number | null
+          streak_maintained?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          current_topic: string | null
+          display_name: string | null
+          id: string
+          level: number | null
+          streak_count: number | null
+          total_questions: number | null
+          updated_at: string
+          user_id: string
+          xp_points: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          current_topic?: string | null
+          display_name?: string | null
+          id?: string
+          level?: number | null
+          streak_count?: number | null
+          total_questions?: number | null
+          updated_at?: string
+          user_id: string
+          xp_points?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          current_topic?: string | null
+          display_name?: string | null
+          id?: string
+          level?: number | null
+          streak_count?: number | null
+          total_questions?: number | null
+          updated_at?: string
+          user_id?: string
+          xp_points?: number | null
+        }
+        Relationships: []
+      }
+      questions: {
+        Row: {
+          ai_response: string | null
+          created_at: string
+          difficulty_level: string | null
+          id: string
+          is_correct: boolean | null
+          question_text: string
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          ai_response?: string | null
+          created_at?: string
+          difficulty_level?: string | null
+          id?: string
+          is_correct?: boolean | null
+          question_text: string
+          topic: string
+          user_id: string
+        }
+        Update: {
+          ai_response?: string | null
+          created_at?: string
+          difficulty_level?: string | null
+          id?: string
+          is_correct?: boolean | null
+          question_text?: string
+          topic?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
