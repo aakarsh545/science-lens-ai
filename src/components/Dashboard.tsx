@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { motion } from "framer-motion";
-import { Flame, Trophy, Target, Zap, LogOut, MessageSquare } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { LogOut, MessageSquare, Trophy, Flame, Target, Zap, BookOpen, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 import ChatInterface from "./ChatInterface";
+import TopicSelector from "./TopicSelector";
+import ProgressRing from "./ProgressRing";
+import ThemeToggle from "./ThemeToggle";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface DashboardProps {
   user: User;
@@ -27,10 +30,12 @@ interface Achievement {
   earned_at: string;
 }
 
-export default function Dashboard({ user }: DashboardProps) {
+const Dashboard = ({ user }: DashboardProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [showChat, setShowChat] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState<any>(null);
+  const [showTopicSelector, setShowTopicSelector] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,173 +44,275 @@ export default function Dashboard({ user }: DashboardProps) {
   }, [user]);
 
   const loadProfile = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("profiles")
       .select("*")
       .eq("user_id", user.id)
       .single();
 
-    if (error) {
-      console.error("Error loading profile:", error);
-    } else {
-      setProfile(data);
-    }
+    if (data) setProfile(data);
   };
 
   const loadAchievements = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("achievements")
       .select("*")
       .eq("user_id", user.id)
       .order("earned_at", { ascending: false });
 
-    if (error) {
-      console.error("Error loading achievements:", error);
-    } else {
-      setAchievements(data || []);
-    }
+    if (data) setAchievements(data);
   };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     toast({
       title: "Signed out successfully",
-      description: "See you next time! 👋",
+      description: "See you next time!",
     });
   };
 
-  if (showChat) {
+  if (showChat && selectedTopic) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto p-4">
-          <div className="flex justify-between items-center mb-4">
-            <Button variant="outline" onClick={() => setShowChat(false)}>
-              ← Back to Dashboard
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowChat(false);
+                setSelectedTopic(null);
+              }}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Dashboard
             </Button>
-            <Button variant="ghost" onClick={handleSignOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
-            </Button>
+            <ThemeToggle />
           </div>
-          <Card className="h-[calc(100vh-120px)]">
-            <ChatInterface userId={user.id} />
-          </Card>
+          <ChatInterface user={user} topic={selectedTopic} />
+        </div>
+      </div>
+    );
+  }
+
+  if (showTopicSelector) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto p-6">
+          <div className="flex items-center justify-between mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => setShowTopicSelector(false)}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Dashboard
+            </Button>
+            <ThemeToggle />
+          </div>
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-foreground mb-2">Choose a Topic</h2>
+            <p className="text-muted-foreground">Select a topic to start your learning journey</p>
+          </div>
+          <TopicSelector
+            onSelectTopic={(topic) => {
+              setSelectedTopic(topic);
+              setShowChat(true);
+              setShowTopicSelector(false);
+            }}
+            selectedTopicId={selectedTopic?.id}
+          />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4 space-y-6">
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between"
+        >
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Welcome back, {profile?.display_name || "Scientist"}! 🌟
+            <h1 className="text-4xl font-bold bg-gradient-cosmic bg-clip-text text-transparent">
+              Welcome back, {profile?.display_name || "Explorer"}!
             </h1>
-            <p className="text-muted-foreground mt-2">Level {profile?.level || 1} Explorer</p>
+            <p className="text-muted-foreground mt-2">
+              Level {profile?.level || 1} Science Explorer
+            </p>
           </div>
-          <Button variant="ghost" onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Stats with Progress Rings */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="card-cosmic hover:shadow-cosmic transition-shadow p-6">
+              <div className="flex flex-col items-center space-y-4">
+                <ProgressRing
+                  progress={Math.min(((profile?.streak_count || 0) / 30) * 100, 100)}
+                  value={profile?.streak_count || 0}
+                  label="days"
+                  size={100}
+                />
+                <div className="text-center">
+                  <h3 className="font-semibold flex items-center gap-2 justify-center">
+                    <Flame className="h-4 w-4 text-achievement" />
+                    Streak
+                  </h3>
+                  <p className="text-xs text-muted-foreground">Keep learning daily!</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="card-cosmic hover:shadow-cosmic transition-shadow p-6">
+              <div className="flex flex-col items-center space-y-4">
+                <ProgressRing
+                  progress={Math.min(((profile?.total_questions || 0) / 100) * 100, 100)}
+                  value={profile?.total_questions || 0}
+                  label="questions"
+                  size={100}
+                />
+                <div className="text-center">
+                  <h3 className="font-semibold flex items-center gap-2 justify-center">
+                    <Target className="h-4 w-4 text-primary" />
+                    Questions
+                  </h3>
+                  <p className="text-xs text-muted-foreground">Knowledge acquired</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="card-cosmic hover:shadow-cosmic transition-shadow p-6">
+              <div className="flex flex-col items-center space-y-4">
+                <ProgressRing
+                  progress={Math.min(((profile?.xp_points || 0) / 1000) * 100, 100)}
+                  value={profile?.xp_points || 0}
+                  label="XP"
+                  size={100}
+                />
+                <div className="text-center">
+                  <h3 className="font-semibold flex items-center gap-2 justify-center">
+                    <Zap className="h-4 w-4 text-success" />
+                    Experience
+                  </h3>
+                  <p className="text-xs text-muted-foreground">Level {profile?.level || 1}</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Card className="card-cosmic hover:shadow-cosmic transition-shadow p-6">
+              <div className="flex flex-col items-center space-y-4">
+                <ProgressRing
+                  progress={Math.min(((achievements.length || 0) / 20) * 100, 100)}
+                  value={achievements.length}
+                  label="badges"
+                  size={100}
+                />
+                <div className="text-center">
+                  <h3 className="font-semibold flex items-center gap-2 justify-center">
+                    <Trophy className="h-4 w-4 text-achievement" />
+                    Achievements
+                  </h3>
+                  <p className="text-xs text-muted-foreground">Unlocked badges</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <Card className="card-cosmic">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Streak</CardTitle>
-                <Flame className="h-4 w-4 text-orange-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{profile?.streak_count || 0} days</div>
-                <p className="text-xs text-muted-foreground">Keep it going! 🔥</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <Card className="card-cosmic">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Questions</CardTitle>
-                <Target className="h-4 w-4 text-blue-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{profile?.total_questions || 0}</div>
-                <p className="text-xs text-muted-foreground">Total asked</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <Card className="card-cosmic">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">XP Points</CardTitle>
-                <Zap className="h-4 w-4 text-yellow-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{profile?.xp_points || 0}</div>
-                <p className="text-xs text-muted-foreground">Experience earned</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-            <Card className="card-cosmic">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Achievements</CardTitle>
-                <Trophy className="h-4 w-4 text-purple-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{achievements.length}</div>
-                <p className="text-xs text-muted-foreground">Unlocked</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-
-        {/* Start Chat Button */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-          <Card className="card-cosmic bg-gradient-to-r from-primary/10 to-secondary/10">
-            <CardHeader>
-              <CardTitle className="text-2xl">Ready to learn something new?</CardTitle>
-              <CardDescription>Ask me anything about science and let's explore together!</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button size="lg" onClick={() => setShowChat(true)} className="w-full md:w-auto">
+        {/* Learning Actions */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Tabs defaultValue="learn" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+              <TabsTrigger value="learn">Start Learning</TabsTrigger>
+              <TabsTrigger value="topics">Browse Topics</TabsTrigger>
+            </TabsList>
+            <TabsContent value="learn" className="text-center mt-6">
+              <Button
+                size="lg"
+                onClick={() => setShowTopicSelector(true)}
+                className="btn-cosmic text-lg px-8 py-6"
+              >
                 <MessageSquare className="mr-2 h-5 w-5" />
-                Start Chat
+                Choose Topic & Start
               </Button>
-            </CardContent>
-          </Card>
+            </TabsContent>
+            <TabsContent value="topics" className="mt-6">
+              <div className="text-center">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setShowTopicSelector(true)}
+                  className="text-lg px-8 py-6"
+                >
+                  <BookOpen className="mr-2 h-5 w-5" />
+                  Explore All Topics
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </motion.div>
 
         {/* Achievements */}
         {achievements.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
             <Card className="card-cosmic">
               <CardHeader>
-                <CardTitle>🏆 Your Achievements</CardTitle>
-                <CardDescription>Badges you've earned on your learning journey</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-achievement" />
+                  Your Achievements
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {achievements.map((achievement, idx) => (
+                  {achievements.slice(0, 6).map((achievement, idx) => (
                     <motion.div
                       key={idx}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: idx * 0.1 }}
-                      className="p-4 rounded-lg bg-gradient-to-br from-achievement/20 to-achievement/5 border border-achievement/30"
+                      className="p-4 rounded-lg bg-gradient-achievement border border-achievement/30"
                     >
-                      <h4 className="font-bold text-lg mb-1">{achievement.title}</h4>
-                      <p className="text-sm text-muted-foreground mb-2">{achievement.description}</p>
-                      <Badge variant="secondary" className="text-xs">
-                        {new Date(achievement.earned_at).toLocaleDateString()}
-                      </Badge>
+                      <h4 className="font-bold mb-1">{achievement.title}</h4>
+                      <p className="text-sm text-muted-foreground">{achievement.description}</p>
                     </motion.div>
                   ))}
                 </div>
@@ -216,4 +323,6 @@ export default function Dashboard({ user }: DashboardProps) {
       </div>
     </div>
   );
-}
+};
+
+export default Dashboard;

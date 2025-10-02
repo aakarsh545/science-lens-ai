@@ -11,11 +11,11 @@ serve(async (req) => {
   }
 
   try {
-    const { message, topic = "science" } = await req.json();
+    const { question, userId, topic = "General Science" } = await req.json();
     
-    if (!message) {
+    if (!question) {
       return new Response(
-        JSON.stringify({ error: "Message is required" }),
+        JSON.stringify({ error: "Question is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -29,20 +29,20 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are Science Lens AI, an enthusiastic and engaging science tutor. Your goal is to make complex scientific concepts easy to understand and exciting to learn about.
+    const systemPrompt = `You are Science Lens AI, an enthusiastic and engaging science tutor${topic !== "General Science" ? ` specializing in ${topic}` : ""}. Your goal is to make complex scientific concepts easy to understand and exciting to learn about.
 
 Guidelines:
 - Provide clear, accurate scientific explanations
 - Use analogies and real-world examples
 - Keep answers concise but informative (2-3 paragraphs max)
 - Encourage curiosity and critical thinking
-- If the question is not science-related, politely redirect to science topics
+${topic !== "General Science" ? `- Focus on ${topic} but draw connections to related topics when helpful` : "- If the question is not science-related, politely redirect to science topics"}
 - Use emojis occasionally to keep things fun (🔬, 🌟, 🧬, ⚡, 🌊, etc.)
 - End with a follow-up question to keep the learning going
 
-Topic context: ${topic}`;
+Current topic: ${topic}`;
 
-    console.log("Calling AI gateway for question:", message);
+    console.log("Calling AI gateway for question:", question, "Topic:", topic);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -54,7 +54,7 @@ Topic context: ${topic}`;
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: message },
+          { role: "user", content: question },
         ],
         stream: true,
       }),
