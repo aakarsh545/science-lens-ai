@@ -41,6 +41,38 @@ export type Database = {
         }
         Relationships: []
       }
+      bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          question_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          question_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          question_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_streaks: {
         Row: {
           created_at: string
@@ -65,6 +97,39 @@ export type Database = {
           questions_answered?: number | null
           streak_maintained?: boolean | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      learning_topics: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          difficulty_level: string | null
+          icon: string | null
+          id: string
+          name: string
+          order_index: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          order_index?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          order_index?: number | null
         }
         Relationships: []
       }
@@ -145,6 +210,91 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      study_sessions: {
+        Row: {
+          duration_minutes: number | null
+          ended_at: string | null
+          id: string
+          questions_answered: number | null
+          started_at: string
+          topic_id: string | null
+          user_id: string
+          xp_earned: number | null
+        }
+        Insert: {
+          duration_minutes?: number | null
+          ended_at?: string | null
+          id?: string
+          questions_answered?: number | null
+          started_at?: string
+          topic_id?: string | null
+          user_id: string
+          xp_earned?: number | null
+        }
+        Update: {
+          duration_minutes?: number | null
+          ended_at?: string | null
+          id?: string
+          questions_answered?: number | null
+          started_at?: string
+          topic_id?: string | null
+          user_id?: string
+          xp_earned?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_sessions_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "learning_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_topic_progress: {
+        Row: {
+          completion_percentage: number | null
+          correct_answers: number | null
+          created_at: string
+          id: string
+          last_practiced_at: string | null
+          questions_answered: number | null
+          topic_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completion_percentage?: number | null
+          correct_answers?: number | null
+          created_at?: string
+          id?: string
+          last_practiced_at?: string | null
+          questions_answered?: number | null
+          topic_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completion_percentage?: number | null
+          correct_answers?: number | null
+          created_at?: string
+          id?: string
+          last_practiced_at?: string | null
+          questions_answered?: number | null
+          topic_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_topic_progress_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "learning_topics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
