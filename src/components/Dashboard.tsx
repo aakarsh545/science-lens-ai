@@ -3,13 +3,14 @@ import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogOut, MessageSquare, Trophy, Flame, Target, Zap, BookOpen, ArrowLeft } from "lucide-react";
+import { LogOut, MessageSquare, Trophy, Flame, Target, Zap, BookOpen, ArrowLeft, Settings as SettingsIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import ChatInterface from "./ChatInterface";
 import TopicSelector from "./TopicSelector";
 import ProgressRing from "./ProgressRing";
 import ThemeToggle from "./ThemeToggle";
+import Settings from "./Settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface DashboardProps {
@@ -36,6 +37,7 @@ const Dashboard = ({ user }: DashboardProps) => {
   const [showChat, setShowChat] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<any>(null);
   const [showTopicSelector, setShowTopicSelector] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -94,6 +96,26 @@ const Dashboard = ({ user }: DashboardProps) => {
     );
   }
 
+  if (showSettings) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto p-6">
+          <div className="flex items-center justify-between mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => setShowSettings(false)}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Dashboard
+            </Button>
+            <ThemeToggle />
+          </div>
+          <Settings />
+        </div>
+      </div>
+    );
+  }
+
   if (showTopicSelector) {
     return (
       <div className="min-h-screen bg-background">
@@ -144,6 +166,10 @@ const Dashboard = ({ user }: DashboardProps) => {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Button variant="ghost" onClick={() => setShowSettings(true)}>
+              <SettingsIcon className="mr-2 h-4 w-4" />
+              Settings
+            </Button>
             <Button variant="ghost" onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
