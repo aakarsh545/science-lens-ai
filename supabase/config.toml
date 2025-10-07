@@ -2,3 +2,6 @@ project_id = "pfrmkmlstzjexccmdkoc"
 
 [functions.science-chat]
 verify_jwt = false
+
+[functions.ask]
+verify_jwt = true

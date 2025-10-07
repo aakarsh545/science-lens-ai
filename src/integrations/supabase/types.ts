@@ -17,25 +17,34 @@ export type Database = {
       achievements: {
         Row: {
           achievement_type: string
+          category: string | null
           description: string | null
           earned_at: string
+          icon: string | null
           id: string
+          points: number | null
           title: string
           user_id: string
         }
         Insert: {
           achievement_type: string
+          category?: string | null
           description?: string | null
           earned_at?: string
+          icon?: string | null
           id?: string
+          points?: number | null
           title: string
           user_id: string
         }
         Update: {
           achievement_type?: string
+          category?: string | null
           description?: string | null
           earned_at?: string
+          icon?: string | null
           id?: string
+          points?: number | null
           title?: string
           user_id?: string
         }
@@ -72,6 +81,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       daily_streaks: {
         Row: {
@@ -132,6 +165,41 @@ export type Database = {
           order_index?: number | null
         }
         Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
