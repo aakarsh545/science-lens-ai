@@ -114,16 +114,27 @@ export function ChatView({ user }: ChatViewProps) {
   }, [conversationId]);
 
   const handleSend = async () => {
-    if (!input.trim() || !conversationId || loading) return;
+    const trimmedInput = input.trim();
+    
+    // Validation
+    if (!trimmedInput || !conversationId || loading) return;
+    
+    if (trimmedInput.length > 2000) {
+      toast({
+        title: "Message too long",
+        description: "Please keep your message under 2000 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const userMessage = input.trim();
     setInput("");
     setLoading(true);
 
     try {
       const { data, error } = await supabase.functions.invoke("ask", {
         body: {
-          message: userMessage,
+          message: trimmedInput,
           conversationId,
         },
       });
