@@ -14,6 +14,37 @@ serve(async (req) => {
 
   try {
     const { message, conversationId } = await req.json();
+
+    // Input validation
+    if (!message || typeof message !== "string") {
+      return new Response(
+        JSON.stringify({ error: "Message is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const trimmedMessage = message.trim();
+    if (trimmedMessage.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Message cannot be empty" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (trimmedMessage.length > 2000) {
+      return new Response(
+        JSON.stringify({ error: "Message must be less than 2000 characters" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check for suspicious prompt injection patterns
+    if (/ignore (previous|all) (instructions|prompts)/i.test(trimmedMessage)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid message format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) {
@@ -56,7 +87,7 @@ serve(async (req) => {
         conversation_id: conversationId,
         user_id: user.id,
         role: "user",
-        content: message,
+        content: trimmedMessage,
       })
       .select()
       .single();
@@ -80,7 +111,7 @@ serve(async (req) => {
     const messages = history || [];
 
     // Call OpenAI
-    console.log("Calling OpenAI with message:", message);
+    console.log(`Message from ${user.id}: ${trimmedMessage.substring(0, 50)}...`);
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -102,9 +133,23 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("OpenAI API error:", response.status, errorText);
+      
+      // Log detailed error server-side only
+      console.error("OpenAI API error:", {
+        status: response.status,
+        error: errorText,
+        timestamp: new Date().toISOString(),
+        userId: user.id
+      });
+      
+      // Return generic error to client
+      let clientMessage = "Unable to process your message. Please try again.";
+      if (response.status === 429) {
+        clientMessage = "Service is busy. Please try again in a moment.";
+      }
+      
       return new Response(
-        JSON.stringify({ error: "Failed to get AI response" }),
+        JSON.stringify({ error: clientMessage }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

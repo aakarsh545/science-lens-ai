@@ -1,7 +1,7 @@
 project_id = "pfrmkmlstzjexccmdkoc"
 
 [functions.science-chat]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ask]
 verify_jwt = true
