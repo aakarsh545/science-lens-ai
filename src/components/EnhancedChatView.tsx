@@ -3,11 +3,14 @@ import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Bookmark, BookmarkCheck, Sparkles } from "lucide-react";
+import { Send, Loader2, Bookmark, BookmarkCheck, Sparkles, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import confetti from "canvas-confetti";
+import { VoiceReader } from "./VoiceReader";
+import { exportChatToPDF } from "@/utils/pdfExport";
+import { ChatProgress } from "./ChatProgress";
 
 interface Message {
   id: string;
@@ -165,8 +168,8 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
     }
   };
 
-  const streamChat = async (userMessage: string) => {
-    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/science-chat`;
+  const streamChat = async (userMessage: string, currentConvoId: string) => {
+    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ask`;
 
     try {
       const session = await supabase.auth.getSession();
@@ -183,8 +186,8 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
           "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
-          question: userMessage,
-          topic: selectedTopic?.name || "General Science",
+          message: userMessage,
+          conversationId: currentConvoId,
         }),
       });
 
@@ -289,9 +292,9 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
 
   const handleSend = async () => {
     const trimmedInput = input.trim();
-    
-    if (!trimmedInput || !conversationId || loading) return;
-    
+    if (!trimmedInput || loading) return;
+
+    // Client-side validation
     if (trimmedInput.length > 2000) {
       toast({
         title: "Message too long",
@@ -301,19 +304,68 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
       return;
     }
 
-    const userMessage: Message = {
+    // Initialize conversation if needed
+    let currentConvoId = conversationId;
+    if (!currentConvoId) {
+      const { data: newConvo, error: convoError } = await supabase
+        .from("conversations")
+        .insert({
+          user_id: user.id,
+          title: selectedTopic?.name || "New Chat",
+        })
+        .select()
+        .single();
+
+      if (convoError || !newConvo) {
+        toast({
+          title: "Error",
+          description: "Failed to create conversation",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      currentConvoId = newConvo.id;
+      if (onConversationChange) {
+        onConversationChange();
+      }
+    }
+
+    setLoading(true);
+    setInput("");
+
+    const userMessage = {
       id: crypto.randomUUID(),
-      role: "user",
+      role: "user" as const,
       content: trimmedInput,
       created_at: new Date().toISOString(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setLoading(true);
 
-    await streamChat(trimmedInput);
-    setLoading(false);
+    try {
+      await streamChat(trimmedInput, currentConvoId);
+      
+      // Check achievements
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("total_questions")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profile) {
+        await checkForAchievements(profile.total_questions);
+      }
+    } catch (error: any) {
+      console.error("Chat error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to get response",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -323,10 +375,52 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
     }
   };
 
+  const handleExportPDF = () => {
+    if (messages.length === 0) {
+      toast({
+        title: "No messages to export",
+        description: "Start a conversation first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    exportChatToPDF(
+      messages,
+      selectedTopic?.name || "Science Chat",
+      selectedTopic?.name
+    );
+    
+    toast({
+      title: "PDF Exported!",
+      description: "Your chat has been saved as a PDF",
+    });
+  };
+
+  const [showChatProgress, setShowChatProgress] = useState(false);
+
   return (
     <div className="flex flex-col h-full">
+      {/* Export PDF Button */}
+      {messages.length > 0 && !showChatProgress && (
+        <div className="border-b p-2 flex justify-end bg-background">
+          <Button onClick={handleExportPDF} variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Export PDF
+          </Button>
+        </div>
+      )}
+
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4" onScroll={(e) => {
+        const target = e.target as HTMLDivElement;
+        const scrolledToBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
+        if (scrolledToBottom && messages.length > 5) {
+          setShowChatProgress(true);
+        } else {
+          setShowChatProgress(false);
+        }
+      }}>
         {messages.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -364,9 +458,12 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
                 >
                   <p className="whitespace-pre-wrap">{message.content}</p>
                   {message.role === "assistant" && message.content && (
-                    <span className="text-xs opacity-70 mt-2 block">
-                      {new Date(message.created_at).toLocaleTimeString()}
-                    </span>
+                    <div className="flex items-center gap-2 mt-2">
+                      <VoiceReader text={message.content} />
+                      <span className="text-xs opacity-70">
+                        {new Date(message.created_at).toLocaleTimeString()}
+                      </span>
+                    </div>
                   )}
                 </Card>
                 {message.role === "user" && message.questionId && (
@@ -403,6 +500,20 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
         )}
 
         <div ref={messagesEndRef} />
+
+        {/* Chat Progress Section */}
+        {showChatProgress && (
+          <ChatProgress 
+            user={user} 
+            onViewChats={() => {
+              // This will be handled by the sidebar
+              toast({
+                title: "View all chats",
+                description: "Check the sidebar to see all your conversations",
+              });
+            }} 
+          />
+        )}
       </div>
 
       {/* Input Area */}

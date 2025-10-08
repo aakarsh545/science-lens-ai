@@ -110,7 +110,7 @@ serve(async (req) => {
 
     const messages = history || [];
 
-    // Call OpenAI
+    // Call OpenAI with streaming
     console.log(`Message from ${user.id}: ${trimmedMessage.substring(0, 50)}...`);
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -119,7 +119,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4-turbo-preview",
+        model: "gpt-4o-mini",
         messages: [
           { 
             role: "system", 
@@ -127,7 +127,7 @@ serve(async (req) => {
           },
           ...messages,
         ],
-        stream: false,
+        stream: true,
       }),
     });
 
@@ -154,53 +154,15 @@ serve(async (req) => {
       );
     }
 
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
-
-    // Save AI response to database
-    const { error: aiMsgError } = await supabase
-      .from("messages")
-      .insert({
-        conversation_id: conversationId,
-        user_id: user.id,
-        role: "assistant",
-        content: aiResponse,
-      });
-
-    if (aiMsgError) {
-      console.error("Error saving AI message:", aiMsgError);
-    }
-
-    // Update conversation updated_at
-    await supabase
-      .from("conversations")
-      .update({ updated_at: new Date().toISOString() })
-      .eq("id", conversationId);
-
-    // Check for achievements
-    const { data: messageCount } = await supabase
-      .from("messages")
-      .select("id", { count: "exact" })
-      .eq("user_id", user.id)
-      .eq("role", "user");
-
-    // Grant "First Chat" achievement
-    if (messageCount && messageCount.length === 1) {
-      await supabase.from("achievements").insert({
-        user_id: user.id,
-        title: "First Question",
-        description: "Asked your first science question",
-        achievement_type: "milestone",
-        icon: "💬",
-        category: "engagement",
-        points: 10,
-      });
-    }
-
-    return new Response(
-      JSON.stringify({ response: aiResponse }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    // Return the stream directly to client
+    return new Response(response.body, {
+      headers: { 
+        ...corsHeaders, 
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive"
+      },
+    });
 
   } catch (error) {
     console.error("Error in ask function:", error);
