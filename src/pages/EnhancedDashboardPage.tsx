@@ -15,6 +15,7 @@ export default function EnhancedDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTopic, setSelectedTopic] = useState<any>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -65,10 +66,35 @@ export default function EnhancedDashboardPage() {
     navigate("/chat");
   };
 
+  const handleSelectConversation = (convId: string) => {
+    setConversationId(convId);
+    navigate("/chat");
+  };
+
+  const handleNewConversation = async () => {
+    if (!user) return;
+
+    const { data: newConvo, error } = await supabase
+      .from("conversations")
+      .insert({ user_id: user.id, title: "New Chat" })
+      .select()
+      .single();
+
+    if (!error && newConvo) {
+      setConversationId(newConvo.id);
+      navigate("/chat");
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <AppSidebar />
+        <AppSidebar 
+          userId={user.id}
+          conversationId={conversationId}
+          onSelectConversation={handleSelectConversation}
+          onNewConversation={handleNewConversation}
+        />
         
         <div className="flex-1 flex flex-col">
           <header className="h-14 flex items-center border-b px-4 bg-background">
@@ -84,7 +110,14 @@ export default function EnhancedDashboardPage() {
 
           <main className="flex-1 overflow-auto">
             {activeView === "dashboard" && <DashboardView user={user} />}
-            {activeView === "chat" && <EnhancedChatView user={user} selectedTopic={selectedTopic} />}
+            {activeView === "chat" && (
+              <EnhancedChatView 
+                user={user} 
+                selectedTopic={selectedTopic}
+                conversationId={conversationId}
+                onConversationChange={() => setConversationId(null)}
+              />
+            )}
             {activeView === "learn" && <InteractiveLearnView onSelectTopic={handleTopicSelect} />}
             {activeView === "achievements" && <AchievementsView user={user} />}
             {activeView === "settings" && (

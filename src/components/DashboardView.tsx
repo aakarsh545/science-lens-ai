@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, MessageSquare, Target, Award } from "lucide-react";
+import { GamificationBar } from "./GamificationBar";
 
 interface DashboardViewProps {
   user: User;
@@ -77,6 +78,8 @@ export function DashboardView({ user }: DashboardViewProps) {
           Track your learning progress and achievements
         </p>
       </div>
+
+      <GamificationBar userId={user.id} />
 
       {/* Level Card */}
       <Card className="border-primary">

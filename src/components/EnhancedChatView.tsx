@@ -25,14 +25,15 @@ interface EnhancedChatViewProps {
     icon: string;
     description: string;
   } | null;
+  conversationId: string | null;
+  onConversationChange?: () => void;
 }
 
-export function EnhancedChatView({ user, selectedTopic }: EnhancedChatViewProps) {
+export function EnhancedChatView({ user, selectedTopic, conversationId, onConversationChange }: EnhancedChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<string>>(new Set());
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -44,44 +45,18 @@ export function EnhancedChatView({ user, selectedTopic }: EnhancedChatViewProps)
     scrollToBottom();
   }, [messages]);
 
-  // Initialize conversation
+  // Load messages when conversation changes
   useEffect(() => {
-    const initConversation = async () => {
-      const { data: existingConvos } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("user_id", user.id)
-        .order("updated_at", { ascending: false })
-        .limit(1);
+    if (!conversationId) {
+      setMessages([]);
+      return;
+    }
 
-      let convId: string;
-      if (existingConvos && existingConvos.length > 0) {
-        convId = existingConvos[0].id;
-      } else {
-        const { data: newConvo, error } = await supabase
-          .from("conversations")
-          .insert({ user_id: user.id, title: "New Chat" })
-          .select()
-          .single();
-
-        if (error) {
-          toast({
-            title: "Error",
-            description: "Failed to create conversation",
-            variant: "destructive",
-          });
-          return;
-        }
-        convId = newConvo.id;
-      }
-
-      setConversationId(convId);
-
-      // Load messages
+    const loadMessages = async () => {
       const { data: msgs } = await supabase
         .from("messages")
         .select("*")
-        .eq("conversation_id", convId)
+        .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true });
 
       if (msgs) {
@@ -89,8 +64,8 @@ export function EnhancedChatView({ user, selectedTopic }: EnhancedChatViewProps)
       }
     };
 
-    initConversation();
-  }, [user.id]);
+    loadMessages();
+  }, [conversationId]);
 
   // Subscribe to real-time messages
   useEffect(() => {
@@ -132,9 +107,9 @@ export function EnhancedChatView({ user, selectedTopic }: EnhancedChatViewProps)
 
   const checkForAchievements = async (questionCount: number) => {
     const achievements = [
-      { type: "first_question", title: "First Steps", description: "Asked your first question", threshold: 1, icon: "🎯", category: "milestone", points: 10 },
-      { type: "curious_mind", title: "Curious Mind", description: "Asked 10 questions", threshold: 10, icon: "🤔", category: "milestone", points: 50 },
-      { type: "knowledge_seeker", title: "Knowledge Seeker", description: "Asked 50 questions", threshold: 50, icon: "🎓", category: "milestone", points: 100 },
+      { type: "first_question", title: "First Steps", description: "Asked your first question", threshold: 1, icon: "🎯", category: "milestone", points: 10, credits: 1 },
+      { type: "curious_mind", title: "Curious Mind", description: "Asked 10 questions", threshold: 10, icon: "🤔", category: "milestone", points: 50, credits: 5 },
+      { type: "knowledge_seeker", title: "Knowledge Seeker", description: "Asked 50 questions", threshold: 50, icon: "🎓", category: "milestone", points: 100, credits: 10 },
     ];
 
     for (const achievement of achievements) {
@@ -150,10 +125,24 @@ export function EnhancedChatView({ user, selectedTopic }: EnhancedChatViewProps)
         });
 
         if (!error) {
+          // Award credits - update profile directly
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("credits")
+            .eq("user_id", user.id)
+            .single();
+
+          if (profile) {
+            await supabase
+              .from("profiles")
+              .update({ credits: (profile.credits || 0) + achievement.credits })
+              .eq("user_id", user.id);
+          }
+
           triggerConfetti();
           toast({
             title: "🏆 Achievement Unlocked!",
-            description: `${achievement.title}: ${achievement.description}`,
+            description: `${achievement.title}: ${achievement.description} (+${achievement.credits} credits)`,
           });
         }
       }
