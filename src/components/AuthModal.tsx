@@ -27,11 +27,14 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
       const { error, data } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        }
       });
 
       if (error) throw error;
 
-      if (data.user) {
+      if (data.user && data.session) {
         // Create profile
         const { error: profileError } = await supabase
           .from("profiles")
@@ -41,6 +44,9 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
           });
 
         if (profileError) console.error("Profile creation error:", profileError);
+        
+        // Store session in localStorage
+        localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
       }
 
       toast({
@@ -64,12 +70,17 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
+
+      // Store session in localStorage
+      if (data.session) {
+        localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
+      }
 
       toast({
         title: "Welcome back! 🌟",

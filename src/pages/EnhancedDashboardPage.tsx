@@ -20,15 +20,7 @@ export default function EnhancedDashboardPage() {
   const location = useLocation();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/");
-        return;
-      }
-      setUser(session.user);
-      setLoading(false);
-    });
-
+    // Set up auth state listener first
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -37,6 +29,17 @@ export default function EnhancedDashboardPage() {
         return;
       }
       setUser(session.user);
+      setLoading(false);
+    });
+
+    // Then check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/");
+        return;
+      }
+      setUser(session.user);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -87,7 +90,7 @@ export default function EnhancedDashboardPage() {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full">
         <AppSidebar 
           userId={user.id}

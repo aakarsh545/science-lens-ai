@@ -50,7 +50,7 @@ export function AppSidebar({ userId, conversationId, onSelectConversation, onNew
   };
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-bold">Science Lens</SidebarGroupLabel>
