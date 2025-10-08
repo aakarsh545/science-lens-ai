@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ConversationsList } from "./ConversationsList";
+import { Separator } from "@/components/ui/separator";
 
 const menuItems = [
   { title: "Dashboard", icon: Home, path: "/dashboard" },
@@ -22,7 +24,14 @@ const menuItems = [
   { title: "Settings", icon: SettingsIcon, path: "/settings" },
 ];
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  userId: string;
+  conversationId: string | null;
+  onSelectConversation: (conversationId: string) => void;
+  onNewConversation: () => void;
+}
+
+export function AppSidebar({ userId, conversationId, onSelectConversation, onNewConversation }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -65,6 +74,20 @@ export function AppSidebar() {
                 );
               })}
             </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <Separator className="my-2" />
+
+        <SidebarGroup className="flex-1 overflow-hidden">
+          <SidebarGroupLabel>Saved Chats</SidebarGroupLabel>
+          <SidebarGroupContent className="h-full overflow-hidden">
+            <ConversationsList 
+              userId={userId}
+              currentConversationId={conversationId}
+              onSelectConversation={onSelectConversation}
+              onNewConversation={onNewConversation}
+            />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
