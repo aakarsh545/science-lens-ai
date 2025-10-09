@@ -170,12 +170,20 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
 
   const streamChat = async (userMessage: string, currentConvoId: string) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ask`;
+    console.log('Edge function URL ->', CHAT_URL);
 
     try {
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      console.log('Token present:', !!token, 'Token length:', token?.length || 0);
 
       if (!token) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in again",
+          variant: "destructive",
+        });
         throw new Error("No authentication token");
       }
 
@@ -191,7 +199,22 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
         }),
       });
 
-      if (!resp.ok || !resp.body) throw new Error("Failed to start stream");
+      console.log('Response status:', resp.status, resp.statusText);
+
+      if (resp.status === 401) {
+        toast({
+          title: "Session Expired",
+          description: "Please sign in again",
+          variant: "destructive",
+        });
+        throw new Error("Unauthorized - please sign in again");
+      }
+
+      if (!resp.ok || !resp.body) {
+        const errorText = await resp.text();
+        console.error('Edge function error:', resp.status, errorText);
+        throw new Error(`Failed to start stream: ${resp.status} ${errorText}`);
+      }
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
