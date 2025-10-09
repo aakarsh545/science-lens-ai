@@ -16,8 +16,8 @@ const Settings = () => {
     setConnectionStatus("idle");
 
     try {
-      const { data, error } = await supabase.functions.invoke("science-chat", {
-        body: { testConnection: true },
+      const { data, error } = await supabase.functions.invoke("ask", {
+        body: { message: "test", conversationId: "test" },
       });
 
       if (error) throw error;

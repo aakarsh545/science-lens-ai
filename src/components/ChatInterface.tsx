@@ -87,14 +87,22 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
   };
 
   const streamChat = async (userMessage: string) => {
-    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/science-chat`;
+    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ask`;
+    console.log('Edge function URL ->', CHAT_URL);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error("No authentication token");
+      }
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           question: userMessage,
