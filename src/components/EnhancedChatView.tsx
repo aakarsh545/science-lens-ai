@@ -234,6 +234,7 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
       while (!streamDone) {
         const { done, value } = await reader.read();
         if (done) break;
+        console.log('Chunk received bytes:', value?.length || 0);
         textBuffer += decoder.decode(value, { stream: true });
 
         let newlineIndex: number;
@@ -263,6 +264,7 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
               });
             }
           } catch {
+            console.warn('Partial/invalid JSON line, buffering more...', line);
             textBuffer = line + "\n" + textBuffer;
             break;
           }

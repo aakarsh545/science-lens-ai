@@ -111,7 +111,7 @@ serve(async (req) => {
     const messages = history || [];
 
     // Call OpenAI with streaming
-    console.log(`Message from ${user.id}: ${trimmedMessage.substring(0, 50)}...`);
+    console.log(`ask invoked by ${user.id} convo=${conversationId} msgLen=${trimmedMessage.length}`);
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {

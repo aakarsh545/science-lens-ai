@@ -91,12 +91,37 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
     console.log('Edge function URL ->', CHAT_URL);
 
     try {
+      // Ensure we have a fresh session and token
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
+      console.log('Token present:', !!token, 'Token length:', token?.length || 0);
       if (!token) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in again",
+          variant: "destructive",
+        });
         throw new Error("No authentication token");
       }
+
+      // Create a conversation for this chat so the edge function can persist messages
+      const { data: newConvo, error: convoError } = await supabase
+        .from("conversations")
+        .insert({ user_id: user.id, title: topic?.name || "New Chat" })
+        .select()
+        .single();
+
+      if (convoError || !newConvo) {
+        console.error('Failed to create conversation:', convoError);
+        throw new Error("Failed to create conversation");
+      }
+
+      const body = {
+        message: userMessage,
+        conversationId: newConvo.id,
+      };
+      console.log('Request body:', body);
 
       const resp = await fetch(CHAT_URL, {
         method: "POST",
@@ -104,14 +129,27 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          question: userMessage,
-          userId: user.id,
-          topic: topic?.name || "General Science",
-        }),
+        body: JSON.stringify(body),
       });
 
-      if (!resp.ok || !resp.body) throw new Error("Failed to start stream");
+      console.log('Response status:', resp.status, resp.statusText);
+
+      if (resp.status === 401) {
+        const t = await resp.text();
+        console.error('401 Unauthorized from Edge Function:', t);
+        toast({
+          title: "Session Expired",
+          description: "Please sign in again",
+          variant: "destructive",
+        });
+        throw new Error(`Unauthorized - please sign in again`);
+      }
+
+      if (!resp.ok || !resp.body) {
+        const t = await resp.text();
+        console.error('Edge function error:', resp.status, t);
+        throw new Error(`Failed to start stream: ${resp.status} — ${t}`);
+      }
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -119,11 +157,13 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
       let streamDone = false;
       let assistantSoFar = "";
 
+      // Create placeholder assistant message
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
       while (!streamDone) {
         const { done, value } = await reader.read();
         if (done) break;
+        console.log('Chunk received bytes:', value?.length || 0);
         textBuffer += decoder.decode(value, { stream: true });
 
         let newlineIndex: number;
@@ -152,13 +192,15 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
                 return newMessages;
               });
             }
-          } catch {
+          } catch (e) {
+            console.warn('Partial/invalid JSON line, buffering more...', line);
             textBuffer = line + "\n" + textBuffer;
             break;
           }
         }
       }
 
+      // Save question & response
       const { data: questionData } = await supabase
         .from("questions")
         .insert({
@@ -178,6 +220,7 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
         });
       }
 
+      // Achievements
       const { data: profile } = await supabase
         .from("profiles")
         .select("total_questions")
