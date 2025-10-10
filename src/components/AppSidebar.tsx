@@ -18,8 +18,8 @@ import { Separator } from "@/components/ui/separator";
 
 const menuItems = [
   { title: "Dashboard", icon: Home, path: "/dashboard" },
-  { title: "Chat", icon: MessageSquare, path: "/chat" },
   { title: "Learn", icon: BookOpen, path: "/learn" },
+  { title: "Test", icon: MessageSquare, path: "/test" },
   { title: "Achievements", icon: Trophy, path: "/achievements" },
   { title: "Settings", icon: SettingsIcon, path: "/settings" },
 ];

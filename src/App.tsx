@@ -6,7 +6,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import EnhancedDashboardPage from "./pages/EnhancedDashboardPage";
+import AppLayout from "./layouts/AppLayout";
+import ChatPage from "./pages/ChatPage";
+import LearnPage from "./pages/LearnPage";
+import TestPage from "./pages/TestPage";
+import AchievementsPage from "./pages/AchievementsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -19,11 +24,13 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/dashboard" element={<EnhancedDashboardPage />} />
-            <Route path="/chat" element={<EnhancedDashboardPage />} />
-            <Route path="/learn" element={<EnhancedDashboardPage />} />
-            <Route path="/achievements" element={<EnhancedDashboardPage />} />
-            <Route path="/settings" element={<EnhancedDashboardPage />} />
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<ChatPage />} />
+              <Route path="/learn" element={<LearnPage />} />
+              <Route path="/test" element={<TestPage />} />
+              <Route path="/achievements" element={<AchievementsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,34 +1,44 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import Dashboard from "@/components/Dashboard";
+import { useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import Settings from "@/components/Settings";
 
 export default function SettingsPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-      } else {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
         navigate("/");
+        return;
       }
+      setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-      } else {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
         navigate("/");
+        return;
       }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  if (!user) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-  return <Dashboard user={user} />;
+  return (
+    <div className="p-6">
+      <Settings />
+    </div>
+  );
 }

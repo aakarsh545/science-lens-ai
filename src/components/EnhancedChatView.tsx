@@ -30,9 +30,10 @@ interface EnhancedChatViewProps {
   } | null;
   conversationId: string | null;
   onConversationChange?: () => void;
+  panelContext?: "dashboard" | "learn" | "test";
 }
 
-export function EnhancedChatView({ user, selectedTopic, conversationId, onConversationChange }: EnhancedChatViewProps) {
+export function EnhancedChatView({ user, selectedTopic, conversationId, onConversationChange, panelContext = "dashboard" }: EnhancedChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -190,6 +191,7 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
       const reqBody = {
         message: userMessage,
         conversationId: currentConvoId,
+        panelContext,
       };
       console.log('Request body:', reqBody);
 
