@@ -47,6 +47,8 @@ serve(async (req) => {
     }
     
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    // Debug: log API key presence (not the key itself)
+    console.log("OpenAI API key present:", !!OPENAI_API_KEY && OPENAI_API_KEY.startsWith("sk-"));
     if (!OPENAI_API_KEY) {
       console.error("OPENAI_API_KEY is not configured");
       return new Response(
@@ -111,46 +113,115 @@ serve(async (req) => {
     const messages = history || [];
 
     // Call OpenAI with streaming
+    const model = Deno.env.get("MODEL") ?? "gpt-4o-mini";
     console.log(`ask invoked by ${user.id} convo=${conversationId} msgLen=${trimmedMessage.length}`);
+
+    const openaiPayload = {
+      model,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are Science Lens AI, an enthusiastic science tutor who makes complex concepts easy to understand. Use emojis occasionally 🔬🌟 and keep responses concise but informative.",
+        },
+        ...messages,
+      ],
+      stream: true,
+    } as const;
+
+    // Debug: log model and payload summary (not full content)
+    console.log("OpenAI model:", model);
+    console.log("OpenAI payload summary:", {
+      messageCount: openaiPayload.messages.length,
+      hasSystem: openaiPayload.messages[0]?.role === "system",
+    });
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { 
-            role: "system", 
-            content: "You are Science Lens AI, an enthusiastic science tutor who makes complex concepts easy to understand. Use emojis occasionally 🔬🌟 and keep responses concise but informative."
-          },
-          ...messages,
-        ],
-        stream: true,
-      }),
+      body: JSON.stringify(openaiPayload),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      
+
+      // Try to parse OpenAI error JSON for a clearer message
+      let errMsg = "";
+      try {
+        const parsed = JSON.parse(errorText);
+        errMsg = parsed?.error?.message || parsed?.message || errorText;
+      } catch {
+        errMsg = errorText;
+      }
+
       // Log detailed error server-side only
       console.error("OpenAI API error:", {
         status: response.status,
-        error: errorText,
+        error: errMsg,
+        raw: errorText,
         timestamp: new Date().toISOString(),
-        userId: user.id
+        userId: user.id,
+        model,
       });
-      
-      // Return generic error to client
-      let clientMessage = "Unable to process your message. Please try again.";
-      if (response.status === 429) {
-        clientMessage = "Service is busy. Please try again in a moment.";
+
+      // Optional fallback to Lovable AI when rate limited or out of quota
+      if (response.status === 429 || response.status === 402) {
+        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+        if (LOVABLE_API_KEY) {
+          try {
+            console.log("Falling back to Lovable AI gateway (google/gemini-2.5-flash)");
+            const lbPayload = {
+              // default model if not provided
+              model: "google/gemini-2.5-flash",
+              messages: openaiPayload.messages,
+              stream: true,
+            } as const;
+
+            const lbResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(lbPayload),
+            });
+
+            if (!lbResp.ok) {
+              const lbText = await lbResp.text();
+              console.error("Lovable AI gateway error:", lbResp.status, lbText);
+              return new Response(
+                JSON.stringify({ error: `AI fallback failed: ${lbText}` }),
+                { status: lbResp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+
+            // Return the Lovable AI stream
+            return new Response(lbResp.body, {
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+              },
+            });
+          } catch (fallbackErr) {
+            console.error("Lovable AI fallback exception:", fallbackErr);
+            return new Response(
+              JSON.stringify({ error: "AI fallback exception" }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        }
       }
-      
+
+      // Surface specific error back to client with proper status code
+      const status = response.status === 0 ? 500 : response.status;
       return new Response(
-        JSON.stringify({ error: clientMessage }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: errMsg || "AI provider error" }),
+        { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

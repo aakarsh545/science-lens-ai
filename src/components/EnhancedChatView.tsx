@@ -187,16 +187,19 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
         throw new Error("No authentication token");
       }
 
+      const reqBody = {
+        message: userMessage,
+        conversationId: currentConvoId,
+      };
+      console.log('Request body:', reqBody);
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          message: userMessage,
-          conversationId: currentConvoId,
-        }),
+        body: JSON.stringify(reqBody),
       });
 
       console.log('Response status:', resp.status, resp.statusText);
