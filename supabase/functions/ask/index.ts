@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationId } = await req.json();
+    const { message, conversationId, panelContext = "dashboard" } = await req.json();
 
     // Input validation
     if (!message || typeof message !== "string") {
@@ -114,15 +114,23 @@ serve(async (req) => {
 
     // Call OpenAI with streaming
     const model = Deno.env.get("MODEL") ?? "gpt-4o-mini";
-    console.log(`ask invoked by ${user.id} convo=${conversationId} msgLen=${trimmedMessage.length}`);
+    console.log(`ask invoked by ${user.id} convo=${conversationId} panel=${panelContext} msgLen=${trimmedMessage.length}`);
+
+    // Context-aware system prompts
+    const systemPrompts = {
+      dashboard: "You are Science Lens AI, a helpful general assistant. Keep responses concise and friendly. If the user asks about learning science topics in depth, suggest: 'For detailed educational content with examples and visuals, check out the Learn panel.'",
+      learn: "You are Science Lens AI, an enthusiastic science educator. Provide detailed explanations with examples, analogies, and encourage curiosity. Use emojis 🔬🌟 to make learning engaging. Break down complex concepts step-by-step.",
+      test: "You are Science Lens AI in quiz mode. Provide direct, factual answers suitable for evaluation. Keep responses concise and accurate. Focus on key facts and concepts.",
+    };
+
+    const systemPrompt = systemPrompts[panelContext as keyof typeof systemPrompts] || systemPrompts.dashboard;
 
     const openaiPayload = {
       model,
       messages: [
         {
           role: "system",
-          content:
-            "You are Science Lens AI, an enthusiastic science tutor who makes complex concepts easy to understand. Use emojis occasionally 🔬🌟 and keep responses concise but informative.",
+          content: systemPrompt,
         },
         ...messages,
       ],
