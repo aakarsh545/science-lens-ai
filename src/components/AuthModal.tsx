@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +56,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
         description: "Your account has been created successfully.",
       });
       onOpenChange(false);
+      navigate("/learn");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -87,6 +90,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
         description: "You've successfully signed in.",
       });
       onOpenChange(false);
+      navigate("/learn");
     } catch (error: any) {
       toast({
         variant: "destructive",
