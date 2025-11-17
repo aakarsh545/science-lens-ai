@@ -12,6 +12,13 @@ import LearnPage from "./pages/LearnPage";
 import TestPage from "./pages/TestPage";
 import AchievementsPage from "./pages/AchievementsPage";
 import SettingsPage from "./pages/SettingsPage";
+import LearnSciencePage from "./pages/LearnSciencePage";
+import AskPage from "./pages/AskPage";
+import ExplorePage from "./pages/ExplorePage";
+import TopicsPage from "./pages/TopicsPage";
+import PricingPage from "./pages/PricingPage";
+import LearningPage from "./pages/LearningPage";
+import DashboardMainPage from "./pages/DashboardMainPage";
 
 const queryClient = new QueryClient();
 
@@ -25,7 +32,14 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<ChatPage />} />
+              <Route path="/dashboard" element={<DashboardMainPage />} />
+              <Route path="/learn-science" element={<LearnSciencePage />} />
+              <Route path="/ask" element={<AskPage />} />
+              <Route path="/explore" element={<ExplorePage />} />
+              <Route path="/topics" element={<TopicsPage />} />
+              <Route path="/api-test" element={<TestPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/learning" element={<LearningPage />} />
               <Route path="/learn" element={<LearnPage />} />
               <Route path="/test" element={<TestPage />} />
               <Route path="/achievements" element={<AchievementsPage />} />

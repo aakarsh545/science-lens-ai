@@ -11,6 +11,8 @@ import confetti from "canvas-confetti";
 import { VoiceReader } from "./VoiceReader";
 import { exportChatToPDF } from "@/utils/pdfExport";
 import { ChatProgress } from "./ChatProgress";
+import { AIService } from "@/services/aiService";
+import CreditGuard from "./CreditGuard";
 
 interface Message {
   id: string;
