@@ -50,6 +50,33 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_credit_logs: {
+        Row: {
+          admin_user_id: string
+          created_at: string | null
+          credits_adjusted: number
+          id: string
+          reason: string | null
+          target_user_id: string
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string | null
+          credits_adjusted: number
+          id?: string
+          reason?: string | null
+          target_user_id: string
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string | null
+          credits_adjusted?: number
+          id?: string
+          reason?: string | null
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       bookmarks: {
         Row: {
           created_at: string
@@ -210,8 +237,11 @@ export type Database = {
           current_topic: string | null
           display_name: string | null
           id: string
+          last_credit_purchase: string | null
+          learning_progress: Json | null
           level: number | null
           streak_count: number | null
+          total_credits_purchased: number | null
           total_questions: number | null
           updated_at: string
           user_id: string
@@ -225,8 +255,11 @@ export type Database = {
           current_topic?: string | null
           display_name?: string | null
           id?: string
+          last_credit_purchase?: string | null
+          learning_progress?: Json | null
           level?: number | null
           streak_count?: number | null
+          total_credits_purchased?: number | null
           total_questions?: number | null
           updated_at?: string
           user_id: string
@@ -240,8 +273,11 @@ export type Database = {
           current_topic?: string | null
           display_name?: string | null
           id?: string
+          last_credit_purchase?: string | null
+          learning_progress?: Json | null
           level?: number | null
           streak_count?: number | null
+          total_credits_purchased?: number | null
           total_questions?: number | null
           updated_at?: string
           user_id?: string
@@ -393,6 +429,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_credits: {
+        Args: {
+          p_admin_id?: string
+          p_amount: number
+          p_reason?: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      deduct_credits: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
