@@ -1,4 +1,16 @@
-import { Home, MessageSquare, BookOpen, Trophy, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { 
+  LayoutDashboard, 
+  MessageSquare, 
+  BookOpen, 
+  Compass, 
+  Library,
+  TestTube, 
+  CreditCard,
+  GraduationCap,
+  Trophy, 
+  Settings as SettingsIcon, 
+  LogOut 
+} from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -17,9 +29,13 @@ import { ConversationsList } from "./ConversationsList";
 import { Separator } from "@/components/ui/separator";
 
 const menuItems = [
-  { title: "Dashboard", icon: Home, path: "/dashboard" },
-  { title: "Learn", icon: BookOpen, path: "/learn" },
-  { title: "Test", icon: MessageSquare, path: "/test" },
+  { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+  { title: "Learn Science", icon: GraduationCap, path: "/learn-science" },
+  { title: "Ask Questions", icon: MessageSquare, path: "/ask" },
+  { title: "Explore", icon: Compass, path: "/explore" },
+  { title: "All Topics", icon: Library, path: "/topics" },
+  { title: "API Test", icon: TestTube, path: "/api-test" },
+  { title: "Pricing", icon: CreditCard, path: "/pricing" },
   { title: "Achievements", icon: Trophy, path: "/achievements" },
   { title: "Settings", icon: SettingsIcon, path: "/settings" },
 ];
