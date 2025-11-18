@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AppLayout from "./layouts/AppLayout";
+import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
 import ChatPage from "./pages/ChatPage";
 import LearnPage from "./pages/LearnPage";
 import TestPage from "./pages/TestPage";
@@ -31,7 +32,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route element={<AppLayout />}>
+            <Route element={<AuthenticatedLayout />}>
               <Route path="/dashboard" element={<DashboardMainPage />} />
               <Route path="/learn-science" element={<LearnSciencePage />} />
               <Route path="/ask" element={<AskPage />} />

@@ -2,3 +2,15 @@ project_id = "pfrmkmlstzjexccmdkoc"
 
 [functions.ask]
 verify_jwt = true
+
+[functions.courses]
+verify_jwt = false
+
+[functions.lessons]
+verify_jwt = true
+
+[functions.challenges]
+verify_jwt = true
+
+[functions.ai-hint]
+verify_jwt = true
