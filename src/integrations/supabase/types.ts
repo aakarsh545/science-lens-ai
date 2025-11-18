@@ -109,6 +109,47 @@ export type Database = {
           },
         ]
       }
+      challenges: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          difficulty: string | null
+          id: string
+          payload: Json | null
+          related_lesson: string | null
+          title: string
+          xp_reward: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          payload?: Json | null
+          related_lesson?: string | null
+          title: string
+          xp_reward?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          payload?: Json | null
+          related_lesson?: string | null
+          title?: string
+          xp_reward?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_related_lesson_fkey"
+            columns: ["related_lesson"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string
@@ -130,6 +171,33 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      courses: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          slug: string
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          slug: string
+          title: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          slug?: string
+          title?: string
         }
         Relationships: []
       }
@@ -192,6 +260,56 @@ export type Database = {
           order_index?: number | null
         }
         Relationships: []
+      }
+      lessons: {
+        Row: {
+          animations: Json | null
+          content: string | null
+          course_id: string | null
+          created_at: string | null
+          examples: Json | null
+          id: string
+          order_index: number | null
+          quiz: Json | null
+          slug: string
+          title: string
+          xp_reward: number | null
+        }
+        Insert: {
+          animations?: Json | null
+          content?: string | null
+          course_id?: string | null
+          created_at?: string | null
+          examples?: Json | null
+          id?: string
+          order_index?: number | null
+          quiz?: Json | null
+          slug: string
+          title: string
+          xp_reward?: number | null
+        }
+        Update: {
+          animations?: Json | null
+          content?: string | null
+          course_id?: string | null
+          created_at?: string | null
+          examples?: Json | null
+          id?: string
+          order_index?: number | null
+          quiz?: Json | null
+          slug?: string
+          title?: string
+          xp_reward?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -359,6 +477,47 @@ export type Database = {
           },
         ]
       }
+      user_progress: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_practiced: string | null
+          lesson_id: string
+          score: number | null
+          status: Database["public"]["Enums"]["progress_status"] | null
+          user_id: string
+          xp_earned: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_practiced?: string | null
+          lesson_id: string
+          score?: number | null
+          status?: Database["public"]["Enums"]["progress_status"] | null
+          user_id: string
+          xp_earned?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_practiced?: string | null
+          lesson_id?: string
+          score?: number | null
+          status?: Database["public"]["Enums"]["progress_status"] | null
+          user_id?: string
+          xp_earned?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -377,6 +536,33 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_stats: {
+        Row: {
+          credits: number | null
+          questions_asked: number | null
+          streak: number | null
+          updated_at: string | null
+          user_id: string
+          xp_total: number | null
+        }
+        Insert: {
+          credits?: number | null
+          questions_asked?: number | null
+          streak?: number | null
+          updated_at?: string | null
+          user_id: string
+          xp_total?: number | null
+        }
+        Update: {
+          credits?: number | null
+          questions_asked?: number | null
+          streak?: number | null
+          updated_at?: string | null
+          user_id?: string
+          xp_total?: number | null
         }
         Relationships: []
       }
@@ -452,6 +638,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      progress_status: "not_started" | "in_progress" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -580,6 +767,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      progress_status: ["not_started", "in_progress", "completed"],
     },
   },
 } as const
