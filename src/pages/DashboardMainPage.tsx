@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
 import { GamificationBar } from "@/components/GamificationBar";
+import { ChallengePanel } from "@/components/ChallengePanel";
 
 interface Profile {
   display_name: string | null;
@@ -135,7 +136,7 @@ export default function DashboardMainPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="hover:shadow-cosmic transition-all duration-300 cursor-pointer group" onClick={() => navigate("/learn-science")}>
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -165,6 +166,8 @@ export default function DashboardMainPage() {
             <Button variant="outline" className="w-full">Ask Now</Button>
           </CardContent>
         </Card>
+
+        <ChallengePanel userId={user.id} />
       </div>
     </div>
   );
