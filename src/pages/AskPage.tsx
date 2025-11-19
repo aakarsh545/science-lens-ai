@@ -4,6 +4,7 @@ import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { EnhancedChatView } from "@/components/EnhancedChatView";
+import CreditGuard from "@/components/CreditGuard";
 
 export default function AskPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -42,14 +43,16 @@ export default function AskPage() {
   }
 
   return (
-    <div className="h-full">
-      <EnhancedChatView 
-        user={user} 
-        selectedTopic={null}
-        conversationId={conversationId}
-        onConversationChange={() => setConversationId(null)}
-        panelContext="dashboard"
-      />
-    </div>
+    <CreditGuard userId={user.id}>
+      <div className="h-full">
+        <EnhancedChatView 
+          user={user} 
+          selectedTopic={null}
+          conversationId={conversationId}
+          onConversationChange={() => setConversationId(null)}
+          panelContext="dashboard"
+        />
+      </div>
+    </CreditGuard>
   );
 }

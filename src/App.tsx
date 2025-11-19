@@ -18,7 +18,7 @@ import AskPage from "./pages/AskPage";
 import ExplorePage from "./pages/ExplorePage";
 import TopicsPage from "./pages/TopicsPage";
 import PricingPage from "./pages/PricingPage";
-import LearningPage from "./pages/LearningPage";
+import CourseListPage from "./pages/CourseListPage";
 import DashboardMainPage from "./pages/DashboardMainPage";
 
 const queryClient = new QueryClient();
@@ -40,7 +40,7 @@ const App = () => (
               <Route path="/topics" element={<TopicsPage />} />
               <Route path="/api-test" element={<TestPage />} />
               <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/learning" element={<LearningPage />} />
+              <Route path="/learning" element={<CourseListPage />} />
               <Route path="/learn" element={<LearnPage />} />
               <Route path="/test" element={<TestPage />} />
               <Route path="/achievements" element={<AchievementsPage />} />
