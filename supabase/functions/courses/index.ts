@@ -19,8 +19,8 @@ serve(async (req) => {
     const url = new URL(req.url);
     const path = url.pathname.split('/').filter(Boolean);
 
-    // GET /courses - list all courses
-    if (req.method === 'GET' && path.length === 0) {
+    // GET/POST /courses - list all courses
+    if ((req.method === 'GET' || req.method === 'POST') && path.length === 0) {
       const { data: courses, error } = await supabase
         .from('courses')
         .select(`
