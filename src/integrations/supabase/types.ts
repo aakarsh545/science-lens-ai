@@ -542,6 +542,7 @@ export type Database = {
       user_stats: {
         Row: {
           credits: number | null
+          last_daily_credit_refresh: string | null
           questions_asked: number | null
           streak: number | null
           updated_at: string | null
@@ -550,6 +551,7 @@ export type Database = {
         }
         Insert: {
           credits?: number | null
+          last_daily_credit_refresh?: string | null
           questions_asked?: number | null
           streak?: number | null
           updated_at?: string | null
@@ -558,6 +560,7 @@ export type Database = {
         }
         Update: {
           credits?: number | null
+          last_daily_credit_refresh?: string | null
           questions_asked?: number | null
           streak?: number | null
           updated_at?: string | null
@@ -635,6 +638,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      refresh_daily_credits: { Args: { p_user_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
