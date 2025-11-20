@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Trophy, Clock, Zap, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-import confetti from "canvas-confetti";
+import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
+import { triggerLevelUpConfetti, triggerSuccessConfetti } from "@/utils/confettiEffects";
 
 interface Challenge {
   id: string;
@@ -105,6 +106,15 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
     setLoading(true);
     setIsActive(false);
     try {
+      // Get current XP before attempt
+      const { data: currentStats } = await supabase
+        .from("user_stats")
+        .select("xp_total")
+        .eq("user_id", userId)
+        .single();
+
+      const oldXp = currentStats?.xp_total || 0;
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
@@ -128,16 +138,26 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
       setSubmitted(true);
 
       if (result.isCorrect) {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-        });
+        const xpAwarded = result.xpEarned || challenge.xp_reward;
+        const newXp = oldXp + xpAwarded;
+        const leveledUp = didLevelUp(oldXp, newXp);
 
-        toast({
-          title: "Correct! 🎉",
-          description: `You earned ${result.xpEarned} XP!`,
-        });
+        if (leveledUp) {
+          const newLevel = calculateLevel(newXp);
+          triggerLevelUpConfetti();
+          
+          toast({
+            title: `🎊 Level Up! You're now Level ${newLevel}!`,
+            description: `You earned ${xpAwarded} XP!`,
+          });
+        } else {
+          triggerSuccessConfetti();
+          
+          toast({
+            title: "Correct! 🎉",
+            description: `You earned ${xpAwarded} XP!`,
+          });
+        }
       } else {
         toast({
           title: "Not quite right",
