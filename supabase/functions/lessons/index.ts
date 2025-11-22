@@ -23,6 +23,38 @@ serve(async (req) => {
 
     const url = new URL(req.url);
     const path = url.pathname.split('/').filter(Boolean);
+    
+    // Handle POST with body.id or body.action
+    if (req.method === 'POST') {
+      const body = await req.json();
+      const lessonId = body.id || path[0];
+
+      // GET lesson details (via POST with id)
+      if (!body.action || body.action === 'get') {
+        const { data: lesson, error } = await supabase
+          .from('lessons')
+          .select('*')
+          .eq('id', lessonId)
+          .maybeSingle();
+
+        if (error) {
+          console.error('[lessons] Error fetching lesson:', error, { lessonId });
+          throw error;
+        }
+
+        if (!lesson) {
+          return new Response(JSON.stringify({ error: 'Lesson not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        return new Response(JSON.stringify(lesson), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const lessonId = path[0];
 
     // GET /lessons/:id - get lesson details
@@ -31,17 +63,29 @@ serve(async (req) => {
         .from('lessons')
         .select('*')
         .eq('id', lessonId)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[lessons] Error fetching lesson:', error, { lessonId });
+        throw error;
+      }
+
+      if (!lesson) {
+        return new Response(JSON.stringify({ error: 'Lesson not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       return new Response(JSON.stringify(lesson), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // POST /lessons/:id/complete - mark lesson complete
-    if (req.method === 'POST' && path[1] === 'complete') {
+    // POST /lessons/:id/complete OR POST with action=complete
+    const body = req.method === 'POST' ? await req.json() : null;
+    if ((req.method === 'POST' && path[1] === 'complete') || (body?.action === 'complete')) {
+      const completeLessonId = body?.id || lessonId;
       const token = authHeader.replace('Bearer ', '');
       const { data: { user }, error: userError } = await supabase.auth.getUser(token);
       
@@ -50,8 +94,8 @@ serve(async (req) => {
       const { data: lesson } = await supabase
         .from('lessons')
         .select('xp_reward')
-        .eq('id', lessonId)
-        .single();
+        .eq('id', completeLessonId)
+        .maybeSingle();
 
       const xpEarned = lesson?.xp_reward || 10;
 
@@ -60,9 +104,9 @@ serve(async (req) => {
         .from('user_progress')
         .select('*')
         .eq('user_id', user.id)
-        .eq('lesson_id', lessonId)
+        .eq('lesson_id', completeLessonId)
         .eq('status', 'completed')
-        .single();
+        .maybeSingle();
 
       if (existing) {
         // Already completed, just return current stats
@@ -85,7 +129,7 @@ serve(async (req) => {
         .from('user_progress')
         .upsert({
           user_id: user.id,
-          lesson_id: lessonId,
+          lesson_id: completeLessonId,
           status: 'completed',
           xp_earned: xpEarned,
           last_practiced: new Date().toISOString(),
@@ -130,8 +174,14 @@ serve(async (req) => {
 
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    console.error('[lessons] Error:', error, { 
+      url: req.url, 
+      method: req.method 
+    });
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      code: 'LESSONS_ERROR'
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
