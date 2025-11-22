@@ -10,7 +10,8 @@ import {
   Brain,
   Rocket,
   Star,
-  Target
+  Target,
+  BookOpen
 } from 'lucide-react';
 import SpaceBackground from './SpaceBackground';
 import AuthModal from './AuthModal';
@@ -104,9 +105,21 @@ export default function LandingPage() {
               <Zap className="w-5 h-5 group-hover:animate-pulse" />
               Start Learning
             </Button>
-            <Button variant="ghostCosmic" size="xl">
-              Watch Demo
-              <Rocket className="w-5 h-5" />
+            <Button 
+              variant="ghostCosmic" 
+              size="xl"
+              onClick={() => {
+                const element = document.getElementById('how-it-works');
+                if (element) {
+                  const headerOffset = 80;
+                  const elementPosition = element.getBoundingClientRect().top;
+                  const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                  window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                }
+              }}
+            >
+              How It Works
+              <Sparkles className="w-5 h-5" />
             </Button>
           </div>
         </motion.div>
@@ -137,6 +150,49 @@ export default function LandingPage() {
                 </Card>
               </motion.div>
             ))}
+          </div>
+        </motion.div>
+      </section>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="relative z-10 py-20 px-6">
+        <motion.div 
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="max-w-6xl mx-auto"
+        >
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              <span className="bg-gradient-cosmic bg-clip-text text-transparent">
+                How It Works
+              </span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Your journey to mastering science in three simple steps
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            {[
+              { step: '1', title: 'Choose Your Path', desc: 'Browse 18+ science courses from physics to biology', icon: BookOpen },
+              { step: '2', title: 'Learn & Practice', desc: 'Interactive lessons with quizzes and AI hints', icon: Brain },
+              { step: '3', title: 'Track Progress', desc: 'Earn XP, level up, and unlock achievements', icon: Trophy }
+            ].map((item, idx) => {
+              const IconComp = item.icon;
+              return (
+                <Card key={idx} className="card-cosmic p-8 text-center">
+                  <CardContent className="p-0">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary">
+                      {item.step}
+                    </div>
+                    <IconComp className="w-8 h-8 mx-auto mb-4 text-primary" />
+                    <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
+                    <p className="text-muted-foreground">{item.desc}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </motion.div>
       </section>

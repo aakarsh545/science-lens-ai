@@ -19,6 +19,8 @@ import ExplorePage from "./pages/ExplorePage";
 import TopicsPage from "./pages/TopicsPage";
 import PricingPage from "./pages/PricingPage";
 import CourseListPage from "./pages/CourseListPage";
+import CoursePage from "./pages/CoursePage";
+import LessonPlayer from "./pages/LessonPlayer";
 import DashboardMainPage from "./pages/DashboardMainPage";
 
 const queryClient = new QueryClient();
@@ -41,6 +43,8 @@ const App = () => (
               <Route path="/api-test" element={<TestPage />} />
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/learning" element={<CourseListPage />} />
+              <Route path="/learn/:courseSlug" element={<CoursePage />} />
+              <Route path="/learn/:courseSlug/:lessonSlug" element={<LessonPlayer />} />
               <Route path="/learn" element={<LearnPage />} />
               <Route path="/test" element={<TestPage />} />
               <Route path="/achievements" element={<AchievementsPage />} />
