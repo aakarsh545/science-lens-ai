@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import PhysicsAnimation from "@/components/animations/PhysicsAnimation";
+import ChemistryAnimation from "@/components/animations/ChemistryAnimation";
+import BiologyAnimation from "@/components/animations/BiologyAnimation";
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -301,20 +304,32 @@ export default function LessonPlayer() {
             <CardTitle className="text-xl">Visual Concepts</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {animations.map((anim: any, idx: number) => (
-              <div key={idx} className="p-4 border border-border rounded-lg bg-muted/20">
-                <div className="flex items-center gap-3 mb-2">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  <h4 className="font-semibold">{anim.title || 'Animation'}</h4>
-                </div>
-                <div className="aspect-video bg-muted/40 rounded flex items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <BookOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Animation placeholder</p>
+            {animations.map((anim: any, idx: number) => {
+              const AnimationComponent = 
+                anim.type === 'physics' ? PhysicsAnimation :
+                anim.type === 'chemistry' ? ChemistryAnimation :
+                anim.type === 'biology' ? BiologyAnimation :
+                null;
+
+              return (
+                <div key={idx} className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    <h4 className="font-semibold">{anim.title || 'Animation'}</h4>
                   </div>
+                  {AnimationComponent ? (
+                    <AnimationComponent />
+                  ) : (
+                    <div className="aspect-video bg-muted/40 rounded flex items-center justify-center text-muted-foreground">
+                      <div className="text-center">
+                        <BookOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Interactive visualization</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       )}

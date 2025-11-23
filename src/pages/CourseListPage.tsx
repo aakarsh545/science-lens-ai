@@ -4,8 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Users, ArrowRight, Loader2 } from "lucide-react";
+import { BookOpen, Users, ArrowRight, Loader2, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Course {
   id: string;
@@ -27,6 +35,8 @@ export default function CourseListPage() {
   const [progress, setProgress] = useState<Record<string, CourseProgress>>({});
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -87,11 +97,23 @@ export default function CourseListPage() {
     }
   };
 
-  const groupedCourses = courses.reduce((acc, course) => {
+  // Filter courses
+  const filteredCourses = courses.filter((course) => {
+    const matchesSearch =
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" || course.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const groupedCourses = filteredCourses.reduce((acc, course) => {
     if (!acc[course.category]) acc[course.category] = [];
     acc[course.category].push(course);
     return acc;
   }, {} as Record<string, Course[]>);
+
+  const categories = ["all", ...Array.from(new Set(courses.map(c => c.category)))];
 
   if (loading) {
     return (
@@ -103,11 +125,39 @@ export default function CourseListPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold">Science Courses</h1>
-        <p className="text-muted-foreground">
-          Explore our comprehensive collection of science courses and start learning today
-        </p>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold">Science Courses</h1>
+          <p className="text-muted-foreground">
+            Explore our comprehensive collection of science courses and start learning today
+          </p>
+        </div>
+
+        {/* Search and Filter */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search courses..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat === "all" ? "All Categories" : cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {Object.entries(groupedCourses).map(([category, categoryCourses]) => (
@@ -181,6 +231,18 @@ export default function CourseListPage() {
           </div>
         </div>
       ))}
+
+      {filteredCourses.length === 0 && courses.length > 0 && (
+        <Card className="p-12">
+          <div className="text-center space-y-2">
+            <Search className="w-12 h-12 mx-auto text-muted-foreground" />
+            <h3 className="text-xl font-semibold">No Courses Found</h3>
+            <p className="text-muted-foreground">
+              Try adjusting your search or filter criteria
+            </p>
+          </div>
+        </Card>
+      )}
 
       {courses.length === 0 && (
         <Card className="p-12">
