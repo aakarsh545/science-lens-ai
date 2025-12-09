@@ -16,34 +16,23 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const url = new URL(req.url);
-    const path = url.pathname.split('/').filter(Boolean);
-
-    // GET/POST /courses - list all courses
-    if ((req.method === 'GET' || req.method === 'POST') && path.length === 0) {
-      const { data: courses, error } = await supabase
-        .from('courses')
-        .select(`
-          *,
-          lessons:lessons(count)
-        `)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-
-      return new Response(JSON.stringify(courses), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Parse body for slug if POST request
+    let bodySlug: string | null = null;
+    if (req.method === 'POST') {
+      try {
+        const body = await req.json();
+        bodySlug = body?.slug || null;
+      } catch {
+        // No body or invalid JSON
+      }
     }
 
-    // GET /courses/:slug - get course details with lessons
-    if (req.method === 'GET' && path.length === 1) {
-      const slug = path[0];
-      
+    // If slug provided in body, get single course
+    if (bodySlug) {
       const { data: course, error: courseError } = await supabase
         .from('courses')
         .select('*')
-        .eq('slug', slug)
+        .eq('slug', bodySlug)
         .single();
 
       if (courseError) throw courseError;
@@ -61,8 +50,18 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: 'Not found' }), {
-      status: 404,
+    // GET/POST /courses - list all courses
+    const { data: courses, error } = await supabase
+      .from('courses')
+      .select(`
+        *,
+        lessons:lessons(count)
+      `)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    return new Response(JSON.stringify(courses), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
