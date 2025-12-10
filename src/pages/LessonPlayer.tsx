@@ -39,8 +39,9 @@ interface Lesson {
 interface QuizQuestion {
   question: string;
   options: string[];
-  correctAnswer: number;
-  explanation: string;
+  correct?: number;
+  correctAnswer?: number;
+  explanation?: string;
 }
 
 export default function LessonPlayer() {
@@ -116,7 +117,9 @@ export default function LessonPlayer() {
     
     const quiz = lesson?.quiz;
     if (quiz?.questions?.[questionIndex]) {
-      const isCorrect = selectedAnswers[questionIndex] === quiz.questions[questionIndex].correctAnswer;
+      const q = quiz.questions[questionIndex];
+      const correctIdx = q.correct ?? q.correctAnswer ?? 0;
+      const isCorrect = selectedAnswers[questionIndex] === correctIdx;
       
       if (isCorrect) {
         toast.success('Correct! Well done! 🎉');
@@ -241,6 +244,9 @@ export default function LessonPlayer() {
   const quiz = lesson.quiz;
   const animations = Array.isArray(lesson.animations) ? lesson.animations : [];
   const examples = Array.isArray(lesson.examples) ? lesson.examples : [];
+  
+  // Fix escaped newlines in content
+  const processedContent = (lesson.content || '').replace(/\\n/g, '\n');
 
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
@@ -292,7 +298,7 @@ export default function LessonPlayer() {
       <Card>
         <CardContent className="p-6 prose prose-invert max-w-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {lesson.content || ''}
+            {processedContent}
           </ReactMarkdown>
         </CardContent>
       </Card>
@@ -305,11 +311,15 @@ export default function LessonPlayer() {
           </CardHeader>
           <CardContent className="space-y-4">
             {animations.map((anim: any, idx: number) => {
+              // Check both type and component name for flexibility
+              const componentName = anim.component?.toLowerCase() || '';
+              const animType = anim.type?.toLowerCase() || '';
+              
               const AnimationComponent = 
-                anim.type === 'physics' ? PhysicsAnimation :
-                anim.type === 'chemistry' ? ChemistryAnimation :
-                anim.type === 'biology' ? BiologyAnimation :
-                null;
+                (animType === 'physics' || componentName.includes('physics') || animType === 'three') ? PhysicsAnimation :
+                (animType === 'chemistry' || componentName.includes('chemistry')) ? ChemistryAnimation :
+                (animType === 'biology' || componentName.includes('biology')) ? BiologyAnimation :
+                PhysicsAnimation; // Default to Physics for generic 'three' type
 
               return (
                 <div key={idx} className="space-y-3">
@@ -317,16 +327,7 @@ export default function LessonPlayer() {
                     <Sparkles className="w-5 h-5 text-primary" />
                     <h4 className="font-semibold">{anim.title || 'Animation'}</h4>
                   </div>
-                  {AnimationComponent ? (
-                    <AnimationComponent />
-                  ) : (
-                    <div className="aspect-video bg-muted/40 rounded flex items-center justify-center text-muted-foreground">
-                      <div className="text-center">
-                        <BookOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">Interactive visualization</p>
-                      </div>
-                    </div>
-                  )}
+                  <AnimationComponent />
                 </div>
               );
             })}
@@ -358,57 +359,63 @@ export default function LessonPlayer() {
             <CardTitle className="text-xl">Test Your Knowledge</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {quiz.questions.map((q: QuizQuestion, qIdx: number) => (
-              <div key={qIdx} className="space-y-4">
-                <h4 className="font-semibold text-lg">{q.question}</h4>
-                
-                <RadioGroup
-                  value={selectedAnswers[qIdx]?.toString()}
-                  onValueChange={(val) => setSelectedAnswers(prev => ({ ...prev, [qIdx]: parseInt(val) }))}
-                  disabled={showResults[qIdx]}
-                >
-                  {q.options.map((option, optIdx) => {
-                    const isSelected = selectedAnswers[qIdx] === optIdx;
-                    const isCorrect = optIdx === q.correctAnswer;
-                    const showFeedback = showResults[qIdx];
+            {quiz.questions.map((q: QuizQuestion, qIdx: number) => {
+              const correctIdx = q.correct ?? q.correctAnswer ?? 0;
+              
+              return (
+                <div key={qIdx} className="space-y-4">
+                  <h4 className="font-semibold text-lg">{q.question}</h4>
+                  
+                  <RadioGroup
+                    value={selectedAnswers[qIdx]?.toString() ?? ''}
+                    onValueChange={(val) => setSelectedAnswers(prev => ({ ...prev, [qIdx]: parseInt(val) }))}
+                    disabled={showResults[qIdx]}
+                  >
+                    {q.options.map((option, optIdx) => {
+                      const isSelected = selectedAnswers[qIdx] === optIdx;
+                      const isCorrect = optIdx === correctIdx;
+                      const showFeedback = showResults[qIdx];
 
-                    return (
-                      <div 
-                        key={optIdx}
-                        className={`
-                          flex items-center space-x-2 p-3 rounded-lg border transition-colors
-                          ${showFeedback && isCorrect ? 'border-success bg-success/10' : ''}
-                          ${showFeedback && isSelected && !isCorrect ? 'border-destructive bg-destructive/10' : ''}
-                          ${!showFeedback ? 'hover:bg-muted/50' : ''}
-                        `}
-                      >
-                        <RadioGroupItem value={optIdx.toString()} id={`q${qIdx}-opt${optIdx}`} />
-                        <Label htmlFor={`q${qIdx}-opt${optIdx}`} className="flex-1 cursor-pointer">
-                          {option}
-                        </Label>
-                        {showFeedback && isCorrect && (
-                          <CheckCircle2 className="w-5 h-5 text-success" />
-                        )}
-                      </div>
-                    );
-                  })}
-                </RadioGroup>
+                      return (
+                        <div 
+                          key={optIdx}
+                          className={`
+                            flex items-center space-x-2 p-3 rounded-lg border transition-colors
+                            ${showFeedback && isCorrect ? 'border-success bg-success/10' : ''}
+                            ${showFeedback && isSelected && !isCorrect ? 'border-destructive bg-destructive/10' : ''}
+                            ${!showFeedback ? 'hover:bg-muted/50' : ''}
+                          `}
+                        >
+                          <RadioGroupItem value={optIdx.toString()} id={`q${qIdx}-opt${optIdx}`} />
+                          <Label htmlFor={`q${qIdx}-opt${optIdx}`} className="flex-1 cursor-pointer">
+                            {option}
+                          </Label>
+                          {showFeedback && isCorrect && (
+                            <CheckCircle2 className="w-5 h-5 text-success" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </RadioGroup>
 
-                {!showResults[qIdx] && selectedAnswers[qIdx] !== undefined && (
-                  <Button onClick={() => handleQuizSubmit(qIdx)}>
-                    Submit Answer
-                  </Button>
-                )}
+                  {!showResults[qIdx] && selectedAnswers[qIdx] !== undefined && (
+                    <Button onClick={() => handleQuizSubmit(qIdx)}>
+                      Submit Answer
+                    </Button>
+                  )}
 
-                {showResults[qIdx] && (
-                  <Card className="border-primary/20 bg-primary/5">
-                    <CardContent className="p-4">
-                      <p className="text-sm"><strong>Explanation:</strong> {q.explanation}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            ))}
+                  {showResults[qIdx] && (
+                    <Card className="border-primary/20 bg-primary/5">
+                      <CardContent className="p-4">
+                        <p className="text-sm">
+                          <strong>Explanation:</strong> {q.explanation || `The correct answer is "${q.options[correctIdx]}".`}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
       )}
