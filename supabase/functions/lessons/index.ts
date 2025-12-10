@@ -21,38 +21,123 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
+    // Parse body once and reuse
+    let body: any = null;
+    if (req.method === 'POST') {
+      body = await req.json();
+    }
+
     const url = new URL(req.url);
     const path = url.pathname.split('/').filter(Boolean);
     
-    // Handle POST with body.id or body.action
-    if (req.method === 'POST') {
-      const body = await req.json();
+    // Handle POST requests
+    if (req.method === 'POST' && body) {
       const lessonId = body.id || path[0];
 
-      // GET lesson details (via POST with id)
-      if (!body.action || body.action === 'get') {
-        const { data: lesson, error } = await supabase
+      // Handle complete action
+      if (body.action === 'complete') {
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+        
+        if (userError || !user) throw new Error('Unauthorized');
+
+        const { data: lesson } = await supabase
           .from('lessons')
-          .select('*')
+          .select('xp_reward')
           .eq('id', lessonId)
           .maybeSingle();
 
-        if (error) {
-          console.error('[lessons] Error fetching lesson:', error, { lessonId });
-          throw error;
-        }
+        const xpEarned = lesson?.xp_reward || 10;
 
-        if (!lesson) {
-          return new Response(JSON.stringify({ error: 'Lesson not found' }), {
-            status: 404,
+        // Check if already completed
+        const { data: existing } = await supabase
+          .from('user_progress')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('lesson_id', lessonId)
+          .eq('status', 'completed')
+          .maybeSingle();
+
+        if (existing) {
+          const { data: stats } = await supabase
+            .from('user_stats')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+          return new Response(JSON.stringify({ 
+            alreadyCompleted: true, 
+            stats 
+          }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
 
-        return new Response(JSON.stringify(lesson), {
+        // Upsert user_progress
+        const { error: progressError } = await supabase
+          .from('user_progress')
+          .upsert({
+            user_id: user.id,
+            lesson_id: lessonId,
+            status: 'completed',
+            xp_earned: xpEarned,
+            last_practiced: new Date().toISOString(),
+          });
+
+        if (progressError) throw progressError;
+
+        // Update user_stats
+        const { data: stats } = await supabase
+          .from('user_stats')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        const newXpTotal = (stats?.xp_total || 0) + xpEarned;
+
+        const { data: updatedStats, error: updateError } = await supabase
+          .from('user_stats')
+          .upsert({
+            user_id: user.id,
+            xp_total: newXpTotal,
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (updateError) throw updateError;
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          xpEarned,
+          stats: updatedStats 
+        }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+
+      // GET lesson details (via POST with id)
+      const { data: lesson, error } = await supabase
+        .from('lessons')
+        .select('*')
+        .eq('id', lessonId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[lessons] Error fetching lesson:', error, { lessonId });
+        throw error;
+      }
+
+      if (!lesson) {
+        return new Response(JSON.stringify({ error: 'Lesson not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      return new Response(JSON.stringify(lesson), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const lessonId = path[0];
@@ -78,91 +163,6 @@ serve(async (req) => {
       }
 
       return new Response(JSON.stringify(lesson), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // POST /lessons/:id/complete OR POST with action=complete
-    const body = req.method === 'POST' ? await req.json() : null;
-    if ((req.method === 'POST' && path[1] === 'complete') || (body?.action === 'complete')) {
-      const completeLessonId = body?.id || lessonId;
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-      
-      if (userError || !user) throw new Error('Unauthorized');
-
-      const { data: lesson } = await supabase
-        .from('lessons')
-        .select('xp_reward')
-        .eq('id', completeLessonId)
-        .maybeSingle();
-
-      const xpEarned = lesson?.xp_reward || 10;
-
-      // Check if already completed
-      const { data: existing } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('lesson_id', completeLessonId)
-        .eq('status', 'completed')
-        .maybeSingle();
-
-      if (existing) {
-        // Already completed, just return current stats
-        const { data: stats } = await supabase
-          .from('user_stats')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        return new Response(JSON.stringify({ 
-          alreadyCompleted: true, 
-          stats 
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Upsert user_progress
-      const { error: progressError } = await supabase
-        .from('user_progress')
-        .upsert({
-          user_id: user.id,
-          lesson_id: completeLessonId,
-          status: 'completed',
-          xp_earned: xpEarned,
-          last_practiced: new Date().toISOString(),
-        });
-
-      if (progressError) throw progressError;
-
-      // Update user_stats
-      const { data: stats, error: statsError } = await supabase
-        .from('user_stats')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      const newXpTotal = (stats?.xp_total || 0) + xpEarned;
-
-      const { data: updatedStats, error: updateError } = await supabase
-        .from('user_stats')
-        .upsert({
-          user_id: user.id,
-          xp_total: newXpTotal,
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      return new Response(JSON.stringify({ 
-        success: true, 
-        xpEarned,
-        stats: updatedStats 
-      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
