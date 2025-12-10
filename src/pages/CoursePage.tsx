@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Clock, Award, Loader2, Lock, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { 
+  BookOpen, Clock, Award, Loader2, Lock, CheckCircle2, ArrowLeft, 
+  ChevronDown, ChevronRight, FolderOpen, FileText 
+} from "lucide-react";
 
 interface Lesson {
   id: string;
@@ -27,6 +31,11 @@ interface UserProgress {
   status: string;
 }
 
+interface LessonGroup {
+  name: string;
+  lessons: Lesson[];
+}
+
 export default function CoursePage() {
   const { courseSlug } = useParams();
   const navigate = useNavigate();
@@ -34,6 +43,7 @@ export default function CoursePage() {
   const [progress, setProgress] = useState<UserProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const init = async () => {
@@ -73,27 +83,139 @@ export default function CoursePage() {
     }
   };
 
+  // Group lessons by detecting patterns in titles
+  const groupedLessons = useMemo(() => {
+    if (!course?.lessons) return [];
+
+    const sortedLessons = [...course.lessons].sort((a, b) => a.order_index - b.order_index);
+    
+    // Detect groups by common prefixes or section patterns
+    const groups: LessonGroup[] = [];
+    let currentGroup: LessonGroup | null = null;
+    
+    // Keywords that indicate a new section
+    const sectionKeywords = [
+      'introduction', 'basics', 'fundamentals', 'advanced', 
+      'forces', 'motion', 'energy', 'waves', 'electricity', 'magnetism',
+      'thermodynamics', 'quantum', 'relativity', 'optics',
+      'organic', 'inorganic', 'biochemistry', 'reactions',
+      'cells', 'genetics', 'evolution', 'ecology', 'anatomy',
+      'stars', 'planets', 'galaxies', 'cosmology',
+      'mechanics', 'kinematics', 'dynamics'
+    ];
+
+    const detectSection = (title: string): string | null => {
+      const lowerTitle = title.toLowerCase();
+      
+      // Check if title starts with a number (like "1. Introduction")
+      const numberMatch = lowerTitle.match(/^\d+\.\s*/);
+      if (numberMatch) {
+        const afterNumber = lowerTitle.slice(numberMatch[0].length);
+        for (const keyword of sectionKeywords) {
+          if (afterNumber.startsWith(keyword)) {
+            return keyword.charAt(0).toUpperCase() + keyword.slice(1);
+          }
+        }
+      }
+
+      // Check for section keywords
+      for (const keyword of sectionKeywords) {
+        if (lowerTitle.includes(keyword)) {
+          return keyword.charAt(0).toUpperCase() + keyword.slice(1);
+        }
+      }
+
+      // Check for colon separator (e.g., "Forces: Newton's Laws")
+      const colonIndex = title.indexOf(':');
+      if (colonIndex > 0 && colonIndex < 30) {
+        return title.slice(0, colonIndex).trim();
+      }
+
+      return null;
+    };
+
+    sortedLessons.forEach((lesson, idx) => {
+      const sectionName = detectSection(lesson.title);
+      
+      if (sectionName && (!currentGroup || currentGroup.name !== sectionName)) {
+        // Start a new group
+        currentGroup = { name: sectionName, lessons: [lesson] };
+        groups.push(currentGroup);
+      } else if (currentGroup) {
+        // Add to current group
+        currentGroup.lessons.push(lesson);
+      } else {
+        // No group detected, create "Getting Started" for first few lessons
+        if (idx < 3) {
+          if (!groups.find(g => g.name === 'Getting Started')) {
+            currentGroup = { name: 'Getting Started', lessons: [lesson] };
+            groups.push(currentGroup);
+          } else {
+            groups.find(g => g.name === 'Getting Started')?.lessons.push(lesson);
+          }
+        } else {
+          // Create a miscellaneous group
+          const miscGroup = groups.find(g => g.name === 'Other Topics');
+          if (miscGroup) {
+            miscGroup.lessons.push(lesson);
+          } else {
+            groups.push({ name: 'Other Topics', lessons: [lesson] });
+          }
+        }
+      }
+    });
+
+    // If only one group or few lessons, just return flat
+    if (groups.length <= 1 || sortedLessons.length <= 5) {
+      return [{ name: '', lessons: sortedLessons }];
+    }
+
+    // Initialize all groups as open
+    const initialOpenState: Record<string, boolean> = {};
+    groups.forEach(g => { initialOpenState[g.name] = true; });
+    
+    return groups;
+  }, [course?.lessons]);
+
+  // Initialize open groups
+  useEffect(() => {
+    const initial: Record<string, boolean> = {};
+    groupedLessons.forEach(g => { initial[g.name] = true; });
+    setOpenGroups(initial);
+  }, [groupedLessons]);
+
   const getLessonStatus = (lessonId: string) => {
     const lessonProgress = progress.find(p => p.lesson_id === lessonId);
     return lessonProgress?.status || 'not_started';
   };
 
-  const isLessonUnlocked = (lessonIndex: number) => {
-    if (lessonIndex === 0) return true; // First lesson always unlocked
-    if (!userId) return false; // Must be logged in for other lessons
+  const isLessonUnlocked = (lesson: Lesson, allLessons: Lesson[]) => {
+    const sortedAll = [...allLessons].sort((a, b) => a.order_index - b.order_index);
+    const lessonIndex = sortedAll.findIndex(l => l.id === lesson.id);
     
-    // Check if previous lesson is completed
-    const prevLesson = course?.lessons[lessonIndex - 1];
+    if (lessonIndex === 0) return true;
+    if (!userId) return false;
+    
+    const prevLesson = sortedAll[lessonIndex - 1];
     if (!prevLesson) return false;
     
     return getLessonStatus(prevLesson.id) === 'completed';
   };
 
-  const handleLessonClick = (lesson: Lesson, index: number) => {
-    if (!isLessonUnlocked(index) && userId) {
-      return; // Lesson locked
+  const handleLessonClick = (lesson: Lesson) => {
+    if (!isLessonUnlocked(lesson, course?.lessons || []) && userId) {
+      return;
     }
     navigate(`/learn/${courseSlug}/${lesson.slug}`);
+  };
+
+  const toggleGroup = (groupName: string) => {
+    setOpenGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
+  };
+
+  const getGroupProgress = (lessons: Lesson[]) => {
+    const completed = lessons.filter(l => getLessonStatus(l.id) === 'completed').length;
+    return { completed, total: lessons.length };
   };
 
   if (loading) {
@@ -126,6 +248,8 @@ export default function CoursePage() {
   const progressPercentage = course.lessons.length > 0 
     ? Math.round((completedLessons / course.lessons.length) * 100) 
     : 0;
+
+  const hasGroups = groupedLessons.length > 1 || (groupedLessons[0]?.name !== '');
 
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
@@ -172,79 +296,142 @@ export default function CoursePage() {
         </CardContent>
       </Card>
 
-      {/* Lessons List */}
+      {/* Lessons List - Tree Structure */}
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold">Lessons</h2>
         
-        <div className="space-y-3">
-          {course.lessons
-            .sort((a, b) => a.order_index - b.order_index)
-            .map((lesson, index) => {
-              const status = getLessonStatus(lesson.id);
-              const isUnlocked = isLessonUnlocked(index);
-              const isCompleted = status === 'completed';
+        <div className="space-y-2">
+          {groupedLessons.map((group, groupIdx) => {
+            const groupProgress = getGroupProgress(group.lessons);
+            const isOpen = openGroups[group.name] ?? true;
 
+            // If no grouping, render flat list
+            if (!group.name) {
               return (
-                <Card 
-                  key={lesson.id}
-                  className={`
-                    transition-all cursor-pointer
-                    ${isUnlocked 
-                      ? 'hover:shadow-lg hover:border-primary/50' 
-                      : 'opacity-60 cursor-not-allowed'
-                    }
-                    ${isCompleted ? 'border-success/30 bg-success/5' : ''}
-                  `}
-                  onClick={() => handleLessonClick(lesson, index)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className={`
-                          w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold
-                          ${isCompleted 
-                            ? 'bg-success/20 text-success' 
-                            : isUnlocked 
-                              ? 'bg-primary/20 text-primary' 
-                              : 'bg-muted text-muted-foreground'
-                          }
-                        `}>
-                          {isCompleted ? (
-                            <CheckCircle2 className="w-5 h-5" />
-                          ) : isUnlocked ? (
-                            index + 1
-                          ) : (
-                            <Lock className="w-5 h-5" />
-                          )}
-                        </div>
-
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{lesson.title}</h3>
-                          <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              <span>~5 min</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Award className="w-3 h-3" />
-                              <span>+{lesson.xp_reward || 10} XP</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {!isUnlocked && (
-                        <Badge variant="outline" className="text-xs">
-                          Complete previous lesson
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                <div key="flat" className="space-y-3">
+                  {group.lessons.map((lesson) => (
+                    <LessonCard
+                      key={lesson.id}
+                      lesson={lesson}
+                      status={getLessonStatus(lesson.id)}
+                      isUnlocked={isLessonUnlocked(lesson, course.lessons)}
+                      onClick={() => handleLessonClick(lesson)}
+                      indented={false}
+                    />
+                  ))}
+                </div>
               );
-            })}
+            }
+
+            return (
+              <Collapsible 
+                key={group.name} 
+                open={isOpen}
+                onOpenChange={() => toggleGroup(group.name)}
+              >
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors">
+                    {isOpen ? (
+                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    )}
+                    <FolderOpen className="w-5 h-5 text-primary" />
+                    <span className="font-semibold flex-1">{group.name}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {groupProgress.completed}/{groupProgress.total}
+                    </Badge>
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="ml-4 mt-2 space-y-2 border-l-2 border-muted pl-4">
+                    {group.lessons.map((lesson) => (
+                      <LessonCard
+                        key={lesson.id}
+                        lesson={lesson}
+                        status={getLessonStatus(lesson.id)}
+                        isUnlocked={isLessonUnlocked(lesson, course.lessons)}
+                        onClick={() => handleLessonClick(lesson)}
+                        indented={true}
+                      />
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          })}
         </div>
       </div>
     </div>
+  );
+}
+
+interface LessonCardProps {
+  lesson: Lesson;
+  status: string;
+  isUnlocked: boolean;
+  onClick: () => void;
+  indented: boolean;
+}
+
+function LessonCard({ lesson, status, isUnlocked, onClick, indented }: LessonCardProps) {
+  const isCompleted = status === 'completed';
+
+  return (
+    <Card 
+      className={`
+        transition-all cursor-pointer
+        ${isUnlocked 
+          ? 'hover:shadow-lg hover:border-primary/50' 
+          : 'opacity-60 cursor-not-allowed'
+        }
+        ${isCompleted ? 'border-success/30 bg-success/5' : ''}
+      `}
+      onClick={onClick}
+    >
+      <CardContent className={`p-4 ${indented ? 'py-3' : ''}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 flex-1">
+            <div className={`
+              w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
+              ${isCompleted 
+                ? 'bg-success/20 text-success' 
+                : isUnlocked 
+                  ? 'bg-primary/20 text-primary' 
+                  : 'bg-muted text-muted-foreground'
+              }
+            `}>
+              {isCompleted ? (
+                <CheckCircle2 className="w-4 h-4" />
+              ) : isUnlocked ? (
+                <FileText className="w-4 h-4" />
+              ) : (
+                <Lock className="w-4 h-4" />
+              )}
+            </div>
+
+            <div className="flex-1">
+              <h3 className={`font-medium ${indented ? 'text-sm' : ''}`}>{lesson.title}</h3>
+              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  <span>~5 min</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Award className="w-3 h-3" />
+                  <span>+{lesson.xp_reward || 10} XP</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {!isUnlocked && (
+            <Badge variant="outline" className="text-xs">
+              Locked
+            </Badge>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

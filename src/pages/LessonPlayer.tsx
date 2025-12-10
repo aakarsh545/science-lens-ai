@@ -9,9 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import PhysicsAnimation from "@/components/animations/PhysicsAnimation";
-import ChemistryAnimation from "@/components/animations/ChemistryAnimation";
-import BiologyAnimation from "@/components/animations/BiologyAnimation";
+import TopicVisual from "@/components/animations/TopicVisual";
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -19,7 +17,6 @@ import {
   CheckCircle2, 
   Award, 
   Loader2,
-  Sparkles,
   BookOpen
 } from "lucide-react";
 import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
@@ -242,7 +239,6 @@ export default function LessonPlayer() {
   }
 
   const quiz = lesson.quiz;
-  const animations = Array.isArray(lesson.animations) ? lesson.animations : [];
   const examples = Array.isArray(lesson.examples) ? lesson.examples : [];
   
   // Fix escaped newlines in content
@@ -303,37 +299,18 @@ export default function LessonPlayer() {
         </CardContent>
       </Card>
 
-      {/* Animations */}
-      {animations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Visual Concepts</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {animations.map((anim: any, idx: number) => {
-              // Check both type and component name for flexibility
-              const componentName = anim.component?.toLowerCase() || '';
-              const animType = anim.type?.toLowerCase() || '';
-              
-              const AnimationComponent = 
-                (animType === 'physics' || componentName.includes('physics') || animType === 'three') ? PhysicsAnimation :
-                (animType === 'chemistry' || componentName.includes('chemistry')) ? ChemistryAnimation :
-                (animType === 'biology' || componentName.includes('biology')) ? BiologyAnimation :
-                PhysicsAnimation; // Default to Physics for generic 'three' type
-
-              return (
-                <div key={idx} className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                    <h4 className="font-semibold">{anim.title || 'Animation'}</h4>
-                  </div>
-                  <AnimationComponent />
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
+      {/* Visual Concepts - Topic-specific images and 3D models */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Visual Concepts</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <TopicVisual 
+            topic={courseSlug || ''} 
+            title={lesson.title}
+          />
+        </CardContent>
+      </Card>
 
       {/* Examples */}
       {examples.length > 0 && (
