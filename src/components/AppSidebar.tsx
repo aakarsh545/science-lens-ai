@@ -29,10 +29,10 @@ import { ConversationsList } from "./ConversationsList";
 import { Separator } from "@/components/ui/separator";
 
 const menuItems = [
+  { title: "Home", icon: Compass, path: "/" },
   { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { title: "Learn Science", icon: GraduationCap, path: "/learn-science" },
   { title: "Ask Questions", icon: MessageSquare, path: "/ask" },
-  { title: "Explore", icon: Compass, path: "/explore" },
   { title: "All Topics", icon: Library, path: "/topics" },
   { title: "API Test", icon: TestTube, path: "/api-test" },
   { title: "Pricing", icon: CreditCard, path: "/pricing" },
