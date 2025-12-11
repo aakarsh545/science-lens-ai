@@ -30,7 +30,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/explore`,
+          emailRedirectTo: `${window.location.origin}/`,
         }
       });
 
@@ -56,7 +56,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
         description: "Your account has been created successfully.",
       });
       onOpenChange(false);
-      navigate("/explore");
+      navigate("/");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -90,7 +90,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
         description: "You've successfully signed in.",
       });
       onOpenChange(false);
-      navigate("/explore");
+      navigate("/");
     } catch (error: any) {
       toast({
         variant: "destructive",

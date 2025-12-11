@@ -15,7 +15,6 @@ import AchievementsPage from "./pages/AchievementsPage";
 import SettingsPage from "./pages/SettingsPage";
 import LearnSciencePage from "./pages/LearnSciencePage";
 import AskPage from "./pages/AskPage";
-import ExplorePage from "./pages/ExplorePage";
 import TopicsPage from "./pages/TopicsPage";
 import PricingPage from "./pages/PricingPage";
 import CourseListPage from "./pages/CourseListPage";
@@ -38,7 +37,6 @@ const App = () => (
               <Route path="/dashboard" element={<DashboardMainPage />} />
               <Route path="/learn-science" element={<LearnSciencePage />} />
               <Route path="/ask" element={<AskPage />} />
-              <Route path="/explore" element={<ExplorePage />} />
               <Route path="/topics" element={<TopicsPage />} />
               <Route path="/api-test" element={<TestPage />} />
               <Route path="/pricing" element={<PricingPage />} />
