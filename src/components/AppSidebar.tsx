@@ -9,7 +9,8 @@ import {
   GraduationCap,
   Trophy, 
   Settings as SettingsIcon, 
-  LogOut 
+  LogOut,
+  Atom
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -32,6 +33,7 @@ const menuItems = [
   { title: "Home", icon: Compass, path: "/" },
   { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { title: "Learn Science", icon: GraduationCap, path: "/learn-science" },
+  { title: "Simulations", icon: Atom, path: "/simulations" },
   { title: "Ask Questions", icon: MessageSquare, path: "/ask" },
   { title: "All Topics", icon: Library, path: "/topics" },
   { title: "API Test", icon: TestTube, path: "/api-test" },
