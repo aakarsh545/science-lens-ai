@@ -21,6 +21,7 @@ import CourseListPage from "./pages/CourseListPage";
 import CoursePage from "./pages/CoursePage";
 import LessonPlayer from "./pages/LessonPlayer";
 import DashboardMainPage from "./pages/DashboardMainPage";
+import SimulationsPage from "./pages/SimulationsPage";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/learn" element={<LearnPage />} />
               <Route path="/test" element={<TestPage />} />
               <Route path="/achievements" element={<AchievementsPage />} />
+              <Route path="/simulations" element={<SimulationsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
