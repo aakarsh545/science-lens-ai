@@ -221,16 +221,19 @@ export default function UnifiedLearningPage() {
                         <BookOpen className="w-6 h-6 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0 space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <h4 className="font-semibold group-hover:text-primary transition-colors min-w-0 truncate">
-                            {course.title}
-                          </h4>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                            {normalizeCategory(course.category)}
+                          </Badge>
                           {course.difficulty && (
-                            <Badge className={`flex-shrink-0 ${getDifficultyBadgeClass(course.difficulty)}`}>
+                            <Badge className={`text-xs ${getDifficultyBadgeClass(course.difficulty)}`}>
                               {course.difficulty}
                             </Badge>
                           )}
                         </div>
+                        <h4 className="font-semibold group-hover:text-primary transition-colors min-w-0 truncate">
+                          {course.title}
+                        </h4>
                         <p className="text-sm text-muted-foreground line-clamp-2">
                           {course.description}
                         </p>
