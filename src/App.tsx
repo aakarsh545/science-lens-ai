@@ -18,6 +18,7 @@ import LessonPlayer from "./pages/LessonPlayer";
 import DashboardMainPage from "./pages/DashboardMainPage";
 import SimulationsPage from "./pages/SimulationsPage";
 import UnifiedLearningPage from "./pages/UnifiedLearningPage";
+import CoursePage from "./pages/CoursePage";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/science-lens" element={<AuthenticatedLayout />}>
               <Route index element={<DashboardMainPage />} />
               <Route path="learning" element={<UnifiedLearningPage />} />
+              <Route path="learn/:courseSlug" element={<CoursePage />} />
               <Route path="learn/:courseSlug/:lessonSlug" element={<LessonPlayer />} />
               <Route path="ask" element={<AskPage />} />
               <Route path="topics" element={<TopicsPage />} />
