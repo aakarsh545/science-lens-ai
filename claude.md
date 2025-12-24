@@ -27,7 +27,7 @@ Science Lens is a React + TypeScript web application for AI-powered science educ
 - `/` - Landing page (public)
 - `/science-lens/*` - Authenticated app routes
   - `/science-lens` - Home (Main dashboard)
-  - `/science-lens/learn-science` - Browse learning topics
+  - `/science-lens/learning` - Unified learning page (topics + courses)
   - `/science-lens/ask` - Ask AI questions
   - `/science-lens/pricing` - Credit packages
 

@@ -137,7 +137,7 @@ export default function DashboardMainPage() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="hover:shadow-cosmic transition-all duration-300 cursor-pointer group" onClick={() => navigate("/science-lens/learn-science")}>
+        <Card className="hover:shadow-cosmic transition-all duration-300 cursor-pointer group" onClick={() => navigate("/science-lens/learning")}>
           <CardHeader>
             <div className="flex items-center gap-3">
               <BookOpen className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
