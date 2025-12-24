@@ -194,7 +194,7 @@ export default function ExplorePage() {
             <Card 
               key={category.title} 
               className="hover:shadow-cosmic transition-all duration-300 group cursor-pointer relative overflow-hidden"
-              onClick={() => navigate("/learn-science")}
+              onClick={() => navigate("/science-lens/learn-science")}
             >
               {/* Progress indicator strip */}
               {isStarted && (

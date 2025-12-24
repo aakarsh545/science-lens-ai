@@ -70,7 +70,7 @@ export default function LearnSciencePage() {
   };
 
   const startLesson = (topic: Topic) => {
-    navigate("/learning", { state: { topic } });
+    navigate("/science-lens/learning", { state: { topic } });
   };
 
   if (loading || !user) {

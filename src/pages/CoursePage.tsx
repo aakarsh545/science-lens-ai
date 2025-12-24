@@ -234,7 +234,7 @@ export default function CoursePage() {
             <BookOpen className="w-12 h-12 mx-auto text-muted-foreground" />
             <h3 className="text-xl font-semibold">Course Not Found</h3>
             <p className="text-muted-foreground">The course you're looking for doesn't exist.</p>
-            <Button onClick={() => navigate('/learning')} className="mt-4">
+            <Button onClick={() => navigate('/science-lens/learning')} className="mt-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Courses
             </Button>
@@ -255,7 +255,7 @@ export default function CoursePage() {
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
       <Button 
         variant="ghost" 
-        onClick={() => navigate('/learning')}
+        onClick={() => navigate('/science-lens/learning')}
         className="mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />

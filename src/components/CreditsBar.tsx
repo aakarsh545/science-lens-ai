@@ -132,7 +132,7 @@ export function CreditsBar({ userId }: CreditsBarProps) {
           <Button 
             size="sm" 
             variant="destructive"
-            onClick={() => navigate('/pricing')}
+            onClick={() => navigate('/science-lens/pricing')}
             className="animate-pulse"
           >
             Get Credits
@@ -143,7 +143,7 @@ export function CreditsBar({ userId }: CreditsBarProps) {
           <Button 
             size="sm" 
             variant="outline"
-            onClick={() => navigate('/pricing')}
+            onClick={() => navigate('/science-lens/pricing')}
           >
             Buy More
           </Button>
