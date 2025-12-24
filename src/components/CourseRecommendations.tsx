@@ -256,7 +256,7 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
             <Card
               key={rec.course.id}
               className="cursor-pointer hover:shadow-md transition-all group border-muted"
-              onClick={() => navigate(`/learn/${rec.course.slug}`)}
+              onClick={() => navigate(`/science-lens/learn/${rec.course.slug}`)}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">

@@ -228,7 +228,7 @@ export default function LessonPlayer() {
           <div className="text-center space-y-2">
             <BookOpen className="w-12 h-12 mx-auto text-muted-foreground" />
             <h3 className="text-xl font-semibold">Lesson Not Found</h3>
-            <Button onClick={() => navigate(`/learn/${courseSlug}`)} className="mt-4">
+            <Button onClick={() => navigate(`/science-lens/learn/${courseSlug}`)} className="mt-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Course
             </Button>
@@ -259,7 +259,7 @@ export default function LessonPlayer() {
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate(`/learn/${courseSlug}`)}
+          onClick={() => navigate(`/science-lens/learn/${courseSlug}`)}
         >
           {courseSlug?.replace(/-/g, ' ')}
         </Button>
@@ -443,7 +443,7 @@ export default function LessonPlayer() {
       <div className="flex items-center justify-between pt-6 border-t border-border">
         <Button 
           variant="outline"
-          onClick={() => navigate(`/learn/${courseSlug}`)}
+          onClick={() => navigate(`/science-lens/learn/${courseSlug}`)}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Course
