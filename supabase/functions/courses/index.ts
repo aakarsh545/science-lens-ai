@@ -61,7 +61,14 @@ serve(async (req) => {
 
     if (error) throw error;
 
-    return new Response(JSON.stringify(courses), {
+    // Transform lessons count to flat lesson_count
+    const coursesWithCount = courses?.map(course => ({
+      ...course,
+      lesson_count: course.lessons?.[0]?.count || 0,
+      lessons: undefined // Remove nested lessons array
+    })) || [];
+
+    return new Response(JSON.stringify(coursesWithCount), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
