@@ -213,7 +213,7 @@ export default function UnifiedLearningPage() {
               return (
                 <Card
                   key={course.id}
-                  className="hover:border-primary/50 transition-all cursor-pointer group"
+                  className="bg-card hover:border-primary/50 transition-all cursor-pointer group"
                 >
                   <CardContent className="p-4">
                     <div className="flex gap-3">
@@ -272,7 +272,7 @@ export default function UnifiedLearningPage() {
 
       {/* Empty state */}
       {Object.keys(groupedByCategory).length === 0 && (
-        <Card className="p-12">
+        <Card className="bg-card p-12">
           <div className="text-center space-y-2">
             <Search className="w-12 h-12 mx-auto text-muted-foreground" />
             <h3 className="text-xl font-semibold">No Results Found</h3>
