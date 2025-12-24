@@ -1,14 +1,12 @@
-import { 
-  LayoutDashboard, 
-  MessageSquare, 
-  BookOpen, 
-  Compass, 
+import {
+  MessageSquare,
+  Compass,
   Library,
-  TestTube, 
+  TestTube,
   CreditCard,
   GraduationCap,
-  Trophy, 
-  Settings as SettingsIcon, 
+  Trophy,
+  Settings as SettingsIcon,
   LogOut,
   Atom
 } from "lucide-react";
@@ -31,7 +29,6 @@ import { Separator } from "@/components/ui/separator";
 
 const menuItems = [
   { title: "Home", icon: Compass, path: "/science-lens" },
-  { title: "Dashboard", icon: LayoutDashboard, path: "/science-lens/dashboard" },
   { title: "Learn Science", icon: GraduationCap, path: "/science-lens/learn-science" },
   { title: "Simulations", icon: Atom, path: "/science-lens/simulations" },
   { title: "Ask Questions", icon: MessageSquare, path: "/science-lens/ask" },

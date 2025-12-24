@@ -36,7 +36,7 @@ export default function AppLayout() {
 
   const handleSelectConversation = (convId: string) => {
     setConversationId(convId);
-    navigate("/science-lens/dashboard");
+    navigate("/science-lens");
   };
 
   const handleNewConversation = async () => {
@@ -50,7 +50,7 @@ export default function AppLayout() {
 
     if (!error && newConvo) {
       setConversationId(newConvo.id);
-      navigate("/science-lens/dashboard");
+      navigate("/science-lens");
     }
   };
 

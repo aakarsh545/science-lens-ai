@@ -113,7 +113,7 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
                 </Button>
                 <Button 
                   variant="outline"
-                  onClick={() => navigate("/science-lens/dashboard")}
+                  onClick={() => navigate("/science-lens")}
                 >
                   Go to Dashboard
                 </Button>
