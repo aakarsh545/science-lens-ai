@@ -7,7 +7,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.lessons]
-verify_jwt = true
+verify_jwt = false
 
 [functions.challenges]
 verify_jwt = true

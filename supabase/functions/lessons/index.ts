@@ -17,9 +17,6 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
 
     // Parse body once and reuse
     let body: any = null;
@@ -29,13 +26,16 @@ serve(async (req) => {
 
     const url = new URL(req.url);
     const path = url.pathname.split('/').filter(Boolean);
-    
+
     // Handle POST requests
     if (req.method === 'POST' && body) {
       const lessonId = body.id || path[0];
 
-      // Handle complete action
+      // Handle complete action (requires auth)
       if (body.action === 'complete') {
+        if (!authHeader) {
+          throw new Error('No authorization header');
+        }
         const token = authHeader.replace('Bearer ', '');
         const { data: { user }, error: userError } = await supabase.auth.getUser(token);
         
