@@ -500,20 +500,20 @@ export default function UnifiedLearningPage() {
       </div>
 
       {/* Tabs + Search Row (Variation 1) */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
-        {/* Difficulty Tabs */}
-        <Tabs value={difficultyTab} onValueChange={setDifficultyTab} className="w-full lg:w-auto">
-          <TabsList className="grid grid-cols-4 w-full lg:w-auto">
-            <TabsTrigger value="all">All Topics</TabsTrigger>
-            <TabsTrigger value="beginner">Beginner</TabsTrigger>
-            <TabsTrigger value="intermediate">Intermediate</TabsTrigger>
-            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+      <div className="space-y-4 mb-8">
+        {/* Difficulty Tabs - scrollable on mobile */}
+        <Tabs value={difficultyTab} onValueChange={setDifficultyTab} className="w-full">
+          <TabsList className="inline-flex h-10 w-full sm:w-auto overflow-x-auto">
+            <TabsTrigger value="all" className="px-3 sm:px-4 whitespace-nowrap">All</TabsTrigger>
+            <TabsTrigger value="beginner" className="px-3 sm:px-4 whitespace-nowrap">Beginner</TabsTrigger>
+            <TabsTrigger value="intermediate" className="px-3 sm:px-4 whitespace-nowrap">Intermediate</TabsTrigger>
+            <TabsTrigger value="advanced" className="px-3 sm:px-4 whitespace-nowrap">Advanced</TabsTrigger>
           </TabsList>
         </Tabs>
 
         {/* Search + Category Filter */}
-        <div className="flex gap-3 w-full lg:w-auto">
-          <div className="relative flex-1 lg:w-64">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search topics..."
@@ -523,7 +523,7 @@ export default function UnifiedLearningPage() {
             />
           </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full lg:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <Filter className="w-4 h-4 mr-2" />
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
