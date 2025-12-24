@@ -238,7 +238,7 @@ export default function UnifiedLearningPage() {
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <BookOpen className="w-3 h-3" />
-                            {course.lesson_count} lessons
+                            {course.lesson_count || 0} {(course.lesson_count || 0) === 1 ? 'lesson' : 'lessons'}
                           </span>
                           {isStarted && (
                             <span className="flex items-center gap-1">
