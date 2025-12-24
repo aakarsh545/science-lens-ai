@@ -29,7 +29,7 @@ import { Separator } from "@/components/ui/separator";
 
 const menuItems = [
   { title: "Home", icon: Compass, path: "/science-lens" },
-  { title: "Learn Science", icon: GraduationCap, path: "/science-lens/learn-science" },
+  { title: "Learning", icon: GraduationCap, path: "/science-lens/learning" },
   { title: "Simulations", icon: Atom, path: "/science-lens/simulations" },
   { title: "Ask Questions", icon: MessageSquare, path: "/science-lens/ask" },
   { title: "All Topics", icon: Library, path: "/science-lens/topics" },

@@ -115,7 +115,7 @@ export default function LearningPage() {
         title: "Quiz Complete!",
         description: `You got ${correctCount + (selectedAnswer === quizzes[currentQuiz].correctAnswer ? 1 : 0)}/${quizzes.length} correct and earned ${xpEarned} XP!`,
       });
-      navigate("/science-lens/learn-science");
+      navigate("/science-lens/learning");
     }
   };
 
