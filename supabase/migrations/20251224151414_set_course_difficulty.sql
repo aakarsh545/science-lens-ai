@@ -1,5 +1,8 @@
 -- Set difficulty levels for all courses
 
+-- First, add the difficulty column if it doesn't exist
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS difficulty text;
+
 -- Beginner courses
 UPDATE public.courses SET difficulty = 'beginner' WHERE slug IN (
   'basic-physics',
