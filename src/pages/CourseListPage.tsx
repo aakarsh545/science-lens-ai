@@ -176,7 +176,7 @@ export default function CourseListPage() {
                 <Card 
                   key={course.id} 
                   className="hover:shadow-lg transition-all cursor-pointer group"
-                  onClick={() => navigate(`/learn/${course.slug}`)}
+                  onClick={() => navigate(`/science-lens/learn/${course.slug}`)}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">

@@ -206,7 +206,7 @@ export default function CoursePage() {
     if (!isLessonUnlocked(lesson, course?.lessons || []) && userId) {
       return;
     }
-    navigate(`/learn/${courseSlug}/${lesson.slug}`);
+    navigate(`/science-lens/learn/${courseSlug}/${lesson.slug}`);
   };
 
   const toggleGroup = (groupName: string) => {
