@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposal 5: Electric Field Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a20 0%, #1a1a40 100%);
+            color: white;
+            overflow: hidden;
+        }
+        #container { width: 100vw; height: 100vh; position: relative; }
+        #canvas { display: block; cursor: crosshair; }
+        .panel {
+            position: absolute;
+            background: rgba(15, 15, 40, 0.95);
+            border: 1px solid rgba(255, 100, 100, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .header {
+            top: 20px; left: 20px;
+            display: flex; gap: 20px; align-items: center;
+        }
+        h1 { font-size: 1.4rem; background: linear-gradient(90deg, #ff6b6b, #4ecdc4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .badge { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); padding: 5px 14px; border-radius: 20px; font-size: 0.75rem; }
+        .tools-panel {
+            top: 20px; right: 20px;
+            display: flex; gap: 10px;
+        }
+        .tool-btn {
+            width: 50px; height: 50px; border-radius: 12px;
+            border: 2px solid transparent; background: rgba(255,255,255,0.1);
+            cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+        }
+        .tool-btn:hover { background: rgba(255,255,255,0.2); }
+        .tool-btn.active { border-color: #ff6b6b; background: rgba(255,100,100,0.2); }
+        .tool-btn.positive { color: #ff6b6b; }
+        .tool-btn.negative { color: #4ecdc4; }
+        .tool-btn.delete { color: #888; }
+        .controls-panel {
+            left: 20px; bottom: 20px; width: 280px;
+        }
+        .control-group { margin-bottom: 15px; }
+        .control-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        label { color: #ff9999; font-size: 0.85rem; }
+        .value { color: #4ecdc4; font-weight: bold; }
+        input[type="range"] {
+            width: 100%; height: 6px; border-radius: 3px;
+            background: rgba(255,100,100,0.2);
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+        }
+        .presets { display: flex; gap: 8px; flex-wrap: wrap; }
+        .preset-btn {
+            padding: 8px 14px; border: 1px solid rgba(255,100,100,0.4);
+            border-radius: 20px; background: transparent; color: #ff9999;
+            cursor: pointer; font-size: 0.8rem; transition: all 0.3s;
+        }
+        .preset-btn:hover { background: rgba(255,100,100,0.2); }
+        .info-panel {
+            right: 20px; bottom: 20px; width: 260px;
+        }
+        .info-section { margin-bottom: 15px; }
+        .info-section h3 { color: #ff9999; font-size: 0.85rem; margin-bottom: 8px; }
+        .formula {
+            font-family: 'Times New Roman', serif; font-size: 1.1rem;
+            color: white; background: rgba(0,0,0,0.3);
+            padding: 10px; border-radius: 6px; text-align: center;
+        }
+        .charge-list { max-height: 150px; overflow-y: auto; }
+        .charge-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px; margin: 4px 0; background: rgba(255,255,255,0.05);
+            border-radius: 6px; font-size: 0.85rem;
+        }
+        .charge-positive { color: #ff6b6b; }
+        .charge-negative { color: #4ecdc4; }
+        .legend {
+            position: absolute; top: 100px; left: 20px;
+            background: rgba(15,15,40,0.9); padding: 15px; border-radius: 8px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: 0.85rem; }
+        .legend-arrow { font-size: 1.2rem; }
+        .instructions {
+            position: absolute; top: 90px; right: 20px;
+            background: rgba(15,15,40,0.9); padding: 12px 16px; border-radius: 8px;
+            font-size: 0.8rem; color: #90caf9;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+
+        <div class="panel header">
+            <div>
+                <h1>Electric Field Visualizer</h1>
+                <p style="color: #90caf9; font-size: 0.85rem;">Lesson: Electricity & Magnetism</p>
+            </div>
+            <span class="badge">PROPOSAL 5</span>
+        </div>
+
+        <div class="panel tools-panel">
+            <button class="tool-btn positive active" id="toolPositive" title="Add Positive Charge">+</button>
+            <button class="tool-btn negative" id="toolNegative" title="Add Negative Charge">−</button>
+            <button class="tool-btn delete" id="toolDelete" title="Delete Charge">×</button>
+            <button class="tool-btn" id="toolClear" title="Clear All">🗑</button>
+        </div>
+
+        <div class="instructions">Click to place charges • Drag to move</div>
+
+        <div class="legend">
+            <div class="legend-item"><span class="legend-arrow" style="color: #ff6b6b;">→</span> Away from +</div>
+            <div class="legend-item"><span class="legend-arrow" style="color: #4ecdc4;">→</span> Toward −</div>
+            <div class="legend-item"><span style="color: #888;">○</span> Field magnitude</div>
+        </div>
+
+        <div class="panel controls-panel">
+            <div class="control-group">
+                <div class="control-header">
+                    <label>Field Line Density</label>
+                    <span class="value" id="densityVal">16</span>
+                </div>
+                <input type="range" id="density" min="8" max="32" value="16">
+            </div>
+            <div class="control-group">
+                <div class="control-header">
+                    <label>Charge Magnitude</label>
+                    <span class="value" id="chargeVal">1.0</span>
+                </div>
+                <input type="range" id="chargeMag" min="0.5" max="3" step="0.1" value="1">
+            </div>
+            <div class="control-group">
+                <label style="margin-bottom: 10px; display: block;">Presets</label>
+                <div class="presets">
+                    <button class="preset-btn" onclick="loadPreset('dipole')">Dipole</button>
+                    <button class="preset-btn" onclick="loadPreset('quadrupole')">Quadrupole</button>
+                    <button class="preset-btn" onclick="loadPreset('parallel')">Parallel Plates</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel info-panel">
+            <div class="info-section">
+                <h3>Coulomb's Law</h3>
+                <div class="formula">E = k × q / r²</div>
+            </div>
+            <div class="info-section">
+                <h3>Active Charges (<span id="chargeCount">0</span>)</h3>
+                <div class="charge-list" id="chargeList"></div>
+            </div>
+            <div class="info-section">
+                <h3>Field at cursor</h3>
+                <div class="formula" id="fieldMag">Move cursor to measure</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scene, camera, renderer;
+        let charges = [];
+        let fieldArrows = [];
+        let currentTool = 'positive';
+        let chargeMagnitude = 1;
+        let fieldDensity = 16;
+        let draggingCharge = null;
+        const k = 8.99e9; // Coulomb's constant (scaled)
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.OrthographicCamera(
+                -20, 20, 15, -15, 0.1, 100
+            );
+            camera.position.z = 50;
+
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            // Grid
+            const gridHelper = new THREE.GridHelper(40, 40, 0x222244, 0x111133);
+            gridHelper.rotation.x = Math.PI / 2;
+            scene.add(gridHelper);
+
+            setupControls();
+            loadPreset('dipole');
+            animate();
+        }
+
+        function addCharge(x, y, q) {
+            const color = q > 0 ? 0xff6b6b : 0x4ecdc4;
+
+            // Charge sphere
+            const geometry = new THREE.SphereGeometry(0.8, 32, 32);
+            const material = new THREE.MeshBasicMaterial({ color });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(x, y, 0);
+
+            // Glow effect
+            const glowGeo = new THREE.SphereGeometry(1.2, 32, 32);
+            const glowMat = new THREE.MeshBasicMaterial({
+                color,
+                transparent: true,
+                opacity: 0.3
+            });
+            const glow = new THREE.Mesh(glowGeo, glowMat);
+            mesh.add(glow);
+
+            // Label
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = q > 0 ? '#ff6b6b' : '#4ecdc4';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(q > 0 ? '+' : '−', 32, 32);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMat = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMat);
+            sprite.scale.set(1.5, 1.5, 1);
+            sprite.position.z = 0.1;
+            mesh.add(sprite);
+
+            mesh.userData = { charge: q, index: charges.length };
+            charges.push(mesh);
+            scene.add(mesh);
+
+            updateFieldLines();
+            updateChargeList();
+        }
+
+        function removeCharge(index) {
+            scene.remove(charges[index]);
+            charges.splice(index, 1);
+            charges.forEach((c, i) => c.userData.index = i);
+            updateFieldLines();
+            updateChargeList();
+        }
+
+        function updateFieldLines() {
+            // Remove old arrows
+            fieldArrows.forEach(arrow => scene.remove(arrow));
+            fieldArrows = [];
+
+            if (charges.length === 0) return;
+
+            // Create field line grid
+            const step = 40 / fieldDensity;
+            for (let x = -19; x <= 19; x += step) {
+                for (let y = -14; y <= 14; y += step) {
+                    const field = calculateField(x, y);
+                    if (field.length() > 0.01) {
+                        createArrow(x, y, field);
+                    }
+                }
+            }
+        }
+
+        function calculateField(x, y) {
+            const E = new THREE.Vector3(0, 0, 0);
+
+            charges.forEach(charge => {
+                const q = charge.userData.charge;
+                const dx = x - charge.position.x;
+                const dy = y - charge.position.y;
+                const r = Math.sqrt(dx * dx + dy * dy);
+
+                if (r > 0.5) {
+                    const magnitude = q / (r * r);
+                    E.x += magnitude * (dx / r);
+                    E.y += magnitude * (dy / r);
+                }
+            });
+
+            return E;
+        }
+
+        function createArrow(x, y, field) {
+            const magnitude = field.length();
+            const maxLen = 1.5;
+            const len = Math.min(magnitude * 0.5, maxLen);
+
+            if (len < 0.1) return;
+
+            const dir = field.clone().normalize();
+
+            // Determine color based on dominant charge contribution
+            let posContrib = 0, negContrib = 0;
+            charges.forEach(charge => {
+                const q = charge.userData.charge;
+                const dx = x - charge.position.x;
+                const dy = y - charge.position.y;
+                const r = Math.sqrt(dx * dx + dy * dy);
+                if (q > 0) posContrib += Math.abs(q) / (r * r);
+                else negContrib += Math.abs(q) / (r * r);
+            });
+
+            const t = posContrib / (posContrib + negContrib + 0.001);
+            const color = new THREE.Color().setHSL(t * 0.05 + (1 - t) * 0.5, 0.8, 0.6);
+
+            // Arrow body
+            const bodyGeo = new THREE.CylinderGeometry(0.03, 0.03, len * 0.7, 8);
+            const bodyMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+
+            // Arrow head
+            const headGeo = new THREE.ConeGeometry(0.1, len * 0.3, 8);
+            const headMat = new THREE.MeshBasicMaterial({ color });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = len * 0.5;
+
+            const arrow = new THREE.Group();
+            arrow.add(body);
+            arrow.add(head);
+
+            arrow.position.set(x, y, 0);
+            arrow.rotation.z = Math.atan2(dir.y, dir.x) - Math.PI / 2;
+
+            fieldArrows.push(arrow);
+            scene.add(arrow);
+        }
+
+        function updateChargeList() {
+            const list = document.getElementById('chargeList');
+            list.innerHTML = '';
+            charges.forEach((charge, i) => {
+                const q = charge.userData.charge;
+                const item = document.createElement('div');
+                item.className = 'charge-item';
+                item.innerHTML = `
+                    <span class="${q > 0 ? 'charge-positive' : 'charge-negative'}">
+                        ${q > 0 ? '+' : ''}${q.toFixed(1)} at (${charge.position.x.toFixed(1)}, ${charge.position.y.toFixed(1)})
+                    </span>
+                `;
+                list.appendChild(item);
+            });
+            document.getElementById('chargeCount').textContent = charges.length;
+        }
+
+        function loadPreset(name) {
+            // Clear existing
+            charges.forEach(c => scene.remove(c));
+            charges = [];
+
+            if (name === 'dipole') {
+                addCharge(-5, 0, chargeMagnitude);
+                addCharge(5, 0, -chargeMagnitude);
+            } else if (name === 'quadrupole') {
+                addCharge(-5, 5, chargeMagnitude);
+                addCharge(5, 5, -chargeMagnitude);
+                addCharge(-5, -5, -chargeMagnitude);
+                addCharge(5, -5, chargeMagnitude);
+            } else if (name === 'parallel') {
+                for (let y = -8; y <= 8; y += 4) {
+                    addCharge(-10, y, chargeMagnitude);
+                    addCharge(10, y, -chargeMagnitude);
+                }
+            }
+        }
+
+        function setupControls() {
+            // Tool selection
+            document.getElementById('toolPositive').onclick = () => setTool('positive');
+            document.getElementById('toolNegative').onclick = () => setTool('negative');
+            document.getElementById('toolDelete').onclick = () => setTool('delete');
+            document.getElementById('toolClear').onclick = () => {
+                charges.forEach(c => scene.remove(c));
+                charges = [];
+                updateFieldLines();
+                updateChargeList();
+            };
+
+            function setTool(tool) {
+                currentTool = tool;
+                document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById('tool' + tool.charAt(0).toUpperCase() + tool.slice(1)).classList.add('active');
+            }
+
+            // Sliders
+            document.getElementById('density').oninput = (e) => {
+                fieldDensity = parseInt(e.target.value);
+                document.getElementById('densityVal').textContent = fieldDensity;
+                updateFieldLines();
+            };
+
+            document.getElementById('chargeMag').oninput = (e) => {
+                chargeMagnitude = parseFloat(e.target.value);
+                document.getElementById('chargeVal').textContent = chargeMagnitude.toFixed(1);
+            };
+
+            // Canvas interactions
+            const canvas = renderer.domElement;
+
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 40 - 20;
+                const y = -((e.clientY - rect.top) / rect.height) * 30 + 15;
+
+                if (currentTool === 'positive') {
+                    addCharge(x, y, chargeMagnitude);
+                } else if (currentTool === 'negative') {
+                    addCharge(x, y, -chargeMagnitude);
+                } else if (currentTool === 'delete') {
+                    // Find nearest charge
+                    let nearest = -1, minDist = 2;
+                    charges.forEach((c, i) => {
+                        const d = Math.sqrt((c.position.x - x) ** 2 + (c.position.y - y) ** 2);
+                        if (d < minDist) { minDist = d; nearest = i; }
+                    });
+                    if (nearest >= 0) removeCharge(nearest);
+                }
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 40 - 20;
+                const y = -((e.clientY - rect.top) / rect.height) * 30 + 15;
+
+                const field = calculateField(x, y);
+                const mag = field.length();
+                document.getElementById('fieldMag').textContent =
+                    mag > 0.01 ? `|E| = ${mag.toFixed(2)} N/C` : 'Near zero';
+            });
+
+            // Mouse drag for charges
+            let dragStart = null;
+            canvas.addEventListener('mousedown', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 40 - 20;
+                const y = -((e.clientY - rect.top) / rect.height) * 30 + 15;
+
+                charges.forEach((c, i) => {
+                    const d = Math.sqrt((c.position.x - x) ** 2 + (c.position.y - y) ** 2);
+                    if (d < 1.5) {
+                        draggingCharge = c;
+                        dragStart = { x: e.clientX, y: e.clientY };
+                    }
+                });
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (draggingCharge) {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 40 - 20;
+                    const y = -((e.clientY - rect.top) / rect.height) * 30 + 15;
+                    draggingCharge.position.x = x;
+                    draggingCharge.position.y = y;
+                    updateFieldLines();
+                    updateChargeList();
+                }
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                draggingCharge = null;
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Pulse charges
+            charges.forEach(charge => {
+                const scale = 1 + Math.sin(Date.now() * 0.003) * 0.05;
+                charge.children[0].scale.setScalar(scale);
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            const aspect = window.innerWidth / window.innerHeight;
+            camera.left = -20 * aspect;
+            camera.right = 20 * aspect;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
+    </script>
+</body>
+</html>

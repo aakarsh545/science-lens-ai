@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposal 1: Interactive Atom Model</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+            color: white;
+            overflow: hidden;
+        }
+        #container { width: 100vw; height: 100vh; position: relative; }
+        #canvas { display: block; }
+        .panel {
+            position: absolute;
+            background: rgba(20, 20, 40, 0.9);
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .header {
+            top: 20px; left: 20px; right: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        h1 { font-size: 1.5rem; color: #64b5f6; }
+        .badge { background: #4caf50; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
+        .controls {
+            bottom: 20px; left: 20px; width: 300px;
+        }
+        .control-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; color: #90caf9; font-size: 0.9rem; }
+        input[type="range"] {
+            width: 100%; height: 6px; border-radius: 3px;
+            background: rgba(100, 150, 255, 0.2);
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: #64b5f6; cursor: pointer;
+        }
+        .info {
+            bottom: 20px; right: 20px; width: 280px;
+        }
+        .element-info h2 { color: #ffd54f; margin-bottom: 10px; }
+        .stat { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .stat-label { color: #90caf9; }
+        .buttons { display: flex; gap: 10px; margin-top: 15px; }
+        button {
+            flex: 1; padding: 10px; border: none; border-radius: 8px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white; cursor: pointer; font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
+        .legend {
+            position: absolute; top: 100px; right: 20px;
+            background: rgba(20, 20, 40, 0.9); padding: 15px; border-radius: 8px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
+        .legend-color { width: 12px; height: 12px; border-radius: 50%; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+
+        <div class="panel header">
+            <div>
+                <h1>Interactive Atom Model</h1>
+                <p style="color: #90caf9; font-size: 0.85rem;">Lesson: Atomic Structure</p>
+            </div>
+            <span class="badge">PROPOSAL 1</span>
+        </div>
+
+        <div class="panel controls">
+            <div class="control-group">
+                <label>Atomic Number (Protons): <span id="protonValue">6</span></label>
+                <input type="range" id="protons" min="1" max="18" value="6">
+            </div>
+            <div class="control-group">
+                <label>Rotation Speed</label>
+                <input type="range" id="speed" min="0" max="100" value="50">
+            </div>
+            <div class="control-group">
+                <label>Electron Shell Visibility</label>
+                <input type="range" id="shellOpacity" min="0" max="100" value="30">
+            </div>
+            <div class="buttons">
+                <button onclick="toggleOrbitals()">Toggle Orbitals</button>
+                <button onclick="explodeView()">Explode View</button>
+            </div>
+        </div>
+
+        <div class="panel info">
+            <div class="element-info">
+                <h2 id="elementName">Carbon</h2>
+                <div class="stat"><span class="stat-label">Symbol</span><span id="symbol">C</span></div>
+                <div class="stat"><span class="stat-label">Protons</span><span id="protonCount">6</span></div>
+                <div class="stat"><span class="stat-label">Electrons</span><span id="electronCount">6</span></div>
+                <div class="stat"><span class="stat-label">Electron Config</span><span id="config">2, 4</span></div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item"><div class="legend-color" style="background: #ff4444;"></div><span>Proton (+)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #888888;"></div><span>Neutron</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #4fc3f7;"></div><span>Electron (-)</span></div>
+        </div>
+    </div>
+
+    <script>
+        const elements = [
+            { name: 'Hydrogen', symbol: 'H', shells: [1] },
+            { name: 'Helium', symbol: 'He', shells: [2] },
+            { name: 'Lithium', symbol: 'Li', shells: [2, 1] },
+            { name: 'Beryllium', symbol: 'Be', shells: [2, 2] },
+            { name: 'Boron', symbol: 'B', shells: [2, 3] },
+            { name: 'Carbon', symbol: 'C', shells: [2, 4] },
+            { name: 'Nitrogen', symbol: 'N', shells: [2, 5] },
+            { name: 'Oxygen', symbol: 'O', shells: [2, 6] },
+            { name: 'Fluorine', symbol: 'F', shells: [2, 7] },
+            { name: 'Neon', symbol: 'Ne', shells: [2, 8] },
+            { name: 'Sodium', symbol: 'Na', shells: [2, 8, 1] },
+            { name: 'Magnesium', symbol: 'Mg', shells: [2, 8, 2] },
+            { name: 'Aluminum', symbol: 'Al', shells: [2, 8, 3] },
+            { name: 'Silicon', symbol: 'Si', shells: [2, 8, 4] },
+            { name: 'Phosphorus', symbol: 'P', shells: [2, 8, 5] },
+            { name: 'Sulfur', symbol: 'S', shells: [2, 8, 6] },
+            { name: 'Chlorine', symbol: 'Cl', shells: [2, 8, 7] },
+            { name: 'Argon', symbol: 'Ar', shells: [2, 8, 8] }
+        ];
+
+        let scene, camera, renderer, nucleus, electrons = [], shells = [];
+        let rotationSpeed = 0.01;
+        let exploded = false;
+        let showOrbitals = true;
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 15;
+
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            // Lighting
+            const ambient = new THREE.AmbientLight(0x404040, 0.5);
+            scene.add(ambient);
+            const point = new THREE.PointLight(0xffffff, 1, 100);
+            point.position.set(10, 10, 10);
+            scene.add(point);
+
+            createAtom(6);
+            setupControls();
+            animate();
+        }
+
+        function createAtom(protons) {
+            // Clear existing
+            while(scene.children.length > 2) scene.remove(scene.children[2]);
+            electrons = [];
+            shells = [];
+
+            const element = elements[protons - 1];
+
+            // Nucleus
+            const nucleusGroup = new THREE.Group();
+            const particleSize = 0.3;
+
+            for (let i = 0; i < protons; i++) {
+                const protonGeo = new THREE.SphereGeometry(particleSize, 16, 16);
+                const protonMat = new THREE.MeshPhongMaterial({ color: 0xff4444, emissive: 0x441111 });
+                const proton = new THREE.Mesh(protonGeo, protonMat);
+                const angle = (i / protons) * Math.PI * 2;
+                const radius = protons > 1 ? 0.5 : 0;
+                proton.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, (Math.random() - 0.5) * 0.5);
+                nucleusGroup.add(proton);
+            }
+
+            for (let i = 0; i < protons; i++) {
+                const neutronGeo = new THREE.SphereGeometry(particleSize, 16, 16);
+                const neutronMat = new THREE.MeshPhongMaterial({ color: 0x888888, emissive: 0x222222 });
+                const neutron = new THREE.Mesh(neutronGeo, neutronMat);
+                const angle = (i / protons) * Math.PI * 2 + 0.3;
+                const radius = protons > 1 ? 0.5 : 0.3;
+                neutron.position.set(Math.cos(angle) * radius, (Math.random() - 0.5) * 0.5, Math.sin(angle) * radius);
+                nucleusGroup.add(neutron);
+            }
+            scene.add(nucleusGroup);
+            nucleus = nucleusGroup;
+
+            // Electron shells
+            element.shells.forEach((count, shellIndex) => {
+                const shellRadius = 3 + shellIndex * 2.5;
+
+                // Shell ring
+                const ringGeo = new THREE.TorusGeometry(shellRadius, 0.02, 8, 64);
+                const ringMat = new THREE.MeshBasicMaterial({ color: 0x4fc3f7, transparent: true, opacity: 0.3 });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 2;
+                scene.add(ring);
+                shells.push(ring);
+
+                // Electrons
+                for (let i = 0; i < count; i++) {
+                    const electronGeo = new THREE.SphereGeometry(0.2, 16, 16);
+                    const electronMat = new THREE.MeshPhongMaterial({ color: 0x4fc3f7, emissive: 0x1a4a5a });
+                    const electron = new THREE.Mesh(electronGeo, electronMat);
+                    electron.userData = {
+                        shell: shellIndex,
+                        angle: (i / count) * Math.PI * 2,
+                        radius: shellRadius,
+                        speed: 0.02 / (shellIndex + 1)
+                    };
+                    electrons.push(electron);
+                    scene.add(electron);
+                }
+            });
+
+            updateInfo(protons);
+        }
+
+        function updateInfo(protons) {
+            const element = elements[protons - 1];
+            document.getElementById('elementName').textContent = element.name;
+            document.getElementById('symbol').textContent = element.symbol;
+            document.getElementById('protonCount').textContent = protons;
+            document.getElementById('electronCount').textContent = protons;
+            document.getElementById('config').textContent = element.shells.join(', ');
+            document.getElementById('protonValue').textContent = protons;
+        }
+
+        function setupControls() {
+            document.getElementById('protons').addEventListener('input', (e) => {
+                createAtom(parseInt(e.target.value));
+            });
+
+            document.getElementById('speed').addEventListener('input', (e) => {
+                rotationSpeed = e.target.value / 5000;
+            });
+
+            document.getElementById('shellOpacity').addEventListener('input', (e) => {
+                shells.forEach(shell => shell.material.opacity = e.target.value / 100);
+            });
+
+            // Mouse controls
+            let isDragging = false, prevX, prevY;
+            renderer.domElement.addEventListener('mousedown', (e) => { isDragging = true; prevX = e.clientX; prevY = e.clientY; });
+            renderer.domElement.addEventListener('mouseup', () => isDragging = false);
+            renderer.domElement.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaX = e.clientX - prevX;
+                    const deltaY = e.clientY - prevY;
+                    scene.rotation.y += deltaX * 0.005;
+                    scene.rotation.x += deltaY * 0.005;
+                    prevX = e.clientX;
+                    prevY = e.clientY;
+                }
+            });
+            renderer.domElement.addEventListener('wheel', (e) => {
+                camera.position.z += e.deltaY * 0.01;
+                camera.position.z = Math.max(5, Math.min(30, camera.position.z));
+            });
+        }
+
+        function toggleOrbitals() {
+            showOrbitals = !showOrbitals;
+            shells.forEach(shell => shell.visible = showOrbitals);
+        }
+
+        function explodeView() {
+            exploded = !exploded;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const explodeOffset = exploded ? 2 : 0;
+
+            electrons.forEach(electron => {
+                electron.userData.angle += electron.userData.speed * (rotationSpeed * 500);
+                const r = electron.userData.radius + explodeOffset * electron.userData.shell;
+                electron.position.x = Math.cos(electron.userData.angle) * r;
+                electron.position.z = Math.sin(electron.userData.angle) * r;
+            });
+
+            if (nucleus) nucleus.rotation.y += rotationSpeed * 0.5;
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
+    </script>
+</body>
+</html>

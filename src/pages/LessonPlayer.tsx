@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense, lazy } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,17 +10,150 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import TopicVisual from "@/components/animations/TopicVisual";
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  Lightbulb, 
-  CheckCircle2, 
-  Award, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  Lightbulb,
+  CheckCircle2,
+  Award,
   Loader2,
-  BookOpen
+  BookOpen,
+  Box
 } from "lucide-react";
 import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
 import { triggerLevelUpConfetti, triggerLessonCompleteConfetti } from "@/utils/confettiEffects";
+
+// Lazy load 3D component for performance
+const LessonModel = lazy(() => import("@/components/3d/LessonModel"));
+
+// Comprehensive lesson-to-3D-model mapping
+import type { ModelType } from "@/components/3d/LessonModel";
+
+const lessonModelMap: Record<string, { type: ModelType; config?: Record<string, unknown> }> = {
+  // ========== BASIC PHYSICS ==========
+  // Introduction
+  'intro': { type: 'atom', config: { protons: 6 } },
+
+  // Units & Measurement
+  'basics-units': { type: 'pendulum' },
+
+  // Motion
+  'motion-basics': { type: 'projectile' },
+  'motion-acceleration': { type: 'projectile' },
+
+  // Forces
+  'forces-intro': { type: 'force-vectors' },
+  'forces-newtons-laws': { type: 'force-vectors' },
+
+  // Energy
+  'energy-work': { type: 'pendulum' },
+  'energy-kinetic-potential': { type: 'pendulum' },
+
+  // Everyday Physics (Level 1)
+  'everyday-physics': { type: 'pendulum' },
+  'why-things-fall': { type: 'gravity' },
+
+  // Basic Understanding (Level 2)
+  'pressure-basics': { type: 'pressure' },
+  'waves-intro': { type: 'wave' },
+
+  // Intermediate (Level 3)
+  'sound-physics': { type: 'wave', config: { frequency: 3 } },
+  'light-basics': { type: 'wave', config: { frequency: 4 } },
+  'momentum-impulse': { type: 'projectile' },
+  'circular-motion': { type: 'planet' },
+
+  // Advanced (Level 4)
+  'electricity-basics': { type: 'electric-field' },
+  'magnetism-basics': { type: 'electric-field' },
+  'relativity-intro': { type: 'spacetime' },
+  'quantum-concepts': { type: 'quantum' },
+
+  // Expert (Level 5)
+  'thermodynamics-advanced': { type: 'thermodynamics' },
+  'general-relativity': { type: 'spacetime' },
+  'standard-model': { type: 'atom', config: { protons: 12 } },
+  'quantum-field-theory': { type: 'quantum' },
+
+  // ========== CHEMISTRY ==========
+  // Chemistry Introduction
+  'basics-matter': { type: 'molecule', config: { molecule: 'water' } },
+  'basics-atoms': { type: 'atom', config: { protons: 8 } },
+
+  // Reactions
+  'reactions-intro': { type: 'molecule', config: { molecule: 'co2' } },
+  'reactions-balancing': { type: 'molecule', config: { molecule: 'methane' } },
+
+  // Advanced Chemistry
+  'advanced-bonding': { type: 'molecule', config: { molecule: 'nacl' } },
+
+  // Comprehensive Chemistry
+  'kitchen-chemistry': { type: 'molecule', config: { molecule: 'water' } },
+  'acids-bases-ph': { type: 'molecule', config: { molecule: 'water' } },
+  'electrochemistry': { type: 'electric-field' },
+  'organic-reactions': { type: 'molecule', config: { molecule: 'methane' } },
+
+  // ========== ASTRONOMY ==========
+  // Basic Astronomy
+  'planets-inner': { type: 'planet', config: { planet: 'earth' } },
+  'planets-outer': { type: 'planet', config: { planet: 'saturn' } },
+  'stars-lifecycle': { type: 'star' },
+  'galaxies-types': { type: 'galaxy' },
+  'cosmology-big-bang': { type: 'galaxy' },
+
+  // Comprehensive Astronomy
+  'night-sky': { type: 'planet', config: { planet: 'saturn' } },
+  'stellar-evolution': { type: 'star' },
+  'black-holes': { type: 'black-hole' },
+  'cosmology': { type: 'galaxy' },
+
+  // ========== BIOLOGY ==========
+  // Cell Biology
+  'cell-intro': { type: 'cell' },
+
+  // Genetics
+  'genetics-intro': { type: 'dna' },
+
+  // Ecology
+  'ecology-intro': { type: 'ecosystem' },
+
+  // ========== OTHER SCIENCES ==========
+  // Thermodynamics
+  'thermo-intro': { type: 'thermodynamics' },
+
+  // Organic Chemistry
+  'organic-intro': { type: 'molecule', config: { molecule: 'methane' } },
+
+  // Biochemistry
+  'biochem-intro': { type: 'dna' },
+
+  // Neurobiology
+  'neuro-intro': { type: 'cell' },
+
+  // Robotics
+  'robotics-intro': { type: 'robot' },
+
+  // Environmental Science
+  'environment-intro': { type: 'ecosystem' },
+
+  // Materials Science
+  'materials-intro': { type: 'atom', config: { protons: 14 } },
+
+  // Astrophysics
+  'astrophysics-intro': { type: 'star' },
+
+  // Planetary Science
+  'planetary-intro': { type: 'planet', config: { planet: 'mars' } },
+
+  // Quantum Mechanics
+  'quantum-intro': { type: 'quantum' },
+
+  // General Science
+  'general-intro': { type: 'atom', config: { protons: 6 } },
+
+  // Origins
+  'origins-intro': { type: 'galaxy' },
+};
 
 interface Lesson {
   id: string;
@@ -299,14 +432,43 @@ export default function LessonPlayer() {
         </CardContent>
       </Card>
 
-      {/* Visual Concepts - Topic-specific images and 3D models */}
+      {/* Interactive 3D Model */}
+      {lessonSlug && lessonModelMap[lessonSlug] && (
+        <Card className="overflow-hidden" style={{
+          background: 'rgba(13, 27, 42, 0.95)',
+          border: '1px solid rgba(0, 212, 255, 0.3)',
+        }}>
+          <CardHeader className="border-b border-[rgba(0,212,255,0.2)]">
+            <CardTitle className="text-xl flex items-center gap-2" style={{ color: '#00d4ff' }}>
+              <Box className="w-5 h-5" />
+              Interactive 3D Model
+            </CardTitle>
+            <p className="text-sm text-gray-400">Drag to rotate, scroll to zoom</p>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Suspense fallback={
+              <div className="h-[400px] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#00d4ff' }} />
+              </div>
+            }>
+              <LessonModel
+                type={lessonModelMap[lessonSlug].type}
+                config={lessonModelMap[lessonSlug].config}
+                title={lesson.title}
+              />
+            </Suspense>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Visual Concepts - Topic-specific images */}
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Visual Concepts</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <TopicVisual 
-            topic={courseSlug || ''} 
+          <TopicVisual
+            topic={courseSlug || ''}
             title={lesson.title}
           />
         </CardContent>
