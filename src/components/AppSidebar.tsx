@@ -1,8 +1,6 @@
 import {
   MessageSquare,
   Compass,
-  Library,
-  TestTube,
   CreditCard,
   GraduationCap,
   Trophy,
@@ -32,8 +30,6 @@ const menuItems = [
   { title: "Learning", icon: GraduationCap, path: "/science-lens/learning" },
   { title: "Simulations", icon: Atom, path: "/science-lens/simulations" },
   { title: "Ask Questions", icon: MessageSquare, path: "/science-lens/ask" },
-  { title: "All Topics", icon: Library, path: "/science-lens/topics" },
-  { title: "API Test", icon: TestTube, path: "/science-lens/api-test" },
   { title: "Pricing", icon: CreditCard, path: "/science-lens/pricing" },
   { title: "Achievements", icon: Trophy, path: "/science-lens/achievements" },
   { title: "Settings", icon: SettingsIcon, path: "/science-lens/settings" },
