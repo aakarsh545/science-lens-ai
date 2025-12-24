@@ -15,6 +15,31 @@ import {
 } from "@/components/ui/select";
 import { BookOpen, Search, Filter, Loader2, CheckCircle2 } from "lucide-react";
 
+// Course emoji mapping
+const getCourseEmoji = (slug: string): string => {
+  const emojiMap: Record<string, string> = {
+    'basic-physics': '⚡',
+    'quantum-mechanics': '🔮',
+    'thermodynamics': '🔥',
+    'astronomy': '🌟',
+    'astrophysics': '🌌',
+    'planetary-science': '🪐',
+    'chemistry-basics': '🧪',
+    'organic-chemistry': '🧬',
+    'biochemistry': '🔬',
+    'cell-biology': '🦠',
+    'genetics': '🧬',
+    'ecology': '🌿',
+    'neurobiology': '🧠',
+    'robotics': '🤖',
+    'materials-science': '⚙️',
+    'environmental-science': '🌍',
+    'general-science': '📚',
+    'origins-how-we-were-created': '🌅',
+  };
+  return emojiMap[slug] || '📖';
+};
+
 // Types
 interface Course {
   id: string;
@@ -217,23 +242,20 @@ export default function UnifiedLearningPage() {
                 >
                   <CardContent className="p-4">
                     <div className="flex gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                        <BookOpen className="w-6 h-6 text-primary" />
+                      <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0 text-2xl">
+                        {getCourseEmoji(course.slug)}
                       </div>
                       <div className="flex-1 min-w-0 space-y-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
-                            {normalizeCategory(course.category)}
-                          </Badge>
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="font-semibold group-hover:text-primary transition-colors min-w-0 truncate">
+                            {course.title}
+                          </h4>
                           {course.difficulty && (
-                            <Badge className={`text-xs ${getDifficultyBadgeClass(course.difficulty)}`}>
+                            <Badge className={`text-xs flex-shrink-0 ${getDifficultyBadgeClass(course.difficulty)}`}>
                               {course.difficulty}
                             </Badge>
                           )}
                         </div>
-                        <h4 className="font-semibold group-hover:text-primary transition-colors min-w-0 truncate">
-                          {course.title}
-                        </h4>
                         <p className="text-sm text-muted-foreground line-clamp-2">
                           {course.description}
                         </p>
