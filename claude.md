@@ -38,6 +38,26 @@ npm run build    # Production build
 npm run lint     # Run ESLint
 ```
 
+## Supabase CLI Commands
+
+**Always use Supabase CLI for database operations.** The project is linked to remote Supabase.
+
+```bash
+# Push migrations to remote database
+npx supabase db push
+
+# Deploy edge functions
+npx supabase functions deploy <function-name>
+
+# Deploy all edge functions
+npx supabase functions deploy
+```
+
+### Setup (if not authenticated)
+1. Get access token from: Supabase Dashboard → Account → Access Tokens
+2. Add to `.env`: `SUPABASE_ACCESS_TOKEN=your_token_here`
+3. Or run: `npx supabase login --token your_token_here`
+
 ---
 
 ## IMPORTANT: Commit Policy
