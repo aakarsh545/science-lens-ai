@@ -213,14 +213,14 @@ export default function UnifiedLearningPage() {
               return (
                 <Card
                   key={course.id}
-                  className="bg-card hover:border-primary/50 transition-all cursor-pointer group"
+                  className="bg-card hover:border-primary/50 transition-all cursor-pointer group overflow-hidden"
                 >
                   <CardContent className="p-4">
                     <div className="flex gap-3">
                       <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                         <BookOpen className="w-6 h-6 text-primary" />
                       </div>
-                      <div className="flex-1 space-y-2">
+                      <div className="flex-1 min-w-0 space-y-2">
                         <div className="flex items-center justify-between gap-2">
                           <h4 className="font-semibold group-hover:text-primary transition-colors min-w-0 truncate">
                             {course.title}
