@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Select,
   SelectContent,
@@ -14,11 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  BookOpen, Search, Filter, Loader2,
-  ChevronDown, ChevronRight, FolderOpen, FileText, Lock,
-  CheckCircle2, Clock, Award, ArrowLeft
-} from "lucide-react";
+import { BookOpen, Search, Filter, Loader2, CheckCircle2 } from "lucide-react";
 
 // Types
 interface Course {
@@ -31,43 +26,16 @@ interface Course {
   difficulty?: string;
 }
 
-interface Lesson {
-  id: string;
-  slug: string;
-  title: string;
-  order_index: number;
-  xp_reward: number;
-}
-
-interface CourseDetail {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  lessons: Lesson[];
-}
-
 interface CourseProgress {
   completed: number;
   total: number;
   percentage: number;
 }
 
-interface UserProgress {
-  lesson_id: string;
-  status: string;
-}
-
-interface LessonGroup {
-  name: string;
-  lessons: Lesson[];
-}
-
 export default function UnifiedLearningPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-
 
   // Courses state
   const [courses, setCourses] = useState<Course[]>([]);
@@ -76,12 +44,6 @@ export default function UnifiedLearningPage() {
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-
-  // Expanded course state (for showing tree inline)
-  const [expandedCourse, setExpandedCourse] = useState<CourseDetail | null>(null);
-  const [expandedCourseProgress, setExpandedCourseProgress] = useState<UserProgress[]>([]);
-  const [loadingCourse, setLoadingCourse] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     initPage();
@@ -139,112 +101,6 @@ export default function UnifiedLearningPage() {
     }
   };
 
-  // Load expanded course details with lessons
-  const loadCourseDetails = async (courseSlug: string) => {
-    setLoadingCourse(true);
-    const { data, error } = await supabase.functions.invoke('courses', {
-      body: { slug: courseSlug }
-    });
-
-    if (!error && data) {
-      setExpandedCourse(data);
-
-      // Load user progress for this course's lessons
-      if (userId) {
-        const { data: progressData } = await supabase
-          .from('user_progress')
-          .select('lesson_id, status')
-          .eq('user_id', userId);
-        if (progressData) setExpandedCourseProgress(progressData);
-      }
-
-      // Initialize all groups as open
-      const groups = groupLessons(data.lessons);
-      const initialOpen: Record<string, boolean> = {};
-      groups.forEach(g => { initialOpen[g.name] = true; });
-      setOpenGroups(initialOpen);
-    }
-    setLoadingCourse(false);
-  };
-
-  // Group lessons by detecting patterns
-  const groupLessons = (lessons: Lesson[]): LessonGroup[] => {
-    if (!lessons || lessons.length === 0) return [];
-
-    const sortedLessons = [...lessons].sort((a, b) => a.order_index - b.order_index);
-    const groups: LessonGroup[] = [];
-    let currentGroup: LessonGroup | null = null;
-
-    const sectionKeywords = [
-      'introduction', 'basics', 'fundamentals', 'advanced',
-      'forces', 'motion', 'energy', 'waves', 'electricity', 'magnetism',
-      'thermodynamics', 'quantum', 'relativity', 'optics',
-      'organic', 'inorganic', 'biochemistry', 'reactions',
-      'cells', 'genetics', 'evolution', 'ecology', 'anatomy',
-      'stars', 'planets', 'galaxies', 'cosmology',
-      'mechanics', 'kinematics', 'dynamics'
-    ];
-
-    const detectSection = (title: string): string | null => {
-      const lowerTitle = title.toLowerCase();
-      const numberMatch = lowerTitle.match(/^\d+\.\s*/);
-      if (numberMatch) {
-        const afterNumber = lowerTitle.slice(numberMatch[0].length);
-        for (const keyword of sectionKeywords) {
-          if (afterNumber.startsWith(keyword)) {
-            return keyword.charAt(0).toUpperCase() + keyword.slice(1);
-          }
-        }
-      }
-      for (const keyword of sectionKeywords) {
-        if (lowerTitle.includes(keyword)) {
-          return keyword.charAt(0).toUpperCase() + keyword.slice(1);
-        }
-      }
-      const colonIndex = title.indexOf(':');
-      if (colonIndex > 0 && colonIndex < 30) {
-        return title.slice(0, colonIndex).trim();
-      }
-      return null;
-    };
-
-    sortedLessons.forEach((lesson, idx) => {
-      const sectionName = detectSection(lesson.title);
-      if (sectionName && (!currentGroup || currentGroup.name !== sectionName)) {
-        currentGroup = { name: sectionName, lessons: [lesson] };
-        groups.push(currentGroup);
-      } else if (currentGroup) {
-        currentGroup.lessons.push(lesson);
-      } else {
-        if (idx < 3) {
-          if (!groups.find(g => g.name === 'Getting Started')) {
-            currentGroup = { name: 'Getting Started', lessons: [lesson] };
-            groups.push(currentGroup);
-          } else {
-            groups.find(g => g.name === 'Getting Started')?.lessons.push(lesson);
-          }
-        } else {
-          const miscGroup = groups.find(g => g.name === 'Other Topics');
-          if (miscGroup) {
-            miscGroup.lessons.push(lesson);
-          } else {
-            groups.push({ name: 'Other Topics', lessons: [lesson] });
-          }
-        }
-      }
-    });
-
-    if (groups.length <= 1 || sortedLessons.length <= 5) {
-      return [{ name: '', lessons: sortedLessons }];
-    }
-    return groups;
-  };
-
-  const groupedLessons = useMemo(() => {
-    if (!expandedCourse?.lessons) return [];
-    return groupLessons(expandedCourse.lessons);
-  }, [expandedCourse?.lessons]);
-
   // Helper to normalize category names (capitalize first letter)
   const normalizeCategory = (cat: string) => {
     if (!cat) return cat;
@@ -282,26 +138,6 @@ export default function UnifiedLearningPage() {
     return groups;
   }, [filteredCourses]);
 
-  // Lesson helpers
-  const getLessonStatus = (lessonId: string) => {
-    const progress = expandedCourseProgress.find(p => p.lesson_id === lessonId);
-    return progress?.status || 'not_started';
-  };
-
-  const isLessonUnlocked = (lesson: Lesson, allLessons: Lesson[]) => {
-    const sorted = [...allLessons].sort((a, b) => a.order_index - b.order_index);
-    const idx = sorted.findIndex(l => l.id === lesson.id);
-    if (idx === 0) return true;
-    if (!userId) return false;
-    const prev = sorted[idx - 1];
-    return prev ? getLessonStatus(prev.id) === 'completed' : false;
-  };
-
-  const getGroupProgress = (lessons: Lesson[]) => {
-    const completed = lessons.filter(l => getLessonStatus(l.id) === 'completed').length;
-    return { completed, total: lessons.length };
-  };
-
   const getDifficultyBadgeClass = (level: string) => {
     switch (level) {
       case "beginner": return "bg-green-500/20 text-green-400 border-green-500/50";
@@ -315,123 +151,6 @@ export default function UnifiedLearningPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // If a course is expanded, show the course detail with tree
-  if (expandedCourse) {
-    const completedLessons = expandedCourse.lessons.filter(l => getLessonStatus(l.id) === 'completed').length;
-    const progressPercentage = expandedCourse.lessons.length > 0
-      ? Math.round((completedLessons / expandedCourse.lessons.length) * 100)
-      : 0;
-
-    return (
-      <div className="p-6 max-w-4xl mx-auto space-y-6">
-        <Button
-          variant="ghost"
-          onClick={() => setExpandedCourse(null)}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to All Courses
-        </Button>
-
-        {/* Course Header */}
-        <Card className="border-primary/20">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1 space-y-2">
-                <Badge variant="secondary">{expandedCourse.category}</Badge>
-                <CardTitle className="text-3xl">{expandedCourse.title}</CardTitle>
-                <CardDescription className="text-base">{expandedCourse.description}</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-primary" />
-                <span>{expandedCourse.lessons.length} lessons</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Award className="w-4 h-4 text-yellow-500" />
-                <span>{expandedCourse.lessons.reduce((sum, l) => sum + (l.xp_reward || 10), 0)} XP total</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span>{completedLessons}/{expandedCourse.lessons.length} completed ({progressPercentage}%)</span>
-              </div>
-            </div>
-            <Progress value={progressPercentage} className="h-2" />
-          </CardContent>
-        </Card>
-
-        {/* Lessons Tree */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-semibold">Lessons</h2>
-          <div className="space-y-2">
-            {groupedLessons.map((group) => {
-              const groupProgress = getGroupProgress(group.lessons);
-              const isOpen = openGroups[group.name] ?? true;
-
-              if (!group.name) {
-                return (
-                  <div key="flat" className="space-y-3">
-                    {group.lessons.map((lesson) => (
-                      <LessonCard
-                        key={lesson.id}
-                        lesson={lesson}
-                        courseSlug={expandedCourse.id}
-                        status={getLessonStatus(lesson.id)}
-                        isUnlocked={isLessonUnlocked(lesson, expandedCourse.lessons)}
-                        onClick={() => {
-                          const course = courses.find(c => c.id === expandedCourse.id);
-                          if (course) navigate(`/science-lens/learn/${course.slug}/${lesson.slug}`);
-                        }}
-                      />
-                    ))}
-                  </div>
-                );
-              }
-
-              return (
-                <Collapsible
-                  key={group.name}
-                  open={isOpen}
-                  onOpenChange={() => setOpenGroups(prev => ({ ...prev, [group.name]: !prev[group.name] }))}
-                >
-                  <CollapsibleTrigger asChild>
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors">
-                      {isOpen ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
-                      <FolderOpen className="w-5 h-5 text-primary" />
-                      <span className="font-semibold flex-1">{group.name}</span>
-                      <Badge variant="outline" className="text-xs">{groupProgress.completed}/{groupProgress.total}</Badge>
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="ml-4 mt-2 space-y-2 border-l-2 border-muted pl-4">
-                      {group.lessons.map((lesson) => (
-                        <LessonCard
-                          key={lesson.id}
-                          lesson={lesson}
-                          courseSlug={expandedCourse.id}
-                          status={getLessonStatus(lesson.id)}
-                          isUnlocked={isLessonUnlocked(lesson, expandedCourse.lessons)}
-                          onClick={() => {
-                            const course = courses.find(c => c.id === expandedCourse.id);
-                            if (course) navigate(`/science-lens/learn/${course.slug}/${lesson.slug}`);
-                          }}
-                          indented
-                        />
-                      ))}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              );
-            })}
-          </div>
-        </div>
       </div>
     );
   }
@@ -537,12 +256,8 @@ export default function UnifiedLearningPage() {
                           size="sm"
                           className="w-full mt-2"
                           variant={isStarted ? "outline" : "default"}
-                          disabled={loadingCourse}
-                          onClick={() => loadCourseDetails(course.slug)}
+                          onClick={() => navigate(`/science-lens/learn/${course.slug}`)}
                         >
-                          {loadingCourse ? (
-                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                          ) : null}
                           {isStarted ? "Continue Learning" : "Start Course"}
                         </Button>
                       </div>
@@ -569,7 +284,6 @@ export default function UnifiedLearningPage() {
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategory("all");
-                setDifficultyTab("all");
               }}
             >
               Clear Filters
@@ -578,72 +292,5 @@ export default function UnifiedLearningPage() {
         </Card>
       )}
     </div>
-  );
-}
-
-// Lesson Card Component
-interface LessonCardProps {
-  lesson: Lesson;
-  courseSlug: string;
-  status: string;
-  isUnlocked: boolean;
-  onClick: () => void;
-  indented?: boolean;
-}
-
-function LessonCard({ lesson, status, isUnlocked, onClick, indented }: LessonCardProps) {
-  const isCompleted = status === 'completed';
-
-  return (
-    <Card
-      className={`
-        transition-all cursor-pointer
-        ${isUnlocked ? 'hover:shadow-lg hover:border-primary/50' : 'opacity-60 cursor-not-allowed'}
-        ${isCompleted ? 'border-green-500/30 bg-green-500/5' : ''}
-      `}
-      onClick={isUnlocked ? onClick : undefined}
-    >
-      <CardContent className={`p-4 ${indented ? 'py-3' : ''}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1">
-            <div className={`
-              w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
-              ${isCompleted
-                ? 'bg-green-500/20 text-green-400'
-                : isUnlocked
-                  ? 'bg-primary/20 text-primary'
-                  : 'bg-muted text-muted-foreground'
-              }
-            `}>
-              {isCompleted ? (
-                <CheckCircle2 className="w-4 h-4" />
-              ) : isUnlocked ? (
-                <FileText className="w-4 h-4" />
-              ) : (
-                <Lock className="w-4 h-4" />
-              )}
-            </div>
-
-            <div className="flex-1">
-              <h3 className={`font-medium ${indented ? 'text-sm' : ''}`}>{lesson.title}</h3>
-              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  <span>~5 min</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Award className="w-3 h-3" />
-                  <span>+{lesson.xp_reward || 10} XP</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {!isUnlocked && (
-            <Badge variant="outline" className="text-xs">Locked</Badge>
-          )}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
