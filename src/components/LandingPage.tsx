@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,6 +53,7 @@ const stats = [
 
 export default function LandingPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen relative overflow-hidden">

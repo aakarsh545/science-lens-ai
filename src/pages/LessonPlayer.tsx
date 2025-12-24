@@ -197,7 +197,7 @@ export default function LessonPlayer() {
       if (error) {
         if (error.message?.includes('credits_exhausted')) {
           toast.error('Credits exhausted! Visit the Pricing page to get more.');
-          navigate('/pricing');
+          navigate('/science-lens/pricing');
           return;
         }
         throw error;
@@ -251,7 +251,7 @@ export default function LessonPlayer() {
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate('/learning')}
+          onClick={() => navigate('/science-lens/learning')}
         >
           Courses
         </Button>

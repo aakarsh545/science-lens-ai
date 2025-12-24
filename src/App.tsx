@@ -34,21 +34,22 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route element={<AuthenticatedLayout />}>
-              <Route path="/dashboard" element={<DashboardMainPage />} />
-              <Route path="/learn-science" element={<LearnSciencePage />} />
-              <Route path="/ask" element={<AskPage />} />
-              <Route path="/topics" element={<TopicsPage />} />
-              <Route path="/api-test" element={<TestPage />} />
-              <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/learning" element={<CourseListPage />} />
-              <Route path="/learn/:courseSlug" element={<CoursePage />} />
-              <Route path="/learn/:courseSlug/:lessonSlug" element={<LessonPlayer />} />
-              <Route path="/learn" element={<LearnPage />} />
-              <Route path="/test" element={<TestPage />} />
-              <Route path="/achievements" element={<AchievementsPage />} />
-              <Route path="/simulations" element={<SimulationsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/science-lens" element={<AuthenticatedLayout />}>
+              <Route index element={<DashboardMainPage />} />
+              <Route path="dashboard" element={<DashboardMainPage />} />
+              <Route path="learn-science" element={<LearnSciencePage />} />
+              <Route path="ask" element={<AskPage />} />
+              <Route path="topics" element={<TopicsPage />} />
+              <Route path="api-test" element={<TestPage />} />
+              <Route path="pricing" element={<PricingPage />} />
+              <Route path="learning" element={<CourseListPage />} />
+              <Route path="learn/:courseSlug" element={<CoursePage />} />
+              <Route path="learn/:courseSlug/:lessonSlug" element={<LessonPlayer />} />
+              <Route path="learn" element={<LearnPage />} />
+              <Route path="test" element={<TestPage />} />
+              <Route path="achievements" element={<AchievementsPage />} />
+              <Route path="simulations" element={<SimulationsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

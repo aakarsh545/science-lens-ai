@@ -37,7 +37,7 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
           
           // Auto-redirect to pricing if credits hit 0
           if (newCredits === 0) {
-            navigate('/pricing');
+            navigate('/science-lens/pricing');
           } else if (newCredits <= 5 && onCreditsLow) {
             onCreditsLow();
           }
@@ -67,7 +67,7 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
         
         // Redirect immediately if no credits
         if (data.credits === 0) {
-          navigate('/pricing');
+          navigate('/science-lens/pricing');
         } else if (data.credits <= 5 && onCreditsLow) {
           onCreditsLow();
         }
@@ -105,7 +105,7 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
               
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                 <Button 
-                  onClick={() => navigate("/pricing")}
+                  onClick={() => navigate("/science-lens/pricing")}
                   className="flex items-center gap-2"
                 >
                   <Zap className="w-4 h-4" />
@@ -113,7 +113,7 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
                 </Button>
                 <Button 
                   variant="outline"
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => navigate("/science-lens/dashboard")}
                 >
                   Go to Dashboard
                 </Button>
@@ -137,7 +137,7 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => navigate("/pricing")}
+              onClick={() => navigate("/science-lens/pricing")}
             >
               Get More
             </Button>

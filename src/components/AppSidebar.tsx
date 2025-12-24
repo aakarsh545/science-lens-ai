@@ -30,16 +30,16 @@ import { ConversationsList } from "./ConversationsList";
 import { Separator } from "@/components/ui/separator";
 
 const menuItems = [
-  { title: "Home", icon: Compass, path: "/" },
-  { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { title: "Learn Science", icon: GraduationCap, path: "/learn-science" },
-  { title: "Simulations", icon: Atom, path: "/simulations" },
-  { title: "Ask Questions", icon: MessageSquare, path: "/ask" },
-  { title: "All Topics", icon: Library, path: "/topics" },
-  { title: "API Test", icon: TestTube, path: "/api-test" },
-  { title: "Pricing", icon: CreditCard, path: "/pricing" },
-  { title: "Achievements", icon: Trophy, path: "/achievements" },
-  { title: "Settings", icon: SettingsIcon, path: "/settings" },
+  { title: "Home", icon: Compass, path: "/science-lens" },
+  { title: "Dashboard", icon: LayoutDashboard, path: "/science-lens/dashboard" },
+  { title: "Learn Science", icon: GraduationCap, path: "/science-lens/learn-science" },
+  { title: "Simulations", icon: Atom, path: "/science-lens/simulations" },
+  { title: "Ask Questions", icon: MessageSquare, path: "/science-lens/ask" },
+  { title: "All Topics", icon: Library, path: "/science-lens/topics" },
+  { title: "API Test", icon: TestTube, path: "/science-lens/api-test" },
+  { title: "Pricing", icon: CreditCard, path: "/science-lens/pricing" },
+  { title: "Achievements", icon: Trophy, path: "/science-lens/achievements" },
+  { title: "Settings", icon: SettingsIcon, path: "/science-lens/settings" },
 ];
 
 interface AppSidebarProps {
