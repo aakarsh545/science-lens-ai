@@ -184,7 +184,7 @@ export default function UnifiedLearningPage() {
             <Filter className="w-4 h-4 mr-2" />
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-popover">
             {categories.map((cat) => (
               <SelectItem key={cat} value={cat}>
                 {cat === "all" ? "All Categories" : cat}
