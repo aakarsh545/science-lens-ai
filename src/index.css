@@ -15,6 +15,10 @@
     --card-foreground: 210 40% 98%;
     --card-hover: 225 39% 16%;
 
+    /* Popover/Dropdown - solid dark background */
+    --popover: 225 39% 12%;
+    --popover-foreground: 210 40% 98%;
+
     /* Cosmic Primary - Electric Blue */
     --primary: 212 100% 60%;
     --primary-foreground: 225 39% 8%;
