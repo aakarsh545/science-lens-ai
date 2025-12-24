@@ -36,7 +36,6 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/science-lens" element={<AuthenticatedLayout />}>
               <Route index element={<DashboardMainPage />} />
-              <Route path="dashboard" element={<DashboardMainPage />} />
               <Route path="learn-science" element={<LearnSciencePage />} />
               <Route path="ask" element={<AskPage />} />
               <Route path="topics" element={<TopicsPage />} />
