@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Select,
@@ -16,28 +15,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  BookOpen, Search, Filter, Loader2, Trophy, Sparkles,
+  BookOpen, Search, Filter, Loader2,
   ChevronDown, ChevronRight, FolderOpen, FileText, Lock,
-  CheckCircle2, Clock, Award, ArrowLeft, X
+  CheckCircle2, Clock, Award, ArrowLeft
 } from "lucide-react";
 
 // Types
-interface Topic {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  difficulty_level: string;
-  category: string;
-}
-
-interface TopicProgress {
-  topic_id: string;
-  questions_answered: number;
-  correct_answers: number;
-  completion_percentage: number;
-}
-
 interface Course {
   id: string;
   slug: string;
@@ -45,6 +28,7 @@ interface Course {
   description: string;
   category: string;
   lesson_count: number;
+  difficulty?: string;
 }
 
 interface Lesson {
@@ -84,16 +68,12 @@ export default function UnifiedLearningPage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Topics state
-  const [topics, setTopics] = useState<Topic[]>([]);
-  const [topicProgress, setTopicProgress] = useState<Record<string, TopicProgress>>({});
 
   // Courses state
   const [courses, setCourses] = useState<Course[]>([]);
   const [courseProgress, setCourseProgress] = useState<Record<string, CourseProgress>>({});
 
   // Filter state
-  const [difficultyTab, setDifficultyTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
@@ -116,32 +96,10 @@ export default function UnifiedLearningPage() {
 
     setUserId(session.user.id);
     await Promise.all([
-      loadTopics(),
-      loadTopicProgress(session.user.id),
       loadCourses(),
       loadCourseProgress(session.user.id)
     ]);
     setLoading(false);
-  };
-
-  const loadTopics = async () => {
-    const { data } = await supabase
-      .from("learning_topics")
-      .select("*")
-      .order("order_index");
-    if (data) setTopics(data);
-  };
-
-  const loadTopicProgress = async (uid: string) => {
-    const { data } = await supabase
-      .from("user_topic_progress")
-      .select("*")
-      .eq("user_id", uid);
-    if (data) {
-      const progressMap: Record<string, TopicProgress> = {};
-      data.forEach(p => { progressMap[p.topic_id] = p; });
-      setTopicProgress(progressMap);
-    }
   };
 
   const loadCourses = async () => {
@@ -287,50 +245,42 @@ export default function UnifiedLearningPage() {
     return groupLessons(expandedCourse.lessons);
   }, [expandedCourse?.lessons]);
 
+  // Helper to normalize category names (capitalize first letter)
+  const normalizeCategory = (cat: string) => {
+    if (!cat) return cat;
+    return cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
+  };
+
   // Filter logic
   const categories = useMemo(() => {
-    const topicCats = [...new Set(topics.map(t => t.category))];
-    const courseCats = [...new Set(courses.map(c => c.category))];
-    return ["all", ...new Set([...topicCats, ...courseCats])];
-  }, [topics, courses]);
-
-  const filteredTopics = useMemo(() => {
-    return topics.filter(t => {
-      const matchesDifficulty = difficultyTab === "all" || t.difficulty_level === difficultyTab;
-      const matchesSearch = !searchQuery ||
-        t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === "all" || t.category === selectedCategory;
-      return matchesDifficulty && matchesSearch && matchesCategory;
-    });
-  }, [topics, difficultyTab, searchQuery, selectedCategory]);
+    const courseCats = courses.map(c => normalizeCategory(c.category));
+    const uniqueCats = [...new Set(courseCats)].filter(Boolean).sort();
+    return ["all", ...uniqueCats];
+  }, [courses]);
 
   const filteredCourses = useMemo(() => {
     return courses.filter(c => {
       const matchesSearch = !searchQuery ||
         c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === "all" || c.category === selectedCategory;
+      const matchesCategory = selectedCategory === "all" ||
+        normalizeCategory(c.category) === selectedCategory;
       return matchesSearch && matchesCategory;
     });
   }, [courses, searchQuery, selectedCategory]);
 
-  // Group items by category
+  // Group courses by category (normalized)
   const groupedByCategory = useMemo(() => {
-    const groups: Record<string, { topics: Topic[], courses: Course[] }> = {};
-
-    filteredTopics.forEach(t => {
-      if (!groups[t.category]) groups[t.category] = { topics: [], courses: [] };
-      groups[t.category].topics.push(t);
-    });
+    const groups: Record<string, { courses: Course[] }> = {};
 
     filteredCourses.forEach(c => {
-      if (!groups[c.category]) groups[c.category] = { topics: [], courses: [] };
-      groups[c.category].courses.push(c);
+      const cat = normalizeCategory(c.category);
+      if (!groups[cat]) groups[cat] = { courses: [] };
+      groups[cat].courses.push(c);
     });
 
     return groups;
-  }, [filteredTopics, filteredCourses]);
+  }, [filteredCourses]);
 
   // Lesson helpers
   const getLessonStatus = (lessonId: string) => {
@@ -357,7 +307,7 @@ export default function UnifiedLearningPage() {
       case "beginner": return "bg-green-500/20 text-green-400 border-green-500/50";
       case "intermediate": return "bg-indigo-500/20 text-indigo-400 border-indigo-500/50";
       case "advanced": return "bg-orange-500/20 text-orange-400 border-orange-500/50";
-      default: return "";
+      default: return "bg-muted text-muted-foreground";
     }
   };
 
@@ -499,43 +449,30 @@ export default function UnifiedLearningPage() {
         </p>
       </div>
 
-      {/* Tabs + Search Row (Variation 1) */}
-      <div className="space-y-4 mb-8">
-        {/* Difficulty Tabs - scrollable on mobile */}
-        <Tabs value={difficultyTab} onValueChange={setDifficultyTab} className="w-full">
-          <TabsList className="inline-flex h-10 w-full sm:w-auto overflow-x-auto">
-            <TabsTrigger value="all" className="px-3 sm:px-4 whitespace-nowrap">All</TabsTrigger>
-            <TabsTrigger value="beginner" className="px-3 sm:px-4 whitespace-nowrap">Beginner</TabsTrigger>
-            <TabsTrigger value="intermediate" className="px-3 sm:px-4 whitespace-nowrap">Intermediate</TabsTrigger>
-            <TabsTrigger value="advanced" className="px-3 sm:px-4 whitespace-nowrap">Advanced</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        {/* Search + Category Filter */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search topics..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat === "all" ? "All Categories" : cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Search + Category Filter */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-8">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search courses..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
         </div>
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <Filter className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="All Categories" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {cat === "all" ? "All Categories" : cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Content grouped by category */}
@@ -544,65 +481,11 @@ export default function UnifiedLearningPage() {
           <div className="flex items-center gap-2 mb-4">
             <h2 className="text-xl font-semibold capitalize">{category}</h2>
             <Badge variant="secondary">
-              {items.topics.length + items.courses.length} items
+              {items.courses.length} {items.courses.length === 1 ? 'course' : 'courses'}
             </Badge>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Topics */}
-            {items.topics.map((topic) => {
-              const progress = topicProgress[topic.id];
-              const completionPct = progress?.completion_percentage || 0;
-
-              return (
-                <Card key={topic.id} className="hover:border-primary/50 transition-all cursor-pointer group">
-                  <CardContent className="p-4">
-                    <div className="flex gap-3">
-                      <span className="text-3xl">{topic.icon}</span>
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold group-hover:text-primary transition-colors">
-                            {topic.name}
-                          </h4>
-                          <Badge className={getDifficultyBadgeClass(topic.difficulty_level)}>
-                            {topic.difficulty_level}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {topic.description}
-                        </p>
-
-                        {progress && (
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>{progress.questions_answered} questions</span>
-                              <span>{completionPct}%</span>
-                            </div>
-                            <Progress value={completionPct} className="h-1.5" />
-                            <div className="flex gap-3 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Trophy className="w-3 h-3" />
-                                {progress.correct_answers} correct
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        <Button
-                          size="sm"
-                          className="w-full mt-2"
-                          variant={completionPct > 0 ? "outline" : "default"}
-                          onClick={() => navigate("/science-lens/ask", { state: { topic } })}
-                        >
-                          {completionPct > 0 ? "Continue Learning" : "Start Learning"}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-
             {/* Courses */}
             {items.courses.map((course) => {
               const progress = courseProgress[course.id] || { completed: 0, total: 0, percentage: 0 };
@@ -619,10 +502,15 @@ export default function UnifiedLearningPage() {
                         <BookOpen className="w-6 h-6 text-primary" />
                       </div>
                       <div className="flex-1 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold group-hover:text-primary transition-colors">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="font-semibold group-hover:text-primary transition-colors min-w-0 truncate">
                             {course.title}
                           </h4>
+                          {course.difficulty && (
+                            <Badge className={`flex-shrink-0 ${getDifficultyBadgeClass(course.difficulty)}`}>
+                              {course.difficulty}
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-2">
                           {course.description}
