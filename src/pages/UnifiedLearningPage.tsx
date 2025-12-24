@@ -69,6 +69,7 @@ export default function UnifiedLearningPage() {
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("all");
 
   useEffect(() => {
     initPage();
@@ -146,9 +147,11 @@ export default function UnifiedLearningPage() {
         c.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === "all" ||
         normalizeCategory(c.category) === selectedCategory;
-      return matchesSearch && matchesCategory;
+      const matchesDifficulty = selectedDifficulty === "all" ||
+        c.difficulty === selectedDifficulty;
+      return matchesSearch && matchesCategory && matchesDifficulty;
     });
-  }, [courses, searchQuery, selectedCategory]);
+  }, [courses, searchQuery, selectedCategory, selectedDifficulty]);
 
   // Group courses by category (normalized)
   const groupedByCategory = useMemo(() => {
@@ -193,8 +196,32 @@ export default function UnifiedLearningPage() {
         </p>
       </div>
 
-      {/* Search + Category Filter */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-8">
+      {/* Filters Row */}
+      <div className="flex flex-col lg:flex-row gap-3 mb-8">
+        {/* Difficulty Tabs */}
+        <div className="flex gap-1 rounded-lg bg-muted/30 p-1">
+          {["all", "beginner", "intermediate", "advanced"].map((level) => (
+            <button
+              key={level}
+              onClick={() => setSelectedDifficulty(level)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                selectedDifficulty === level
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : level === "beginner"
+                  ? "text-green-400 hover:bg-green-500/20"
+                  : level === "intermediate"
+                  ? "text-indigo-400 hover:bg-indigo-500/20"
+                  : level === "advanced"
+                  ? "text-orange-400 hover:bg-orange-500/20"
+                  : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {level === "all" ? "All" : level.charAt(0).toUpperCase() + level.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -204,8 +231,10 @@ export default function UnifiedLearningPage() {
             className="pl-10"
           />
         </div>
+
+        {/* Category Filter */}
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full lg:w-[160px]">
             <Filter className="w-4 h-4 mr-2" />
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
@@ -309,6 +338,7 @@ export default function UnifiedLearningPage() {
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategory("all");
+                setSelectedDifficulty("all");
               }}
             >
               Clear Filters
