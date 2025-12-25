@@ -84,9 +84,21 @@ npx supabase functions deploy
 /proposals/PRP-TEMPLATE.md
 ```
 
+**ALL PRPs must be saved in:** `/docs/PRP-XXX.md`
+
+### PRP Numbering
+PRPs must use **sequential numbering**:
+- First PRP: `/docs/PRP-001-name.md`
+- Second PRP: `/docs/PRP-002-name.md`
+- Third PRP: `/docs/PRP-003-name.md`
+- And so on...
+
+Check existing PRPs in `/docs/` to determine the next number.
+
 ### PRP Workflow
-1. **Create PRP**: Copy template to `/proposals/PRP-XXX.md` (XXX = feature number)
-2. **Fill Out**: Complete ALL sections of the template
+1. **Determine Next Number**: Check `/docs/` for existing PRPs, use next sequential number
+2. **Create PRP**: Copy template to `/docs/PRP-XXX-name.md` (XXX = sequential number, name = kebab-case feature name)
+3. **Fill Out**: Complete ALL sections of the template
    - Executive Summary (what & why)
    - Problem Statement (current issues + impact)
    - Success Criteria (measurable outcomes)
@@ -95,10 +107,10 @@ npx supabase functions deploy
    - Pre-Flight Checks (MANDATORY - must pass before starting)
    - Implementation Tasks (broken into phases)
    - Final Verification checklist
-3. **Review**: Get user approval if needed
-4. **Execute**: Work through ALL tasks sequentially
-5. **Build Gates**: Run build commands after EACH phase
-6. **Complete**: Output `<promise>PRP-XXX COMPLETE</promise>` when done
+4. **Review**: Get user approval if needed
+5. **Execute**: Work through ALL tasks sequentially
+6. **Build Gates**: Run build commands after EACH phase
+7. **Complete**: Output `<promise>PRP-XXX COMPLETE</promise>` when done
 
 ### PRP Template Key Sections
 - **Pre-Flight Checks**: MANDATORY environment/validation checks before implementation
@@ -113,10 +125,14 @@ npx supabase functions deploy
 # User: "Add user achievement system"
 # Claude: "I'll create a PRP for this feature."
 
-# Creates: /proposals/PRP-001-user-achievements.md
-# Works through all phases
-# Outputs completion promises
-# Commits after each phase
+# Step 1: Check /docs/ for existing PRPs (none yet, so start with 001)
+# Step 2: Create /docs/PRP-001-user-achievements.md
+# Step 3: Fill out all sections of the template
+# Step 4: Work through all phases
+# Step 5: Output completion promises after each phase
+# Step 6: Commit after each phase
+
+# Next feature would be: /docs/PRP-002-name.md
 ```
 
 **NEVER start substantial work without a PRP. This ensures:**
