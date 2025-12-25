@@ -16,6 +16,7 @@ interface Lesson {
   title: string;
   order_index: number;
   xp_reward: number;
+  chapter?: string;
 }
 
 interface Course {
@@ -83,97 +84,47 @@ export default function CoursePage() {
     }
   };
 
-  // Group lessons by detecting patterns in titles
+  // Group lessons by chapter from database
   const groupedLessons = useMemo(() => {
     if (!course?.lessons) return [];
 
     const sortedLessons = [...course.lessons].sort((a, b) => a.order_index - b.order_index);
-    
-    // Detect groups by common prefixes or section patterns
-    const groups: LessonGroup[] = [];
-    let currentGroup: LessonGroup | null = null;
-    
-    // Keywords that indicate a new section
-    const sectionKeywords = [
-      'introduction', 'basics', 'fundamentals', 'advanced', 
-      'forces', 'motion', 'energy', 'waves', 'electricity', 'magnetism',
-      'thermodynamics', 'quantum', 'relativity', 'optics',
-      'organic', 'inorganic', 'biochemistry', 'reactions',
-      'cells', 'genetics', 'evolution', 'ecology', 'anatomy',
-      'stars', 'planets', 'galaxies', 'cosmology',
-      'mechanics', 'kinematics', 'dynamics'
-    ];
 
-    const detectSection = (title: string): string | null => {
-      const lowerTitle = title.toLowerCase();
-      
-      // Check if title starts with a number (like "1. Introduction")
-      const numberMatch = lowerTitle.match(/^\d+\.\s*/);
-      if (numberMatch) {
-        const afterNumber = lowerTitle.slice(numberMatch[0].length);
-        for (const keyword of sectionKeywords) {
-          if (afterNumber.startsWith(keyword)) {
-            return keyword.charAt(0).toUpperCase() + keyword.slice(1);
-          }
-        }
+    // Group by chapter field from database
+    const groupsMap = new Map<string, Lesson[]>();
+
+    sortedLessons.forEach((lesson) => {
+      const chapter = lesson.chapter || 'Introduction';
+      if (!groupsMap.has(chapter)) {
+        groupsMap.set(chapter, []);
       }
-
-      // Check for section keywords
-      for (const keyword of sectionKeywords) {
-        if (lowerTitle.includes(keyword)) {
-          return keyword.charAt(0).toUpperCase() + keyword.slice(1);
-        }
-      }
-
-      // Check for colon separator (e.g., "Forces: Newton's Laws")
-      const colonIndex = title.indexOf(':');
-      if (colonIndex > 0 && colonIndex < 30) {
-        return title.slice(0, colonIndex).trim();
-      }
-
-      return null;
-    };
-
-    sortedLessons.forEach((lesson, idx) => {
-      const sectionName = detectSection(lesson.title);
-      
-      if (sectionName && (!currentGroup || currentGroup.name !== sectionName)) {
-        // Start a new group
-        currentGroup = { name: sectionName, lessons: [lesson] };
-        groups.push(currentGroup);
-      } else if (currentGroup) {
-        // Add to current group
-        currentGroup.lessons.push(lesson);
-      } else {
-        // No group detected, create "Getting Started" for first few lessons
-        if (idx < 3) {
-          if (!groups.find(g => g.name === 'Getting Started')) {
-            currentGroup = { name: 'Getting Started', lessons: [lesson] };
-            groups.push(currentGroup);
-          } else {
-            groups.find(g => g.name === 'Getting Started')?.lessons.push(lesson);
-          }
-        } else {
-          // Create a miscellaneous group
-          const miscGroup = groups.find(g => g.name === 'Other Topics');
-          if (miscGroup) {
-            miscGroup.lessons.push(lesson);
-          } else {
-            groups.push({ name: 'Other Topics', lessons: [lesson] });
-          }
-        }
-      }
+      groupsMap.get(chapter)!.push(lesson);
     });
 
-    // If only one group or few lessons, just return flat
-    if (groups.length <= 1 || sortedLessons.length <= 5) {
-      return [{ name: '', lessons: sortedLessons }];
-    }
+    // Convert map to array and sort by chapter order
+    const chapterOrder = [
+      'Introduction',
+      'Basics',
+      'You Might Know This',
+      'Going Deeper',
+      'Advanced Concepts',
+      'Expert Level'
+    ];
 
-    // Initialize all groups as open
-    const initialOpenState: Record<string, boolean> = {};
-    groups.forEach(g => { initialOpenState[g.name] = true; });
-    
+    const groups: LessonGroup[] = Array.from(groupsMap.entries())
+      .map(([name, lessons]) => ({ name, lessons }))
+      .sort((a, b) => {
+        const aIndex = chapterOrder.indexOf(a.name);
+        const bIndex = chapterOrder.indexOf(b.name);
+        // If both chapters are in our ordered list, sort by that order
+        if (aIndex >= 0 && bIndex >= 0) return aIndex - bIndex;
+        // If only one is in the list, that one comes first
+        if (aIndex >= 0) return -1;
+        if (bIndex >= 0) return 1;
+        // Otherwise, sort alphabetically
+        return a.name.localeCompare(b.name);
+      });
+
     return groups;
   }, [course?.lessons]);
 
