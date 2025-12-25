@@ -60,6 +60,75 @@ npx supabase functions deploy
 
 ---
 
+## MANDATORY: Project Proposal (PRP) Template
+
+**CRITICAL:** For ANY substantial feature, improvement, or multi-step task, you MUST create a Project Proposal (PRP) using the template before starting implementation.
+
+### When to Use PRP
+**MANDATORY for:**
+- New features (any feature affecting user experience or core functionality)
+- Major refactoring or architectural changes
+- Database schema changes
+- Multi-file changes (3+ files)
+- Tasks requiring 2+ hours of work
+- Bug fixes that require significant code changes
+
+**NOT required for:**
+- Simple typo fixes
+- Minor styling tweaks (single component)
+- Simple bug fixes (single function, <10 lines)
+- Documentation updates
+
+### PRP Template Location
+```
+/proposals/PRP-TEMPLATE.md
+```
+
+### PRP Workflow
+1. **Create PRP**: Copy template to `/proposals/PRP-XXX.md` (XXX = feature number)
+2. **Fill Out**: Complete ALL sections of the template
+   - Executive Summary (what & why)
+   - Problem Statement (current issues + impact)
+   - Success Criteria (measurable outcomes)
+   - Proposed Solution (architecture + design)
+   - Documentation Requirements
+   - Pre-Flight Checks (MANDATORY - must pass before starting)
+   - Implementation Tasks (broken into phases)
+   - Final Verification checklist
+3. **Review**: Get user approval if needed
+4. **Execute**: Work through ALL tasks sequentially
+5. **Build Gates**: Run build commands after EACH phase
+6. **Complete**: Output `<promise>PRP-XXX COMPLETE</promise>` when done
+
+### PRP Template Key Sections
+- **Pre-Flight Checks**: MANDATORY environment/validation checks before implementation
+- **Phased Approach**: Break work into logical phases (Phase 1, Phase 2, etc.)
+- **Build Gates**: Commands to verify each phase (build, test, typecheck)
+- **Completion Promises**: Output after each phase to track progress
+- **Rollback Plan**: How to revert if issues arise
+- **Success Criteria**: Measurable outcomes to validate completion
+
+### Example PRP Usage
+```bash
+# User: "Add user achievement system"
+# Claude: "I'll create a PRP for this feature."
+
+# Creates: /proposals/PRP-001-user-achievements.md
+# Works through all phases
+# Outputs completion promises
+# Commits after each phase
+```
+
+**NEVER start substantial work without a PRP. This ensures:**
+- ✅ Clear requirements and success criteria
+- ✅ Proper planning and architecture
+- ✅ Phased, testable implementation
+- ✅ Documentation is considered
+- ✅ Rollback plan exists
+- ✅ No scope creep
+
+---
+
 ## IMPORTANT: Commit Policy
 
 **After completing each improvement, feature, or bug fix, you MUST create a git commit.**
