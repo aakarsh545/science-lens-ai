@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dialog Overlay Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .overlay-test {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 50;
+        }
+        .overlay-test.active {
+            display: block;
+        }
+        .overlay-test.closed {
+            display: none;
+            pointer-events: none;
+        }
+        .overlay-test.open {
+            display: block;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dialog Overlay Pointer Events Test</h1>
+
+    <div class="test-section">
+        <h2>Test 1: Check Overlay State Management</h2>
+        <p>This test verifies that dialog overlays properly manage pointer-events based on their state.</p>
+        <button onclick="testOverlayStates()">Test Overlay States</button>
+        <div id="test1-result" class="status" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Simulate Dialog Behavior</h2>
+        <p>Click to open a simulated dialog overlay, then close it and verify pointer-events are disabled.</p>
+        <button onclick="openDialog()">Open Dialog</button>
+        <button onclick="closeDialog()">Close Dialog</button>
+        <button onclick="testClickAfterClose()" id="clickAfterClose" disabled>Test Click After Close</button>
+        <div id="test2-result" class="status" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Verify Z-Index Hierarchy</h2>
+        <p>Ensure that overlay z-index doesn't interfere with other elements when closed.</p>
+        <button onclick="testZIndex()">Test Z-Index</button>
+        <div id="test3-result" class="status" style="display: none;"></div>
+    </div>
+
+    <!-- Simulated Overlay -->
+    <div id="test-overlay" class="overlay-test closed" data-state="closed"></div>
+
+    <script>
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `status ${type}`;
+            element.textContent = message;
+        }
+
+        function testOverlayStates() {
+            const overlay = document.getElementById('test-overlay');
+            const results = [];
+
+            // Test 1: Closed state should have pointer-events: none
+            overlay.classList.remove('active', 'open');
+            overlay.classList.add('closed');
+            overlay.setAttribute('data-state', 'closed');
+
+            const closedStyle = window.getComputedStyle(overlay);
+            const closedPointerEvents = closedStyle.pointerEvents;
+
+            if (closedPointerEvents === 'none') {
+                results.push('PASS: Closed overlay has pointer-events: none');
+            } else {
+                results.push(`FAIL: Closed overlay has pointer-events: ${closedPointerEvents}`);
+            }
+
+            // Test 2: Open state should have pointer-events: auto
+            overlay.classList.remove('closed');
+            overlay.classList.add('open', 'active');
+            overlay.setAttribute('data-state', 'open');
+
+            const openStyle = window.getComputedStyle(overlay);
+            const openPointerEvents = openStyle.pointerEvents;
+
+            if (openPointerEvents === 'auto') {
+                results.push('PASS: Open overlay has pointer-events: auto');
+            } else {
+                results.push(`FAIL: Open overlay has pointer-events: ${openPointerEvents}`);
+            }
+
+            // Clean up
+            overlay.classList.remove('open', 'active');
+            overlay.classList.add('closed');
+            overlay.setAttribute('data-state', 'closed');
+
+            const allPassed = results.every(r => r.startsWith('PASS'));
+            showStatus('test1-result', results.join('\n'), allPassed ? 'success' : 'error');
+        }
+
+        function openDialog() {
+            const overlay = document.getElementById('test-overlay');
+            overlay.classList.remove('closed');
+            overlay.classList.add('active', 'open');
+            overlay.setAttribute('data-state', 'open');
+            showStatus('test2-result', 'Dialog opened. Overlay is now active.', 'info');
+            document.getElementById('clickAfterClose').disabled = false;
+        }
+
+        function closeDialog() {
+            const overlay = document.getElementById('test-overlay');
+            overlay.classList.remove('active', 'open');
+            overlay.classList.add('closed');
+            overlay.setAttribute('data-state', 'closed');
+            showStatus('test2-result', 'Dialog closed. Overlay pointer-events should now be none.', 'info');
+        }
+
+        function testClickAfterClose() {
+            const overlay = document.getElementById('test-overlay');
+            const style = window.getComputedStyle(overlay);
+            const pointerEvents = style.pointerEvents;
+
+            if (pointerEvents === 'none') {
+                showStatus('test2-result', 'SUCCESS: Overlay properly disabled after close. Pointer events will not be intercepted.', 'success');
+            } else {
+                showStatus('test2-result', `FAILURE: Overlay still intercepts pointer events (${pointerEvents}). This will block clicks!`, 'error');
+            }
+        }
+
+        function testZIndex() {
+            const overlay = document.getElementById('test-overlay');
+            const style = window.getComputedStyle(overlay);
+            const zIndex = style.zIndex;
+
+            if (zIndex === '50' || zIndex === 'auto') {
+                showStatus('test3-result', `PASS: Overlay z-index is ${zIndex}. When closed (pointer-events: none), it won't block interactions.`, 'success');
+            } else {
+                showStatus('test3-result', `INFO: Overlay z-index is ${zIndex}. This should be fine with proper pointer-events management.`, 'info');
+            }
+        }
+
+        // Run initial test
+        window.addEventListener('load', () => {
+            console.log('Dialog Overlay Test Page Loaded');
+            console.log('Expected fix: data-[state=closed]:pointer-events-none data-[state=open]:pointer-events-auto');
+        });
+    </script>
+</body>
+</html>
