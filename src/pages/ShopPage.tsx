@@ -9,6 +9,8 @@ import { Coins, ShoppingBag, Crown, Check, Palette, Smile, Sparkles, Lock, Star,
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
+import { AnimeAvatar } from "@/components/AnimeAvatar";
+import { ThemeIllustration } from "@/components/ThemeIllustration";
 
 interface ShopItem {
   id: string;
@@ -484,68 +486,40 @@ export default function ShopPage() {
           <CardContent className="space-y-4">
             {item.type === 'theme' ? (
               <div className="relative group">
-                {/* Theme Preview - Large and Attractive */}
-                <div
-                  className="w-full h-40 rounded-xl border-4 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl"
-                  style={{
-                    backgroundColor: item.metadata.background,
-                    borderColor: item.metadata.primary,
-                    boxShadow: `0 0 20px ${item.metadata.primary}40`,
-                  }}
-                >
-                  {/* Gradient overlay if available */}
-                  {item.metadata.gradientColors && (
-                    <div
-                      className="absolute inset-0 opacity-30"
-                      style={{
-                        background: `linear-gradient(135deg, ${item.metadata.gradientColors.join(', ')})`,
+                {/* Theme Preview - Illustrated Scene */}
+                <div className="w-full h-40 rounded-xl border-4 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl"
+                     style={{
+                       borderColor: item.metadata.primary,
+                       boxShadow: `0 0 20px ${item.metadata.primary}40`,
+                     }}>
+                  {/* Illustrated Theme Scene */}
+                  <div className="relative z-10 transform group-hover:scale-105 transition-transform duration-300">
+                    <ThemeIllustration
+                      themeName={item.name}
+                      colors={{
+                        primary: item.metadata.primary || '#3b82f6',
+                        secondary: item.metadata.secondary || '#1e40af',
+                        background: item.metadata.background || '#0f172a',
+                        accent: item.metadata.accent || '#60a5fa',
                       }}
-                    />
-                  )}
-
-                  {/* Color swatches */}
-                  <div className="absolute top-3 left-3 flex gap-2">
-                    <div
-                      className="w-6 h-6 rounded-full border-2 border-white/50 shadow-lg"
-                      style={{ backgroundColor: item.metadata.primary }}
-                      title="Primary"
-                    />
-                    <div
-                      className="w-6 h-6 rounded-full border-2 border-white/50 shadow-lg"
-                      style={{ backgroundColor: item.metadata.secondary }}
-                      title="Secondary"
-                    />
-                    <div
-                      className="w-6 h-6 rounded-full border-2 border-white/50 shadow-lg"
-                      style={{ backgroundColor: item.metadata.accent }}
-                      title="Accent"
+                      size={152}
+                      className="rounded-lg"
                     />
                   </div>
 
-                  {/* Preview text */}
-                  <div className="relative z-10 text-center">
-                    <p
-                      className="text-2xl font-bold mb-1"
-                      style={{ color: item.metadata.text }}
-                    >
-                      {item.name}
-                    </p>
-                    <p
-                      className="text-sm opacity-80"
-                      style={{ color: item.metadata.accent }}
-                    >
-                      Theme Preview
-                    </p>
+                  {/* Theme name overlay */}
+                  <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1 text-center">
+                    <p className="text-sm font-bold text-white truncate">{item.name}</p>
                   </div>
 
                   {/* Shine effect on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                 </div>
               </div>
             ) : item.type === 'avatar' ? (
               <div className="relative group">
-                {/* Avatar Preview - Large and Animated */}
-                <div className="w-full h-40 rounded-xl border-4 bg-gradient-to-br from-primary/20 via-purple-500/20 to-pink-500/20 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl"
+                {/* Avatar Preview - Large and Animated with Anime Character */}
+                <div className="w-full h-40 rounded-xl border-4 bg-gradient-to-br from-primary/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center relative overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl"
                      style={{ borderColor: item.metadata.primary || 'var(--theme-primary)' }}>
                   {/* Animated background particles */}
                   <div className="absolute inset-0">
@@ -555,11 +529,14 @@ export default function ShopPage() {
                     <div className="absolute top-1/2 right-4 w-2 h-2 bg-white/30 rounded-full animate-ping" style={{ animationDelay: '1.5s' }} />
                   </div>
 
-                  {/* Avatar emoji */}
+                  {/* Anime Avatar Character */}
                   <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
-                    <div className="text-8xl drop-shadow-2xl filter group-hover:brightness-125 transition-all duration-300">
-                      {item.icon_emoji}
-                    </div>
+                    <AnimeAvatar
+                      avatarType={item.name}
+                      rarity={item.rarity}
+                      size={120}
+                      className="drop-shadow-2xl filter group-hover:brightness-125 transition-all duration-300"
+                    />
                   </div>
 
                   {/* Rarity glow */}
