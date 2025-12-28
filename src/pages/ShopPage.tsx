@@ -9,8 +9,6 @@ import { Coins, ShoppingBag, Crown, Check, Palette, Smile, Sparkles, Lock, Star,
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
-import { AnimeAvatar } from "@/components/AnimeAvatar";
-import { ThemeIllustration } from "@/components/ThemeIllustration";
 
 interface ShopItem {
   id: string;
@@ -492,18 +490,17 @@ export default function ShopPage() {
                        borderColor: item.metadata.primary,
                        boxShadow: `0 0 20px ${item.metadata.primary}40`,
                      }}>
-                  {/* Illustrated Theme Scene */}
-                  <div className="relative z-10 transform group-hover:scale-105 transition-transform duration-300">
-                    <ThemeIllustration
-                      themeName={item.name}
-                      colors={{
-                        primary: item.metadata.primary || '#3b82f6',
-                        secondary: item.metadata.secondary || '#1e40af',
-                        background: item.metadata.background || '#0f172a',
-                        accent: item.metadata.accent || '#60a5fa',
+                  {/* Generated Theme Illustration */}
+                  <div className="relative z-10 transform group-hover:scale-105 transition-transform duration-300 w-full h-full">
+                    <img
+                      src={`/icons/themes/theme-${item.name.toLowerCase().replace(/\s+/g, '-')}.png`}
+                      alt={item.name}
+                      className="w-full h-full object-cover rounded-lg"
+                      onError={(e) => {
+                        // Fallback if image doesn't exist
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
                       }}
-                      size={152}
-                      className="rounded-lg"
                     />
                   </div>
 
@@ -529,13 +526,17 @@ export default function ShopPage() {
                     <div className="absolute top-1/2 right-4 w-2 h-2 bg-white/30 rounded-full animate-ping" style={{ animationDelay: '1.5s' }} />
                   </div>
 
-                  {/* Anime Avatar Character */}
-                  <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
-                    <AnimeAvatar
-                      avatarType={item.name}
-                      rarity={item.rarity}
-                      size={120}
-                      className="drop-shadow-2xl filter group-hover:brightness-125 transition-all duration-300"
+                  {/* Generated Avatar Image */}
+                  <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300 w-32 h-32">
+                    <img
+                      src={`/icons/avatars/avatar-${item.name.toLowerCase().replace(/\s+/g, '-')}.png`}
+                      alt={item.name}
+                      className="w-full h-full object-cover rounded-full drop-shadow-2xl filter group-hover:brightness-125 transition-all duration-300"
+                      onError={(e) => {
+                        // Fallback if image doesn't exist
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
                     />
                   </div>
 
