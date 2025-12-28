@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import confetti from "canvas-confetti";
+import { TIMEOUT_VALUES, API_ENDPOINTS } from "@/utils/constants";
 
 interface Topic {
   id: string;
@@ -94,15 +95,12 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
   };
 
   const streamChat = async (userMessage: string) => {
-    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ask`;
-    console.log('Edge function URL ->', CHAT_URL);
+    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}${API_ENDPOINTS.CHAT}`;
 
     try {
-      // Ensure we have a fresh session and token
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
-      console.log('Token present:', !!token, 'Token length:', token?.length || 0);
       if (!token) {
         toast({
           title: "Authentication Required",
@@ -112,7 +110,6 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
         throw new Error("No authentication token");
       }
 
-      // Create a conversation for this chat so the edge function can persist messages
       const { data: newConvo, error: convoError } = await supabase
         .from("conversations")
         .insert({ user_id: user.id, title: topic?.name || "New Chat" })
@@ -128,11 +125,9 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
         message: userMessage,
         conversationId: newConvo.id,
       };
-      console.log('Request body:', body);
 
-      // Add timeout for the initial request
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_VALUES.INITIAL_REQUEST);
 
       const resp = await fetch(CHAT_URL, {
         method: "POST",
@@ -146,23 +141,18 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
 
       clearTimeout(timeoutId);
 
-      console.log('Response status:', resp.status, resp.statusText);
-
       if (resp.status === 401) {
-        const t = await resp.text();
-        console.error('401 Unauthorized from Edge Function:', t);
         toast({
           title: "Session Expired",
           description: "Please sign in again",
           variant: "destructive",
         });
-        throw new Error(`Unauthorized - please sign in again`);
+        throw new Error("Unauthorized - please sign in again");
       }
 
       if (!resp.ok || !resp.body) {
-        const t = await resp.text();
-        console.error('Edge function error:', resp.status, t);
-        throw new Error(`Failed to start stream: ${resp.status} — ${t}`);
+        const errorText = await resp.text();
+        throw new Error(`Failed to start stream: ${resp.status} — ${errorText}`);
       }
 
       const reader = resp.body.getReader();
@@ -173,15 +163,12 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
       let lastChunkTime = Date.now();
       let noDataTimeoutId: NodeJS.Timeout;
 
-      // Create placeholder assistant message
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
-      // Set up timeout for no data received
       const resetNoDataTimeout = () => {
         if (noDataTimeoutId) clearTimeout(noDataTimeoutId);
         noDataTimeoutId = setTimeout(() => {
           if (!streamDone) {
-            console.error('No data received for 20 seconds, aborting stream');
             reader.cancel();
             toast({
               title: "Response Timeout",
@@ -191,7 +178,7 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
             setMessages((prev) => prev.slice(0, -1));
             streamDone = true;
           }
-        }, 20000); // 20 seconds without any data
+        }, TIMEOUT_VALUES.NO_DATA_RECEIVED);
       };
 
       resetNoDataTimeout();
@@ -199,9 +186,7 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
       while (!streamDone) {
         const { done, value } = await reader.read();
         if (done) break;
-        console.log('Chunk received bytes:', value?.length || 0);
 
-        // Update last chunk time and reset timeout
         lastChunkTime = Date.now();
         resetNoDataTimeout();
 
@@ -233,18 +218,15 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
                 return newMessages;
               });
             }
-          } catch (e) {
-            console.warn('Partial/invalid JSON line, buffering more...', line);
+          } catch {
             textBuffer = line + "\n" + textBuffer;
             break;
           }
         }
       }
 
-      // Clear the no data timeout
       if (noDataTimeoutId) clearTimeout(noDataTimeoutId);
 
-      // Save question & response
       const { data: questionData } = await supabase
         .from("questions")
         .insert({
@@ -264,7 +246,6 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
         });
       }
 
-      // Achievements
       const { data: profile } = await supabase
         .from("profiles")
         .select("total_questions")

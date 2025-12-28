@@ -124,44 +124,40 @@ export default function LessonPlayer() {
 
   const loadLesson = async (uid: string) => {
     try {
-      // Get course to find lesson by slug
       const { data: courseData } = await supabase.functions.invoke('courses', {
         body: { slug: courseSlug }
       });
 
-      if (courseData?.lessons) {
-        // Sort lessons by order_index and store in state
+      if (courseData?.lessons && Array.isArray(courseData.lessons)) {
         const sortedLessons = [...courseData.lessons].sort((a: Lesson, b: Lesson) => a.order_index - b.order_index);
         setCourseLessons(sortedLessons);
 
         const foundLesson = courseData.lessons.find((l: Lesson) => l.slug === lessonSlug);
 
         if (foundLesson) {
-          // Check if lesson is unlocked (sequential unlocking)
           const lessonIndex = sortedLessons.findIndex((l: Lesson) => l.id === foundLesson.id);
 
-          // If not the first lesson, check if previous lesson is completed
           if (lessonIndex > 0) {
             const previousLesson = sortedLessons[lessonIndex - 1];
 
-            // Fetch user progress for previous lesson
-            const { data: prevProgress } = await supabase
-              .from('user_progress')
-              .select('status')
-              .eq('user_id', uid)
-              .eq('lesson_id', previousLesson.id)
-              .maybeSingle();
+            if (previousLesson) {
+              const { data: prevProgress } = await supabase
+                .from('user_progress')
+                .select('status')
+                .eq('user_id', uid)
+                .eq('lesson_id', previousLesson.id)
+                .maybeSingle();
 
-            const isPreviousCompleted = prevProgress?.status === 'completed';
+              const isPreviousCompleted = prevProgress?.status === 'completed';
 
-            if (!isPreviousCompleted) {
-              // Lesson is locked, redirect to course page with message
-              toast.error(
-                `🔒 Lesson Locked! Please complete "${previousLesson.title}" first to unlock this lesson.`,
-                { duration: 5000 }
-              );
-              navigate(`/science-lens/learning/${courseSlug}`);
-              return;
+              if (!isPreviousCompleted) {
+                toast.error(
+                  `🔒 Lesson Locked! Please complete "${previousLesson.title || 'the previous lesson'}" first to unlock this lesson.`,
+                  { duration: 5000 }
+                );
+                navigate(`/science-lens/learning/${courseSlug}`);
+                return;
+              }
             }
           }
 
@@ -172,7 +168,6 @@ export default function LessonPlayer() {
           if (lessonData) {
             setLesson(lessonData);
 
-            // Check if already completed
             const { data: progress } = await supabase
               .from('user_progress')
               .select('status')

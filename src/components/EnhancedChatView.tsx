@@ -13,6 +13,7 @@ import { exportChatToPDF } from "@/utils/pdfExport";
 import { ChatProgress } from "./ChatProgress";
 import { AIService } from "@/services/aiService";
 import CreditGuard from "./CreditGuard";
+import { LIMITS, API_ENDPOINTS } from "@/utils/constants";
 
 interface Message {
   id: string;
@@ -172,14 +173,11 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
   };
 
   const streamChat = async (userMessage: string, currentConvoId: string) => {
-    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ask`;
-    console.log('Edge function URL ->', CHAT_URL);
+    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}${API_ENDPOINTS.CHAT}`;
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-
-      console.log('Token present:', !!token, 'Token length:', token?.length || 0);
 
       if (!token) {
         toast({
@@ -195,7 +193,6 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
         conversationId: currentConvoId,
         panelContext,
       };
-      console.log('Request body:', reqBody);
 
       const resp = await fetch(CHAT_URL, {
         method: "POST",
@@ -205,8 +202,6 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
         },
         body: JSON.stringify(reqBody),
       });
-
-      console.log('Response status:', resp.status, resp.statusText);
 
       if (resp.status === 401) {
         toast({
@@ -219,7 +214,6 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
 
       if (!resp.ok || !resp.body) {
         const errorText = await resp.text();
-        console.error('Edge function error:', resp.status, errorText);
         throw new Error(`Failed to start stream: ${resp.status} ${errorText}`);
       }
 
@@ -229,19 +223,17 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
       let streamDone = false;
       let assistantSoFar = "";
 
-      // Add empty assistant message
       const tempId = crypto.randomUUID();
-      setMessages((prev) => [...prev, { 
-        id: tempId, 
-        role: "assistant", 
-        content: "", 
-        created_at: new Date().toISOString() 
+      setMessages((prev) => [...prev, {
+        id: tempId,
+        role: "assistant",
+        content: "",
+        created_at: new Date().toISOString()
       }]);
 
       while (!streamDone) {
         const { done, value } = await reader.read();
         if (done) break;
-        console.log('Chunk received bytes:', value?.length || 0);
         textBuffer += decoder.decode(value, { stream: true });
 
         let newlineIndex: number;
@@ -271,14 +263,12 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
               });
             }
           } catch {
-            console.warn('Partial/invalid JSON line, buffering more...', line);
             textBuffer = line + "\n" + textBuffer;
             break;
           }
         }
       }
 
-      // Save to questions table
       const { data: questionData } = await supabase
         .from("questions")
         .insert({
@@ -293,7 +283,6 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
       if (questionData) {
         setMessages((prev) => {
           const newMessages = [...prev];
-          // Find the user message (second to last) and add questionId
           if (newMessages.length >= 2) {
             newMessages[newMessages.length - 2].questionId = questionData.id;
           }
@@ -301,7 +290,6 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
         });
       }
 
-      // Check achievements
       const { data: profile } = await supabase
         .from("profiles")
         .select("total_questions")
@@ -326,11 +314,10 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
     const trimmedInput = input.trim();
     if (!trimmedInput || loading) return;
 
-    // Client-side validation
-    if (trimmedInput.length > 2000) {
+    if (trimmedInput.length > LIMITS.MAX_MESSAGE_LENGTH) {
       toast({
         title: "Message too long",
-        description: "Please keep your message under 2000 characters.",
+        description: `Please keep your message under ${LIMITS.MAX_MESSAGE_LENGTH} characters.`,
         variant: "destructive",
       });
       return;
@@ -560,10 +547,10 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
             className="resize-none pr-20"
             rows={2}
             disabled={loading}
-            maxLength={2000}
+            maxLength={LIMITS.MAX_MESSAGE_LENGTH}
           />
           <div className="absolute bottom-6 right-14 text-xs text-muted-foreground">
-            {input.length}/2000
+            {input.length}/{LIMITS.MAX_MESSAGE_LENGTH}
           </div>
           <Button onClick={handleSend} disabled={loading || !input.trim()} size="icon" aria-label="Send message" className="mb-auto">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

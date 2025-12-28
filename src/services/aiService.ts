@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { API_ENDPOINTS } from "@/utils/constants";
 
 interface AIRequestOptions {
   userId: string;
@@ -29,7 +30,7 @@ export class AIService {
 
     if (error) {
       console.error("Failed to deduct credits:", error);
-      return false;
+      throw new Error(`Failed to deduct credits: ${error.message}`);
     }
 
     return data;
@@ -39,23 +40,20 @@ export class AIService {
     const { userId, message, conversationId, panelContext, onStream, onComplete, onError } = options;
 
     try {
-      // Check credits first
       const credits = await this.checkCredits(userId);
       if (credits < 1) {
         onError?.("Insufficient credits. Please purchase more to continue.");
         return;
       }
 
-      // Get session for auth
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         onError?.("Authentication required");
         return;
       }
 
-      // Call the edge function with streaming
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ask`,
+        `${import.meta.env.VITE_SUPABASE_URL}${API_ENDPOINTS.CHAT}`,
         {
           method: "POST",
           headers: {
@@ -76,13 +74,14 @@ export class AIService {
         return;
       }
 
-      // Deduct credits only after successful response
-      const deducted = await this.deductCredits(userId, 1);
-      if (!deducted) {
-        console.warn("Failed to deduct credits, but continuing with response");
+      try {
+        await this.deductCredits(userId, 1);
+      } catch (creditError) {
+        console.error("Credit deduction failed:", creditError);
+        onError?.(creditError instanceof Error ? creditError.message : "Failed to deduct credits");
+        return;
       }
 
-      // Handle streaming response
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
@@ -97,8 +96,7 @@ export class AIService {
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        
-        // Process complete lines
+
         let newlineIndex;
         while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
           const line = buffer.slice(0, newlineIndex);
