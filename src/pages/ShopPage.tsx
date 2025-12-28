@@ -5,13 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Coins, ShoppingBag, Crown, Check, Palette, Smile, Sparkles, Lock, Star } from "lucide-react";
+import { Coins, ShoppingBag, Crown, Check, Palette, Smile, Sparkles, Lock, Star, Zap, Clock, DollarSign, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
 interface ShopItem {
   id: string;
-  type: 'theme' | 'avatar';
+  type: 'theme' | 'avatar' | 'coin_pack' | 'xp_boost';
   name: string;
   description: string;
   price: number;
@@ -26,6 +26,12 @@ interface ShopItem {
     text?: string;
     accent?: string;
     gradientColors?: string[];
+    coin_amount?: number;
+    usd_price?: number;
+    bonus?: number;
+    boost_type?: string;
+    duration_minutes?: number;
+    bonus_multiplier?: number;
   };
 }
 
@@ -39,6 +45,8 @@ interface UserProfile {
   level: number;
   equipped_theme: string | null;
   equipped_avatar: string | null;
+  active_xp_boost: number;
+  xp_boost_expires_at: string | null;
 }
 
 // Rarity configuration
@@ -62,10 +70,34 @@ export default function ShopPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [purchasing, setPurchasing] = useState<Set<string>>(new Set());
   const [equipping, setEquipping] = useState<Set<string>>(new Set());
+  const [activeBoostTime, setActiveBoostTime] = useState<number>(0);
 
   useEffect(() => {
     initPage();
   }, []);
+
+  // Update boost timer every second
+  useEffect(() => {
+    if (!userProfile?.xp_boost_expires_at) return;
+
+    const updateTimer = () => {
+      if (userProfile?.xp_boost_expires_at) {
+        const expiresAt = new Date(userProfile.xp_boost_expires_at).getTime();
+        const now = Date.now();
+        const remaining = Math.max(0, expiresAt - now);
+        setActiveBoostTime(remaining);
+
+        if (remaining === 0) {
+          // Boost expired, refresh profile
+          loadUserProfile(userId!);
+        }
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [userProfile, userId]);
 
   const initPage = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -109,7 +141,7 @@ export default function ShopPage() {
   const loadUserProfile = async (uid: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('coins, is_premium, level, equipped_theme, equipped_avatar')
+      .select('coins, is_premium, level, equipped_theme, equipped_avatar, active_xp_boost, xp_boost_expires_at')
       .eq('user_id', uid)
       .single();
 
@@ -154,40 +186,80 @@ export default function ShopPage() {
     setPurchasing(prev => new Set(prev).add(item.id));
 
     try {
-      // Spend coins
-      const { error: spendError } = await supabase.rpc('spend_coins', {
-        user_id: userId,
-        amount: item.price,
-        item_id: item.id
-      });
+      if (item.type === 'coin_pack') {
+        // Handle coin pack purchase - add coins directly
+        const coinAmount = item.metadata.coin_amount || 0;
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ coins: userProfile.coins + coinAmount })
+          .eq('user_id', userId);
 
-      if (spendError) {
+        if (updateError) throw updateError;
+
+        setUserProfile(prev => prev ? { ...prev, coins: prev.coins + coinAmount } : null);
+
         toast({
-          title: "Purchase failed",
-          description: spendError.message,
-          variant: "destructive",
+          title: "Coins purchased! 💰",
+          description: `You received ${coinAmount.toLocaleString()} coins!`,
         });
-        return;
-      }
+      } else if (item.type === 'xp_boost') {
+        // Handle XP boost - activate immediately
+        const duration = item.metadata.duration_minutes || 15;
+        const multiplier = item.metadata.bonus_multiplier || 2;
+        const expiresAt = new Date(Date.now() + duration * 60 * 1000).toISOString();
 
-      // Add to inventory
-      const { error: invError } = await supabase
-        .from('user_inventory')
-        .insert({
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            active_xp_boost: multiplier,
+            xp_boost_expires_at: expiresAt
+          })
+          .eq('user_id', userId);
+
+        if (updateError) throw updateError;
+
+        await loadUserProfile(userId!);
+
+        toast({
+          title: "XP Boost activated! ⚡",
+          description: `${multiplier}x XP for ${duration} minutes!`,
+        });
+      } else {
+        // Handle regular shop items (themes/avatars)
+        const { error: spendError } = await supabase.rpc('spend_coins', {
           user_id: userId,
+          amount: item.price,
           item_id: item.id
         });
 
-      if (invError) throw invError;
+        if (spendError) {
+          toast({
+            title: "Purchase failed",
+            description: spendError.message,
+            variant: "destructive",
+          });
+          return;
+        }
 
-      // Update local state
-      setUserInventory(prev => new Set(prev).add(item.id));
-      setUserProfile(prev => prev ? { ...prev, coins: prev.coins - item.price } : null);
+        // Add to inventory
+        const { error: invError } = await supabase
+          .from('user_inventory')
+          .insert({
+            user_id: userId,
+            item_id: item.id
+          });
 
-      toast({
-        title: "Purchase successful! 🎉",
-        description: `You purchased ${item.name} for ${item.price} coins!`,
-      });
+        if (invError) throw invError;
+
+        // Update local state
+        setUserInventory(prev => new Set(prev).add(item.id));
+        setUserProfile(prev => prev ? { ...prev, coins: prev.coins - item.price } : null);
+
+        toast({
+          title: "Purchase successful! 🎉",
+          description: `You purchased ${item.name} for ${item.price} coins!`,
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Purchase failed",
@@ -260,6 +332,19 @@ export default function ShopPage() {
     return acc;
   }, {} as Record<string, ShopItem[]>);
 
+  const coinPacks = shopItems.filter(item => item.type === 'coin_pack').sort((a, b) => a.price - b.price);
+  const xpBoosts = shopItems.filter(item => item.type === 'xp_boost').sort((a, b) => {
+    const aDuration = a.metadata.duration_minutes || 0;
+    const bDuration = b.metadata.duration_minutes || 0;
+    return aDuration - bDuration;
+  });
+
+  const formatTime = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   const renderShopCard = (item: ShopItem) => {
     const isOwned = userInventory.has(item.id);
     const equipped = isEquipped(item);
@@ -268,6 +353,9 @@ export default function ShopPage() {
     const meetsLevelReq = userProfile ? userProfile.level >= item.level_required : false;
     const meetsPremiumReq = !item.is_premium_exclusive || userProfile?.is_premium;
     const canPurchase = meetsLevelReq && meetsPremiumReq;
+
+    // Special handling for coin packs and XP boosts
+    const isConsumable = item.type === 'coin_pack' || item.type === 'xp_boost';
 
     return (
       <motion.div
@@ -278,11 +366,11 @@ export default function ShopPage() {
       >
         <Card className={`overflow-hidden transition-all ${
           equipped ? 'ring-2 ring-primary' : ''
-        } ${!canPurchase ? 'opacity-60' : ''}`}>
+        } ${!canPurchase ? 'opacity-60' : ''} ${isConsumable ? 'border-2 border-dashed' : ''}`}>
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   {item.icon_emoji && <span className="text-2xl">{item.icon_emoji}</span>}
                   <CardTitle className="text-lg">{item.name}</CardTitle>
                   <Badge className={RARITY_CONFIG[item.rarity].color}>
@@ -297,10 +385,27 @@ export default function ShopPage() {
                   )}
                 </div>
                 <CardDescription className="mt-2">{item.description}</CardDescription>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <Badge variant="outline" className="text-xs">
                     Level {item.level_required}
                   </Badge>
+                  {item.type === 'xp_boost' && (
+                    <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {item.metadata.duration_minutes} min
+                    </Badge>
+                  )}
+                  {item.type === 'xp_boost' && (
+                    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/50">
+                      <TrendingUp className="w-3 h-3 mr-1" />
+                      {item.metadata.bonus_multiplier}x XP
+                    </Badge>
+                  )}
+                  {item.type === 'coin_pack' && item.metadata.bonus && (
+                    <Badge className="bg-green-500/20 text-green-400 border-green-500/50">
+                      +{item.metadata.bonus} bonus
+                    </Badge>
+                  )}
                   {equipped && (
                     <Badge className="bg-primary">
                       <Check className="w-3 h-3 mr-1" />
@@ -325,9 +430,27 @@ export default function ShopPage() {
               >
                 <span style={{ color: item.metadata.accent }}>Preview</span>
               </div>
-            ) : (
+            ) : item.type === 'avatar' ? (
               <div className="w-full h-24 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 border-2 border-primary/30 flex items-center justify-center text-5xl">
                 {item.icon_emoji}
+              </div>
+            ) : item.type === 'coin_pack' ? (
+              <div className="w-full h-24 rounded-lg bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border-2 border-amber-500/30 flex flex-col items-center justify-center text-center">
+                <span className="text-4xl mb-1">💰</span>
+                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                  {item.metadata.coin_amount?.toLocaleString()} Coins
+                </span>
+                {item.metadata.bonus && (
+                  <span className="text-xs text-green-500">+{item.metadata.bonus} bonus</span>
+                )}
+              </div>
+            ) : (
+              <div className="w-full h-24 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-500/30 flex flex-col items-center justify-center text-center">
+                <Zap className="w-8 h-8 mb-2 text-purple-500" />
+                <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                  {item.metadata.bonus_multiplier}x XP
+                </span>
+                <span className="text-xs text-muted-foreground">{item.metadata.duration_minutes} min</span>
               </div>
             )}
 
@@ -349,13 +472,30 @@ export default function ShopPage() {
             {/* Actions */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Coins className="w-4 h-4 text-amber-500" />
-                <span className={`font-bold ${item.price === 0 ? 'text-green-500' : 'text-amber-600 dark:text-amber-400'}`}>
-                  {item.price === 0 ? 'Free' : item.price}
-                </span>
+                {item.type === 'coin_pack' ? (
+                  <>
+                    <DollarSign className="w-4 h-4 text-green-500" />
+                    <span className="text-xs text-muted-foreground">${item.metadata.usd_price}</span>
+                  </>
+                ) : (
+                  <>
+                    <Coins className="w-4 h-4 text-amber-500" />
+                    <span className={`font-bold ${item.price === 0 ? 'text-green-500' : 'text-amber-600 dark:text-amber-400'}`}>
+                      {item.price === 0 ? 'Free' : item.price}
+                    </span>
+                  </>
+                )}
               </div>
 
-              {!isOwned ? (
+              {isConsumable ? (
+                <Button
+                  onClick={() => handlePurchase(item)}
+                  disabled={isPurchasing || !canPurchase || (item.type !== 'coin_pack' && userProfile?.coins < item.price)}
+                  className={item.price === 0 ? 'bg-green-500 hover:bg-green-600' : ''}
+                >
+                  {isPurchasing ? 'Purchasing...' : item.type === 'coin_pack' ? 'Buy' : 'Activate'}
+                </Button>
+              ) : !isOwned ? (
                 <Button
                   onClick={() => handlePurchase(item)}
                   disabled={isPurchasing || !canPurchase || userProfile?.coins < item.price}
@@ -450,10 +590,10 @@ export default function ShopPage() {
         <div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent flex items-center gap-3">
             <ShoppingBag className="w-10 h-10 text-primary" />
-            Rarity Shop
+            Shop
           </h1>
           <p className="text-muted-foreground mt-2">
-            Collect items across 7 rarity tiers! Higher rarities require higher levels.
+            Collect items, buy coins, and activate XP boosts!
           </p>
         </div>
 
@@ -466,7 +606,7 @@ export default function ShopPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Coins</p>
                   <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                    {userProfile.coins}
+                    {userProfile.coins.toLocaleString()}
                   </p>
                 </div>
               </CardContent>
@@ -484,6 +624,20 @@ export default function ShopPage() {
               </CardContent>
             </Card>
 
+            {userProfile.active_xp_boost > 1 && (
+              <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30 animate-pulse">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <Zap className="w-6 h-6 text-purple-500" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Active Boost</p>
+                    <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                      {userProfile.active_xp_boost}x XP ({formatTime(activeBoostTime)} left)
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {userProfile.is_premium && (
               <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30">
                 <CardContent className="p-4 flex items-center gap-3">
@@ -499,16 +653,73 @@ export default function ShopPage() {
         )}
       </div>
 
-      {/* Rarity Sections */}
-      <div className="space-y-12">
-        {renderRaritySection('common', '⚪ Common (Level 1)')}
-        {renderRaritySection('uncommon', '🟢 Uncommon (Level 5)')}
-        {renderRaritySection('rare', '🔵 Rare (Level 10)')}
-        {renderRaritySection('epic', '🟣 Epic (Level 20)')}
-        {renderRaritySection('legendary', '🟠 Legendary (Level 40)')}
-        {renderRaritySection('mythical', '🌟 Mythical (Level 60) - 50% Premium')}
-        {renderRaritySection('godly', '👑 Godly (Level 100) - 90% Premium')}
-      </div>
+      {/* Main Shop Tabs */}
+      <Tabs defaultValue="cosmetics" className="w-full">
+        <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3">
+          <TabsTrigger value="cosmetics" className="gap-2">
+            <Palette className="w-4 h-4" />
+            Cosmetics
+          </TabsTrigger>
+          <TabsTrigger value="coins" className="gap-2">
+            <DollarSign className="w-4 h-4" />
+            Buy Coins
+          </TabsTrigger>
+          <TabsTrigger value="boosts" className="gap-2">
+            <Zap className="w-4 h-4" />
+            XP Boosts
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Cosmetics Tab - Themes and Avatars */}
+        <TabsContent value="cosmetics" className="mt-8 space-y-12">
+          {renderRaritySection('common', '⚪ Common (Level 1)')}
+          {renderRaritySection('uncommon', '🟢 Uncommon (Level 5)')}
+          {renderRaritySection('rare', '🔵 Rare (Level 10)')}
+          {renderRaritySection('epic', '🟣 Epic (Level 20)')}
+          {renderRaritySection('legendary', '🟠 Legendary (Level 40)')}
+          {renderRaritySection('mythical', '🌟 Mythical (Level 60) - 50% Premium')}
+          {renderRaritySection('godly', '👑 Godly (Level 100) - 90% Premium')}
+        </TabsContent>
+
+        {/* Coins Tab - Coin Packs */}
+        <TabsContent value="coins" className="mt-8">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+              <DollarSign className="w-8 h-8 text-green-500" />
+              Coin Packages
+            </h2>
+            <p className="text-muted-foreground">Purchase coins with real money (currently testing with coins)</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {coinPacks.map(renderShopCard)}
+          </div>
+        </TabsContent>
+
+        {/* XP Boosts Tab */}
+        <TabsContent value="boosts" className="mt-8">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+              <Zap className="w-8 h-8 text-purple-500" />
+              XP Boosts
+            </h2>
+            <p className="text-muted-foreground">Activate temporary XP multipliers to level up faster!</p>
+          </div>
+
+          <div className="mb-6 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg">
+            <h3 className="font-semibold mb-2">How XP Boosts Work:</h3>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• Purchase a boost to activate it immediately</li>
+              <li>• All XP earned during the boost period is multiplied</li>
+              <li>• Boost expires after the duration (15/30/50/60 minutes)</li>
+li>• Boost works on lessons, challenges, and achievements</li>
+            </ul>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {xpBoosts.map(renderShopCard)}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
