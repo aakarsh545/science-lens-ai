@@ -196,17 +196,19 @@ export default function LeaderboardPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <TabsList className="grid grid-cols-3 lg:grid-cols-5 gap-2 h-auto">
-            <TabsTrigger value="all_time">All-Time</TabsTrigger>
-            <TabsTrigger value="weekly">This Week</TabsTrigger>
-            <TabsTrigger value="monthly">This Month</TabsTrigger>
-            <TabsTrigger value="streaks">Streaks</TabsTrigger>
-            <TabsTrigger value="challenges">Challenges</TabsTrigger>
-            <TabsTrigger value="physics">Physics</TabsTrigger>
-            <TabsTrigger value="chemistry">Chemistry</TabsTrigger>
-            <TabsTrigger value="biology">Biology</TabsTrigger>
-            <TabsTrigger value="astronomy">Astronomy</TabsTrigger>
-          </TabsList>
+          <div className="w-full overflow-x-auto pb-2 sm:pb-0">
+            <TabsList className="grid grid-cols-3 lg:grid-cols-5 gap-2 h-auto min-w-max">
+              <TabsTrigger value="all_time">All-Time</TabsTrigger>
+              <TabsTrigger value="weekly">This Week</TabsTrigger>
+              <TabsTrigger value="monthly">This Month</TabsTrigger>
+              <TabsTrigger value="streaks">Streaks</TabsTrigger>
+              <TabsTrigger value="challenges">Challenges</TabsTrigger>
+              <TabsTrigger value="physics">Physics</TabsTrigger>
+              <TabsTrigger value="chemistry">Chemistry</TabsTrigger>
+              <TabsTrigger value="biology">Biology</TabsTrigger>
+              <TabsTrigger value="astronomy">Astronomy</TabsTrigger>
+            </TabsList>
+          </div>
 
           <div className="flex items-center gap-2">
             <Input

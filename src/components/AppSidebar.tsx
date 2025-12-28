@@ -80,8 +80,8 @@ export function AppSidebar({ userId, conversationId, onSelectConversation, onNew
                       isActive={isActive}
                       onClick={() => navigate(item.path)}
                     >
-                      <button className="w-full flex items-center gap-3">
-                        <item.icon className="h-5 w-5" />
+                      <button className="w-full flex items-center gap-3" aria-label={`Navigate to ${item.title}`}>
+                        <item.icon className="h-5 w-5" aria-hidden="true" />
                         <span>{item.title}</span>
                       </button>
                     </SidebarMenuButton>
@@ -109,8 +109,8 @@ export function AppSidebar({ userId, conversationId, onSelectConversation, onNew
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSignOut}>
-              <LogOut className="h-5 w-5" />
+            <SidebarMenuButton onClick={handleSignOut} aria-label="Sign out of your account">
+              <LogOut className="h-5 w-5" aria-hidden="true" />
               <span>Sign Out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>

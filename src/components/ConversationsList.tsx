@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Trash2, Edit2, Plus } from "lucide-react";
@@ -39,7 +39,22 @@ export function ConversationsList({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  const loadConversations = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("conversations")
+      .select("*")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false });
+
+    if (data) {
+      setConversations(data);
+    }
+    setLoading(false);
+  }, [userId]);
 
   useEffect(() => {
     loadConversations();
@@ -63,19 +78,7 @@ export function ConversationsList({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]);
-
-  const loadConversations = async () => {
-    const { data } = await supabase
-      .from("conversations")
-      .select("*")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false });
-
-    if (data) {
-      setConversations(data);
-    }
-  };
+  }, [userId, loadConversations]);
 
   const handleRename = async (id: string) => {
     if (!editTitle.trim()) return;
@@ -141,7 +144,23 @@ export function ConversationsList({
           New Chat
         </Button>
 
-        {conversations.map((conv) => {
+        {loading ? (
+          // Skeleton loader
+          <>
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={`skeleton-${i}`}
+                className="animate-pulse rounded-md border border-muted bg-muted/50 p-2 mb-2"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="h-3.5 w-3.5 bg-muted-foreground/20 rounded" />
+                  <div className="flex-1 h-4 bg-muted-foreground/20 rounded" />
+                </div>
+              </div>
+            ))}
+          </>
+        ) : (
+          conversations.map((conv) => {
           const isActive = conv.id === currentConversationId;
           const isEditing = editingId === conv.id;
 
@@ -210,8 +229,9 @@ export function ConversationsList({
                         e.stopPropagation();
                         startEdit(conv);
                       }}
+                      aria-label="Rename conversation"
                     >
-                      <Edit2 className="h-3 w-3" />
+                      <Edit2 className="h-3 w-3" aria-hidden="true" />
                     </Button>
                     <Button
                       size="icon"
@@ -221,17 +241,19 @@ export function ConversationsList({
                         e.stopPropagation();
                         setDeleteId(conv.id);
                       }}
+                      aria-label="Delete conversation"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-3 w-3" aria-hidden="true" />
                     </Button>
                   </div>
                 </button>
               )}
             </div>
           );
-        })}
+        })
+        )}
 
-        {conversations.length === 0 && (
+        {!loading && conversations.length === 0 && (
           <div className="text-center py-8 text-muted-foreground text-sm">
             No conversations yet
           </div>

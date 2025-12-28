@@ -125,9 +125,9 @@ export class AIService {
       }
 
       onComplete?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("AI Service Error:", error);
-      onError?.(error.message || "An unexpected error occurred");
+      onError?.(error instanceof Error ? error.message : "An unexpected error occurred");
     }
   }
 }

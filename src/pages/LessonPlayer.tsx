@@ -25,13 +25,53 @@ import {
 import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
 import { triggerLevelUpConfetti, triggerLessonCompleteConfetti } from "@/utils/confettiEffects";
 
+interface LessonExample {
+  title: string;
+  description: string;
+}
+
+interface QuizAnswer {
+  question: string;
+  userAnswer: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  explanation?: string;
+}
+
+interface LessonQuizResults {
+  id?: string;
+  quizType: 'lesson';
+  lessonId?: string;
+  totalQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  accuracyPercentage: number;
+  timeTakenSeconds: number;
+  averageTimePerQuestion: number;
+  xpEarned: number;
+  streakBonus: number;
+  answers: QuizAnswer[];
+  previousAttempt?: {
+    id: string;
+    accuracyPercentage: number;
+    completedAt: string;
+  };
+  improvementPercentage?: number;
+  difficultyLevel: string;
+  completedAt: string;
+  questionsPerMinute: number;
+  perfectStreaks: number;
+  topicsToReview: string[];
+  lessonTitle?: string;
+}
 
 interface Lesson {
   id: string;
   title: string;
   content: string;
+  slug?: string;
   animations?: unknown[];
-  examples?: unknown[];
+  examples?: LessonExample[];
   quiz?: QuizQuestion[];
   xp_reward: number;
   order_index: number;
@@ -61,7 +101,7 @@ export default function LessonPlayer() {
   const [showResults, setShowResults] = useState<Record<number, boolean>>({});
   const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
   const [showQuizResults, setShowQuizResults] = useState(false);
-  const [quizResultsData, setQuizResultsData] = useState<any>(null);
+  const [quizResultsData, setQuizResultsData] = useState<LessonQuizResults | null>(null);
 
   // AI hint state
   const [aiHint, setAiHint] = useState<string | null>(null);
@@ -89,14 +129,14 @@ export default function LessonPlayer() {
 
       if (courseData?.lessons) {
         // Sort lessons by order_index and store in state
-        const sortedLessons = [...courseData.lessons].sort((a: any, b: any) => a.order_index - b.order_index);
+        const sortedLessons = [...courseData.lessons].sort((a: Lesson, b: Lesson) => a.order_index - b.order_index);
         setCourseLessons(sortedLessons);
 
-        const foundLesson = courseData.lessons.find((l: any) => l.slug === lessonSlug);
+        const foundLesson = courseData.lessons.find((l: Lesson) => l.slug === lessonSlug);
 
         if (foundLesson) {
           // Check if lesson is unlocked (sequential unlocking)
-          const lessonIndex = sortedLessons.findIndex((l: any) => l.id === foundLesson.id);
+          const lessonIndex = sortedLessons.findIndex((l: Lesson) => l.id === foundLesson.id);
 
           // If not the first lesson, check if previous lesson is completed
           if (lessonIndex > 0) {
@@ -223,7 +263,7 @@ export default function LessonPlayer() {
 
     const totalQuestions = quiz.questions.length;
     let correctCount = 0;
-    const answers: any[] = [];
+    const answers: QuizAnswer[] = [];
     const topicsToReview: string[] = [];
 
     quiz.questions.forEach((q: QuizQuestion, idx: number) => {
@@ -572,7 +612,7 @@ export default function LessonPlayer() {
             <CardTitle className="text-xl">Real-World Examples</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {examples.map((example: any, idx: number) => (
+            {examples.map((example: LessonExample, idx: number) => (
               <div key={idx} className="p-4 border border-border rounded-lg bg-muted/20">
                 <h4 className="font-semibold mb-2">{example.title}</h4>
                 <p className="text-muted-foreground">{example.description}</p>

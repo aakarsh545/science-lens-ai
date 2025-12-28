@@ -311,12 +311,12 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
       if (profile) {
         await checkForAchievements(profile.total_questions);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Chat error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to get response",
+        description: error instanceof Error ? error.message : "Failed to get response",
       });
       setMessages((prev) => prev.slice(0, -1));
     }
@@ -388,11 +388,11 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
       if (profile) {
         await checkForAchievements(profile.total_questions);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Chat error:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to get response",
+        description: error instanceof Error ? error.message : "Failed to get response",
         variant: "destructive",
       });
     } finally {
@@ -436,8 +436,8 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
       {/* Export PDF Button */}
       {messages.length > 0 && !showChatProgress && (
         <div className="border-b p-2 flex justify-end bg-background">
-          <Button onClick={handleExportPDF} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
+          <Button onClick={handleExportPDF} variant="outline" size="sm" aria-label="Export chat as PDF">
+            <Download className="h-4 w-4 mr-2" aria-hidden="true" />
             Export PDF
           </Button>
         </div>
@@ -504,11 +504,12 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleBookmark(message.questionId!)}
+                      aria-label={bookmarkedQuestions.has(message.questionId) ? "Remove bookmark" : "Add bookmark"}
                     >
                       {bookmarkedQuestions.has(message.questionId) ? (
-                        <BookmarkCheck className="h-4 w-4" />
+                        <BookmarkCheck className="h-4 w-4" aria-hidden="true" />
                       ) : (
-                        <Bookmark className="h-4 w-4" />
+                        <Bookmark className="h-4 w-4" aria-hidden="true" />
                       )}
                     </Button>
                   </div>
@@ -550,17 +551,21 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
 
       {/* Input Area */}
       <div className="border-t bg-background p-4">
-        <div className="flex gap-2 max-w-4xl mx-auto">
+        <div className="flex gap-2 max-w-4xl mx-auto relative">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={selectedTopic ? `Ask about ${selectedTopic.name}...` : "Ask a science question..."}
-            className="resize-none"
+            className="resize-none pr-20"
             rows={2}
             disabled={loading}
+            maxLength={2000}
           />
-          <Button onClick={handleSend} disabled={loading || !input.trim()} size="icon">
+          <div className="absolute bottom-6 right-14 text-xs text-muted-foreground">
+            {input.length}/2000
+          </div>
+          <Button onClick={handleSend} disabled={loading || !input.trim()} size="icon" aria-label="Send message" className="mb-auto">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>

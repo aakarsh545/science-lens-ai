@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -81,7 +81,7 @@ export function ChatView({ user }: ChatViewProps) {
     };
 
     initConversation();
-  }, [user.id]);
+  }, [user.id, toast]);
 
   // Subscribe to real-time messages
   useEffect(() => {
@@ -215,17 +215,21 @@ export function ChatView({ user }: ChatViewProps) {
 
       {/* Input Area */}
       <div className="border-t bg-background p-4">
-        <div className="flex gap-2 max-w-4xl mx-auto">
+        <div className="flex gap-2 max-w-4xl mx-auto relative">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask a science question..."
-            className="resize-none"
+            className="resize-none pr-20"
             rows={2}
             disabled={loading}
+            maxLength={2000}
           />
-          <Button onClick={handleSend} disabled={loading || !input.trim()} size="icon">
+          <div className="absolute bottom-6 right-14 text-xs text-muted-foreground">
+            {input.length}/2000
+          </div>
+          <Button onClick={handleSend} disabled={loading || !input.trim()} size="icon" aria-label="Send message" className="mb-auto">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>

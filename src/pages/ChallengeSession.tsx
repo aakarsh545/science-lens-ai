@@ -29,6 +29,14 @@ interface QuizQuestion {
   explanation: string;
 }
 
+interface ChallengeAnswer {
+  question: string;
+  userAnswer: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  explanation: string;
+}
+
 interface LocationState {
   topicId?: string;
   topicName?: string;
@@ -71,7 +79,7 @@ export default function ChallengeSession() {
     completionPercentage: number;
   } | null>(null);
   const [detailedResults, setDetailedResults] = useState<unknown>(null);
-  const [answers, setAnswers] = useState<unknown[]>([]);
+  const [answers, setAnswers] = useState<ChallengeAnswer[]>([]);
   const [sessionStartTime] = useState(Date.now());
 
   // Start session on mount
@@ -120,10 +128,10 @@ export default function ChallengeSession() {
       setQuestion(data.session.question);
       setSessionActive(true);
       setSessionEnded(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to start challenge",
+        description: error instanceof Error ? error.message : "Failed to start challenge",
         variant: "destructive",
       });
       navigate("/science-lens/learning");
@@ -173,10 +181,10 @@ export default function ChallengeSession() {
       const questions = sessionData.questions as QuizQuestion[];
       setQuestion(questions[sessionData.current_question - 1]);
       setSessionActive(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to load session",
+        description: error instanceof Error ? error.message : "Failed to load session",
         variant: "destructive",
       });
       navigate("/science-lens/learning");
@@ -337,10 +345,10 @@ export default function ChallengeSession() {
           setExplanation("");
         }, 2000);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to submit answer",
+        description: error instanceof Error ? error.message : "Failed to submit answer",
         variant: "destructive",
       });
     } finally {

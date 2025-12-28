@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -23,11 +23,7 @@ export function ChatProgress({ user, onViewChats }: ChatProgressProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadConversations();
-  }, [user.id]);
-
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     const { data } = await supabase
       .from("conversations")
       .select("*")
@@ -39,7 +35,11 @@ export function ChatProgress({ user, onViewChats }: ChatProgressProps) {
       setConversations(data);
     }
     setLoading(false);
-  };
+  }, [user.id]);
+
+  useEffect(() => {
+    loadConversations();
+  }, [loadConversations]);
 
   const progress = Math.min((conversations.length / 100) * 100, 100);
 

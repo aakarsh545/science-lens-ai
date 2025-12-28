@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getDifficultyColors } from "@/lib/utils";
 
 interface Topic {
   id: string;
@@ -164,16 +165,7 @@ export default function ChallengesPage() {
   };
 
   const getDifficultyColor = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'intermediate':
-        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'advanced':
-        return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
-      default:
-        return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-    }
+    return getDifficultyColors(level);
   };
 
   const beginnerTopics = topics.filter(t => t.difficulty_level === "beginner");

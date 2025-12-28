@@ -57,11 +57,11 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
       });
       onOpenChange(false);
       navigate("/science-lens");
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Signup failed",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An error occurred",
       });
     } finally {
       setIsLoading(false);
@@ -91,11 +91,11 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
       });
       onOpenChange(false);
       navigate("/science-lens");
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Sign in failed",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An error occurred",
       });
     } finally {
       setIsLoading(false);

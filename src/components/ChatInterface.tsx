@@ -9,6 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import confetti from "canvas-confetti";
 
+interface Topic {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -17,7 +24,7 @@ interface Message {
 
 interface ChatInterfaceProps {
   user: User;
-  topic?: any;
+  topic?: Topic;
 }
 
 const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
@@ -267,10 +274,10 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
       if (profile) {
         await checkForAchievements(profile.total_questions);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Chat error:", error);
 
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         toast({
           variant: "destructive",
           title: "Request Timeout",
@@ -280,7 +287,7 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
         toast({
           variant: "destructive",
           title: "Error",
-          description: error.message || "Failed to get response",
+          description: error instanceof Error ? error.message : "Failed to get response",
         });
       }
 

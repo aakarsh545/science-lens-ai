@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AppLayout from "./layouts/AppLayout";
@@ -31,29 +32,31 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/science-lens" element={<AuthenticatedLayout />}>
-              <Route index element={<DashboardMainPage />} />
-              <Route path="learning" element={<UnifiedLearningPage />} />
-              <Route path="learning/:courseSlug" element={<CoursePage />} />
-              <Route path="learning/:courseSlug/:lessonSlug" element={<LessonPlayer />} />
-              <Route path="challenges" element={<ChallengesPage />} />
-              <Route path="challenges/session/:sessionId" element={<ChallengeSession />} />
-              <Route path="leaderboard" element={<LeaderboardPage />} />
-              <Route path="ask" element={<AskPage />} />
-              <Route path="topics" element={<TopicsPage />} />
-              <Route path="api-test" element={<TestPage />} />
-              <Route path="pricing" element={<PricingPage />} />
-              <Route path="achievements" element={<AchievementsPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <ErrorBoundary>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/science-lens" element={<AuthenticatedLayout />}>
+                <Route index element={<DashboardMainPage />} />
+                <Route path="learning" element={<UnifiedLearningPage />} />
+                <Route path="learning/:courseSlug" element={<CoursePage />} />
+                <Route path="learning/:courseSlug/:lessonSlug" element={<LessonPlayer />} />
+                <Route path="challenges" element={<ChallengesPage />} />
+                <Route path="challenges/session/:sessionId" element={<ChallengeSession />} />
+                <Route path="leaderboard" element={<LeaderboardPage />} />
+                <Route path="ask" element={<AskPage />} />
+                <Route path="topics" element={<TopicsPage />} />
+                <Route path="api-test" element={<TestPage />} />
+                <Route path="pricing" element={<PricingPage />} />
+                <Route path="achievements" element={<AchievementsPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </ErrorBoundary>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
