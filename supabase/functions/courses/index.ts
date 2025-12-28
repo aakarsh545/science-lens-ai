@@ -39,7 +39,7 @@ serve(async (req) => {
 
       const { data: lessons, error: lessonsError } = await supabase
         .from('lessons')
-        .select('id, slug, title, order_index, xp_reward')
+        .select('id, slug, title, order_index, xp_reward, chapter')
         .eq('course_id', course.id)
         .order('order_index', { ascending: true });
 

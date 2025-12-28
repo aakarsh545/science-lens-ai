@@ -12,6 +12,7 @@ interface Course {
   title: string;
   description: string;
   category: string;
+  difficulty: string;
   lessonCount: number;
 }
 
@@ -25,37 +26,51 @@ interface CourseRecommendationsProps {
   userId: string;
 }
 
-// Course relationship map - which courses are related/prerequisites
-const courseRelationships: Record<string, string[]> = {
-  "basic-physics": ["quantum-mechanics", "thermodynamics", "astrophysics"],
-  "quantum-mechanics": ["astrophysics", "materials-science"],
-  "thermodynamics": ["chemistry-basics", "environmental-science"],
-  "chemistry-basics": ["organic-chemistry", "biochemistry", "materials-science"],
-  "organic-chemistry": ["biochemistry", "cell-biology"],
-  "biochemistry": ["cell-biology", "genetics", "neurobiology"],
-  "cell-biology": ["genetics", "neurobiology", "ecology"],
-  "genetics": ["cell-biology", "ecology", "neurobiology"],
-  "ecology": ["environmental-science", "planetary-science"],
-  "astronomy": ["astrophysics", "planetary-science"],
-  "astrophysics": ["quantum-mechanics", "planetary-science"],
-  "planetary-science": ["astronomy", "environmental-science"],
-  "neurobiology": ["cell-biology", "genetics"],
-  "robotics": ["basic-physics", "materials-science"],
-  "materials-science": ["chemistry-basics", "basic-physics"],
-  "environmental-science": ["ecology", "chemistry-basics"],
-  "general-science": ["basic-physics", "chemistry-basics", "cell-biology"],
-  "origins": ["astronomy", "cell-biology", "genetics"],
-};
+// Topic to course mapping based on course content and categories
+const topicCourseMapping: Record<string, string[]> = {
+  // Physics topics
+  "physics": ["basic-physics", "thermodynamics", "quantum-mechanics", "astrophysics"],
+  "forces": ["basic-physics"],
+  "motion": ["basic-physics"],
+  "energy": ["basic-physics", "thermodynamics"],
+  "thermodynamics": ["thermodynamics", "basic-physics"],
+  "heat": ["thermodynamics", "basic-physics"],
+  "quantum": ["quantum-mechanics", "basic-physics"],
+  "quantum mechanics": ["quantum-mechanics", "basic-physics"],
+  "astrophysics": ["astrophysics", "astronomy"],
+  "space": ["astrophysics", "astronomy", "planetary-science"],
+  "stars": ["astrophysics", "astronomy"],
 
-// Category learning paths
-const categoryPaths: Record<string, string[]> = {
-  Physics: ["basic-physics", "thermodynamics", "quantum-mechanics", "astrophysics"],
-  Chemistry: ["chemistry-basics", "organic-chemistry", "biochemistry"],
-  Biology: ["cell-biology", "genetics", "ecology", "neurobiology"],
-  Astronomy: ["astronomy", "astrophysics", "planetary-science"],
-  Technology: ["robotics", "materials-science"],
-  "Earth Science": ["environmental-science"],
-  General: ["general-science", "origins"],
+  // Chemistry topics
+  "chemistry": ["chemistry-basics", "organic-chemistry", "biochemistry"],
+  "atoms": ["chemistry-basics", "basic-physics"],
+  "elements": ["chemistry-basics"],
+  "reactions": ["chemistry-basics", "organic-chemistry"],
+  "organic": ["organic-chemistry", "chemistry-basics"],
+  "molecules": ["chemistry-basics", "organic-chemistry", "biochemistry"],
+  "biochemistry": ["biochemistry", "chemistry-basics", "organic-chemistry"],
+
+  // Biology topics
+  "biology": ["cell-biology", "genetics", "ecology", "neurobiology", "biochemistry"],
+  "cell": ["cell-biology", "biochemistry"],
+  "cells": ["cell-biology", "biochemistry"],
+  "genetics": ["genetics", "cell-biology"],
+  "dna": ["genetics", "cell-biology", "biochemistry"],
+  "ecology": ["ecology", "environmental-science"],
+  "environment": ["environmental-science", "ecology"],
+  "neurobiology": ["neurobiology", "cell-biology"],
+  "brain": ["neurobiology", "cell-biology"],
+
+  // Astronomy topics
+  "astronomy": ["astronomy", "astrophysics", "planetary-science"],
+  "universe": ["astrophysics", "astronomy"],
+  "planets": ["planetary-science", "astronomy"],
+  "solar": ["astronomy", "planetary-science"],
+
+  // General science
+  "science": ["general-science", "basic-physics", "chemistry-basics", "cell-biology"],
+  "evolution": ["origins", "cell-biology", "genetics"],
+  "origin": ["origins", "astronomy", "cell-biology"],
 };
 
 export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
@@ -69,35 +84,36 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
 
   const loadRecommendations = async () => {
     try {
-      // Get all courses
-      const { data: courses } = await supabase
-        .from("courses")
-        .select("id, slug, title, description, category");
+      // Fetch all data in parallel for better performance
+      const [coursesResult, lessonsResult, progressResult, questionsResult, messagesResult, profileResult] = await Promise.all([
+        supabase.from("courses").select("id, slug, title, description, category, difficulty"),
+        supabase.from("lessons").select("id, course_id"),
+        supabase.from("user_progress").select("lesson_id, status").eq("user_id", userId),
+        supabase.from("questions").select("question_text, topic, difficulty_level, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
+        supabase.from("messages").select("content, role, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(10),
+        supabase.from("profiles").select("current_topic").eq("user_id", userId).single(),
+      ]);
 
-      // Get all lessons for lesson counts
-      const { data: lessons } = await supabase
-        .from("lessons")
-        .select("id, course_id");
-
-      // Get user progress
-      const { data: progress } = await supabase
-        .from("user_progress")
-        .select("lesson_id, status")
-        .eq("user_id", userId);
+      const courses = coursesResult.data;
+      const lessons = lessonsResult.data;
+      const progress = progressResult.data;
+      const questions = questionsResult.data || [];
+      const messages = messagesResult.data || [];
+      const profile = profileResult.data;
 
       if (!courses || !lessons) {
         setLoading(false);
         return;
       }
 
-      // Create course map with lesson counts
+      // Create course map with lesson counts and difficulty
       const courseMap = courses.reduce((acc, course) => {
         const lessonCount = lessons.filter((l) => l.course_id === course.id).length;
-        acc[course.slug] = { ...course, lessonCount };
+        acc[course.slug] = { ...course, lessonCount, difficulty: course.difficulty || 'beginner' };
         return acc;
       }, {} as Record<string, Course>);
 
-      // Calculate course completion
+      // Calculate course completion status
       const completedLessonIds = new Set(
         progress?.filter((p) => p.status === "completed").map((p) => p.lesson_id) || []
       );
@@ -108,6 +124,7 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
         return {
           slug: course.slug,
           category: course.category,
+          difficulty: course.difficulty || 'beginner',
           completed,
           total: courseLessons.length,
           isComplete: completed === courseLessons.length && courseLessons.length > 0,
@@ -116,96 +133,174 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
         };
       });
 
-      // Find completed courses
+      // Analyze user's question topics and interests
+      const topicFrequency: Record<string, number> = {};
+      const recentUserMessages = messages.filter(m => m.role === 'user').map(m => m.content.toLowerCase());
+
+      // Count topics from questions
+      questions.forEach((q) => {
+        const topic = q.topic?.toLowerCase() || '';
+        if (topic) {
+          topicFrequency[topic] = (topicFrequency[topic] || 0) + 2; // Higher weight for explicit topics
+        }
+
+        // Also analyze question text for keywords
+        const questionText = q.question_text?.toLowerCase() || '';
+        Object.keys(topicCourseMapping).forEach((keyword) => {
+          if (questionText.includes(keyword)) {
+            topicFrequency[keyword] = (topicFrequency[keyword] || 0) + 1;
+          }
+        });
+      });
+
+      // Analyze recent conversation messages for topics
+      recentUserMessages.forEach((msg) => {
+        Object.keys(topicCourseMapping).forEach((keyword) => {
+          if (msg.includes(keyword)) {
+            topicFrequency[keyword] = (topicFrequency[keyword] || 0) + 1;
+          }
+        });
+      });
+
+      // Add current topic from profile
+      if (profile?.current_topic) {
+        topicFrequency[profile.current_topic] = (topicFrequency[profile.current_topic] || 0) + 3;
+      }
+
+      // Find most interested topics
+      const topTopics = Object.entries(topicFrequency)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([topic]) => topic);
+
+      // Find completed and in-progress courses
       const completedCourses = courseProgress.filter((c) => c.isComplete).map((c) => c.slug);
       const inProgressCourses = courseProgress.filter((c) => c.isStarted && !c.isComplete);
       const notStartedCourses = courseProgress.filter((c) => !c.isStarted);
 
-      // Generate recommendations
+      // Generate recommendations based on data
       const recs: Recommendation[] = [];
+      const recommendedSlugs = new Set<string>();
 
       // 1. Continue in-progress courses (highest priority)
       inProgressCourses
         .sort((a, b) => b.percentage - a.percentage)
         .slice(0, 2)
         .forEach((course) => {
-          if (courseMap[course.slug]) {
+          if (courseMap[course.slug] && !recommendedSlugs.has(course.slug)) {
             recs.push({
               course: courseMap[course.slug],
               reason: `Continue where you left off (${Math.round(course.percentage)}% complete)`,
               score: 100 + course.percentage,
             });
+            recommendedSlugs.add(course.slug);
           }
         });
 
-      // 2. Related courses based on completed courses
-      completedCourses.forEach((completedSlug) => {
-        const related = courseRelationships[completedSlug] || [];
-        related.forEach((relatedSlug) => {
-          const courseData = courseMap[relatedSlug];
-          const progressData = courseProgress.find((p) => p.slug === relatedSlug);
-          
-          if (courseData && progressData && !progressData.isComplete && !progressData.isStarted) {
-            const existing = recs.find((r) => r.course.slug === relatedSlug);
-            if (!existing) {
-              recs.push({
-                course: courseData,
-                reason: `Recommended after completing ${courseMap[completedSlug]?.title}`,
-                score: 80,
-              });
-            }
+      // 2. Recommend courses based on user's question topics
+      topTopics.forEach((topic) => {
+        const relatedCourses = topicCourseMapping[topic] || [];
+        relatedCourses.forEach((courseSlug) => {
+          const courseData = courseMap[courseSlug];
+          const progressData = courseProgress.find((p) => p.slug === courseSlug);
+
+          if (courseData && !recommendedSlugs.has(courseSlug) && progressData && !progressData.isComplete) {
+            recs.push({
+              course: courseData,
+              reason: `Based on your interest in ${topic}`,
+              score: 85,
+            });
+            recommendedSlugs.add(courseSlug);
           }
         });
       });
 
-      // 3. Category path recommendations
-      if (completedCourses.length > 0) {
-        // Find user's preferred categories
-        const categoryCount: Record<string, number> = {};
-        completedCourses.forEach((slug) => {
-          const course = courseProgress.find((c) => c.slug === slug);
-          if (course) {
-            categoryCount[course.category] = (categoryCount[course.category] || 0) + 1;
+      // 3. Recommend courses in the same category as completed courses
+      const completedCategories = new Set(
+        completedCourses.map((slug) => courseProgress.find((c) => c.slug === slug)?.category)
+      );
+
+      completedCategories.forEach((category) => {
+        if (!category) return;
+
+        const categoryCourses = courseProgress.filter(
+          (c) => c.category === category && !c.isComplete && !c.isStarted && !recommendedSlugs.has(c.slug)
+        );
+
+        categoryCourses.slice(0, 2).forEach((course) => {
+          if (courseMap[course.slug]) {
+            recs.push({
+              course: courseMap[course.slug],
+              reason: `Continue learning ${category}`,
+              score: 70,
+            });
+            recommendedSlugs.add(course.slug);
           }
         });
+      });
 
-        const preferredCategory = Object.entries(categoryCount)
-          .sort(([, a], [, b]) => b - a)[0]?.[0];
+      // 4. For users with completed courses, recommend courses in the same difficulty level or next level
+      if (completedCourses.length > 0) {
+        const difficultyLevels = ['beginner', 'intermediate', 'advanced'];
+        const completedDifficulty = courseProgress
+          .filter((c) => c.isComplete)
+          .map((c) => difficultyLevels.indexOf(c.difficulty || 'beginner'));
 
-        if (preferredCategory && categoryPaths[preferredCategory]) {
-          categoryPaths[preferredCategory].forEach((slug) => {
-            const courseData = courseMap[slug];
-            const progressData = courseProgress.find((p) => p.slug === slug);
-            
-            if (courseData && progressData && !progressData.isComplete && !progressData.isStarted) {
-              const existing = recs.find((r) => r.course.slug === slug);
-              if (!existing) {
-                recs.push({
-                  course: courseData,
-                  reason: `Part of your ${preferredCategory} learning path`,
-                  score: 60,
-                });
-              }
+        const avgDifficulty = completedDifficulty.length > 0
+          ? Math.round(completedDifficulty.reduce((a, b) => a + b, 0) / completedDifficulty.length)
+          : 0;
+
+        // Recommend courses at the same or next difficulty level
+        const targetDifficulty = difficultyLevels[Math.min(avgDifficulty + 1, difficultyLevels.length - 1)];
+
+        courseProgress
+          .filter((c) => !c.isComplete && !c.isStarted && !recommendedSlugs.has(c.slug) && c.difficulty === targetDifficulty)
+          .slice(0, 2)
+          .forEach((course) => {
+            if (courseMap[course.slug]) {
+              recs.push({
+                course: courseMap[course.slug],
+                reason: `Next level: ${targetDifficulty}`,
+                score: 60,
+              });
+              recommendedSlugs.add(course.slug);
             }
           });
-        }
       }
 
-      // 4. Beginner recommendations for new users
-      if (completedCourses.length === 0 && inProgressCourses.length === 0) {
+      // 5. Beginner recommendations for new users with no activity
+      if (completedCourses.length === 0 && inProgressCourses.length === 0 && topTopics.length === 0) {
         const beginnerCourses = ["basic-physics", "chemistry-basics", "cell-biology", "general-science"];
         beginnerCourses.forEach((slug) => {
-          if (courseMap[slug]) {
+          if (courseMap[slug] && !recommendedSlugs.has(slug)) {
             recs.push({
               course: courseMap[slug],
               reason: "Great starting point for beginners",
               score: 50,
             });
+            recommendedSlugs.add(slug);
           }
         });
       }
 
-      // Sort by score and limit
+      // 6. If still have space, fill with popular beginner courses
+      if (recs.length < 4) {
+        courses
+          .filter((c) => !recommendedSlugs.has(c.slug) && (c.difficulty || 'beginner') === 'beginner')
+          .slice(0, 4 - recs.length)
+          .forEach((course) => {
+            if (!recommendedSlugs.has(course.slug)) {
+              recs.push({
+                course: courseMap[course.slug],
+                reason: "Popular beginner course",
+                score: 40,
+              });
+              recommendedSlugs.add(course.slug);
+            }
+          });
+      }
+
+      // Sort by score and limit to top 4
       const sortedRecs = recs
         .sort((a, b) => b.score - a.score)
         .slice(0, 4);
@@ -213,6 +308,7 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
       setRecommendations(sortedRecs);
     } catch (error) {
       console.error("Error loading recommendations:", error);
+      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -256,7 +352,7 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
             <Card
               key={rec.course.id}
               className="cursor-pointer hover:shadow-md transition-all group border-muted"
-              onClick={() => navigate(`/science-lens/learn/${rec.course.slug}`)}
+              onClick={() => navigate(`/science-lens/learning/${rec.course.slug}`)}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">

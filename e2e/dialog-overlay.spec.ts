@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { setupAuth } from './helpers/auth';
 
 /**
  * Dialog Overlay Tests
@@ -7,6 +8,8 @@ import { test, expect } from '@playwright/test';
  */
 test.describe('Dialog Overlay Pointer Events', () => {
   test.beforeEach(async ({ page }) => {
+    // Setup authentication before accessing protected route
+    await setupAuth(page);
     // Navigate to a page that uses dialogs
     await page.goto('/science-lens');
     await page.waitForLoadState('networkidle');

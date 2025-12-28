@@ -13,11 +13,11 @@ interface AIRequestOptions {
 export class AIService {
   static async checkCredits(userId: string): Promise<number> {
     const { data } = await supabase
-      .from("profiles")
+      .from("user_stats")
       .select("credits")
       .eq("user_id", userId)
       .single();
-    
+
     return data?.credits || 0;
   }
 

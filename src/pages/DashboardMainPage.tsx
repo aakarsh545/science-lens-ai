@@ -23,18 +23,54 @@ export default function DashboardMainPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/");
-        return;
+    let mounted = true;
+    let timeoutId: NodeJS.Timeout;
+
+    const initializeDashboard = async () => {
+      try {
+        // Set timeout for authentication check
+        timeoutId = setTimeout(() => {
+          if (mounted && loading) {
+            setError("Authentication check timed out. Please refresh the page.");
+            setLoading(false);
+          }
+        }, 10000); // 10 second timeout
+
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        if (timeoutId) clearTimeout(timeoutId);
+
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        if (!session) {
+          navigate("/");
+          return;
+        }
+
+        setUser(session.user);
+        await loadProfile(session.user.id);
+
+        if (mounted) {
+          setLoading(false);
+        }
+      } catch (err: unknown) {
+        console.error("Dashboard initialization error:", err);
+        if (mounted) {
+          setError(err instanceof Error ? err.message : "Failed to load dashboard. Please try again.");
+          setLoading(false);
+        }
       }
-      setUser(session.user);
-      loadProfile(session.user.id);
-      setLoading(false);
-    });
+    };
+
+    initializeDashboard();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
@@ -42,23 +78,75 @@ export default function DashboardMainPage() {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const loadProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+    try {
+      // Add timeout to profile fetch
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Profile loading timed out")), 8000);
+      });
 
-    if (data) setProfile(data);
+      const fetchPromise = supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
+      if (error) throw error;
+
+      if (data) {
+        setProfile(data);
+      }
+    } catch (err: any) {
+      console.error("Error loading profile:", err);
+      throw err;
+    }
   };
 
-  if (loading || !user || !profile) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="text-destructive text-4xl">⚠️</div>
+          <h2 className="text-xl font-semibold">Unable to load dashboard</h2>
+          <p className="text-muted-foreground">{error}</p>
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Preparing your dashboard...</p>
+        </div>
       </div>
     );
   }

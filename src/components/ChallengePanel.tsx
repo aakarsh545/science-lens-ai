@@ -63,14 +63,21 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
+      // Add timeout for challenge loading
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/challenges/next`,
         {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) throw new Error("Failed to load challenge");
 
@@ -82,11 +89,19 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
       setAnswer("");
       setSelectedOption(null);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      if (error.name === 'AbortError') {
+        toast({
+          title: "Timeout",
+          description: "Challenge loading took too long. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to load challenge",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -118,6 +133,10 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
+      // Add timeout for submission
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/challenges/${challenge.id}/attempt`,
         {
@@ -126,11 +145,14 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
             Authorization: `Bearer ${session.access_token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ 
-            answer: selectedOption || answer 
+          body: JSON.stringify({
+            answer: selectedOption || answer
           }),
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) throw new Error("Failed to submit");
 
@@ -145,14 +167,14 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
         if (leveledUp) {
           const newLevel = calculateLevel(newXp);
           triggerLevelUpConfetti();
-          
+
           toast({
             title: `🎊 Level Up! You're now Level ${newLevel}!`,
             description: `You earned ${xpAwarded} XP!`,
           });
         } else {
           triggerSuccessConfetti();
-          
+
           toast({
             title: "Correct! 🎉",
             description: `You earned ${xpAwarded} XP!`,
@@ -166,11 +188,21 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
         });
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      if (error.name === 'AbortError') {
+        toast({
+          title: "Timeout",
+          description: "Submission took too long. Please try again.",
+          variant: "destructive",
+        });
+        setIsActive(true); // Re-enable timer on timeout
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to submit answer",
+          variant: "destructive",
+        });
+        setIsActive(true); // Re-enable timer on error
+      }
     } finally {
       setLoading(false);
     }

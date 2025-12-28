@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { SidebarTrigger } from "./ui/sidebar";
 import { Progress } from "./ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
-import { calculateLevel, getXpForNextLevel, getProgressToNextLevel } from "@/utils/levelCalculations";
+import { calculateLevel, getXpForNextLevel, getProgressToNextLevel, getTotalXpForLevel } from "@/utils/levelCalculations";
 import { triggerLevelUpConfetti } from "@/utils/confettiEffects";
 
 interface CreditsBarProps {
@@ -88,6 +88,10 @@ export function CreditsBar({ userId }: CreditsBarProps) {
 
   const progressToNext = getProgressToNextLevel(xp);
   const xpForNext = getXpForNextLevel(xp);
+  const currentLevel = calculateLevel(xp);
+  const totalXpForCurrentLevel = getTotalXpForLevel(currentLevel);
+  const totalXpForNextLevel = getTotalXpForLevel(currentLevel + 1);
+  const xpInCurrentLevel = xp - totalXpForCurrentLevel;
 
   return (
     <div className="h-14 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-4">
@@ -116,7 +120,7 @@ export function CreditsBar({ userId }: CreditsBarProps) {
           <div className="flex flex-col gap-1 min-w-[120px]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">Level {level}</span>
-              <span className="text-xs text-muted-foreground">{xp}/{xpForNext} XP</span>
+              <span className="text-xs text-muted-foreground">{xpInCurrentLevel}/{totalXpForNextLevel - totalXpForCurrentLevel} XP</span>
             </div>
             <Progress value={progressToNext} className="h-1.5" />
           </div>

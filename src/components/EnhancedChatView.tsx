@@ -131,17 +131,17 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
         });
 
         if (!error) {
-          // Award credits - update profile directly
-          const { data: profile } = await supabase
-            .from("profiles")
+          // Award credits - update user_stats directly
+          const { data: stats } = await supabase
+            .from("user_stats")
             .select("credits")
             .eq("user_id", user.id)
             .single();
 
-          if (profile) {
+          if (stats) {
             await supabase
-              .from("profiles")
-              .update({ credits: (profile.credits || 0) + achievement.credits })
+              .from("user_stats")
+              .update({ credits: (stats.credits || 0) + achievement.credits })
               .eq("user_id", user.id);
           }
 

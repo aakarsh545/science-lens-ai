@@ -3,7 +3,7 @@ import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogOut, MessageSquare, Trophy, Flame, Target, Zap, BookOpen, ArrowLeft, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, MessageSquare, Trophy, Flame, Target, Zap, BookOpen, ArrowLeft, Settings as SettingsIcon, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import ChatInterface from "./ChatInterface";
@@ -12,6 +12,7 @@ import ProgressRing from "./ProgressRing";
 import ThemeToggle from "./ThemeToggle";
 import Settings from "./Settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface DashboardProps {
   user: User;
@@ -38,30 +39,68 @@ const Dashboard = ({ user }: DashboardProps) => {
   const [selectedTopic, setSelectedTopic] = useState<any>(null);
   const [showTopicSelector, setShowTopicSelector] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    loadProfile();
-    loadAchievements();
+    let mounted = true;
+
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Add timeout for data fetching
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Data loading timed out")), 10000);
+        });
+
+        const dataPromise = Promise.all([
+          loadProfile(),
+          loadAchievements()
+        ]);
+
+        await Promise.race([dataPromise, timeoutPromise]);
+
+        if (mounted) {
+          setLoading(false);
+        }
+      } catch (err: any) {
+        console.error("Error loading dashboard data:", err);
+        if (mounted) {
+          setError(err?.message || "Failed to load dashboard data");
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      mounted = false;
+    };
   }, [user]);
 
   const loadProfile = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("user_id", user.id)
       .single();
 
+    if (error) throw error;
     if (data) setProfile(data);
   };
 
   const loadAchievements = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("achievements")
       .select("*")
       .eq("user_id", user.id)
       .order("earned_at", { ascending: false });
 
+    if (error) throw error;
     if (data) setAchievements(data);
   };
 
@@ -143,6 +182,52 @@ const Dashboard = ({ user }: DashboardProps) => {
             selectedTopicId={selectedTopic?.id}
           />
         </div>
+      </div>
+    );
+  }
+
+  // Show loading state while fetching data
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-5 w-48" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="p-6">
+                <div className="flex flex-col items-center space-y-4">
+                  <Skeleton className="h-24 w-24 rounded-full" />
+                  <div className="space-y-2 w-full">
+                    <Skeleton className="h-4 w-24 mx-auto" />
+                    <Skeleton className="h-3 w-16 mx-auto" />
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+          <Card className="p-6">
+            <Skeleton className="h-32 w-full" />
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <Card className="max-w-md p-6 text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+          <h2 className="text-xl font-semibold">Unable to load dashboard</h2>
+          <p className="text-muted-foreground">{error}</p>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Try Again
+          </Button>
+        </Card>
       </div>
     );
   }
