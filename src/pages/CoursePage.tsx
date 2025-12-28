@@ -21,6 +21,7 @@ interface Lesson {
 
 interface Course {
   id: string;
+  slug: string;
   title: string;
   description: string;
   category: string;
@@ -41,6 +42,7 @@ export default function CoursePage() {
   const { courseSlug } = useParams();
   const navigate = useNavigate();
   const [course, setCourse] = useState<Course | null>(null);
+  const [relatedCourses, setRelatedCourses] = useState<Course[]>([]);
   const [progress, setProgress] = useState<UserProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -65,9 +67,54 @@ export default function CoursePage() {
     const { data, error } = await supabase.functions.invoke('courses', {
       body: { slug: courseSlug }
     });
-    
+
     if (!error && data) {
+      // If chapters are not included, fetch them directly from database
+      if (data.lessons && data.lessons.length > 0 && !data.lessons[0].chapter) {
+        const { data: lessonsWithChapters } = await supabase
+          .from('lessons')
+          .select('id, slug, title, order_index, xp_reward, chapter')
+          .eq('course_id', data.id)
+          .order('order_index', { ascending: true });
+
+        if (lessonsWithChapters) {
+          setCourse({ ...data, lessons: lessonsWithChapters });
+          // Load related courses after setting course
+          await loadRelatedCourses(data.category, data.id);
+          return;
+        }
+      }
       setCourse(data);
+      // Load related courses after setting course
+      await loadRelatedCourses(data.category, data.id);
+    }
+  };
+
+  const loadRelatedCourses = async (category: string, currentCourseId: string) => {
+    const { data: coursesData, error } = await supabase
+      .from('courses')
+      .select('id, slug, title, description, category')
+      .eq('category', category)
+      .neq('id', currentCourseId)
+      .order('title', { ascending: true });
+
+    if (!error && coursesData) {
+      // Get lesson count for each course
+      const coursesWithCounts = await Promise.all(
+        coursesData.map(async (course: any) => {
+          const { count } = await supabase
+            .from('lessons')
+            .select('*', { count: 'exact', head: true })
+            .eq('course_id', course.id);
+
+          return {
+            ...course,
+            lessons: [],
+            lesson_count: count || 0
+          };
+        })
+      );
+      setRelatedCourses(coursesWithCounts);
     }
   };
 
@@ -155,9 +202,18 @@ export default function CoursePage() {
 
   const handleLessonClick = (lesson: Lesson) => {
     if (!isLessonUnlocked(lesson, course?.lessons || []) && userId) {
+      // Find the previous lesson that needs to be completed
+      const sortedLessons = [...(course?.lessons || [])].sort((a, b) => a.order_index - b.order_index);
+      const lessonIndex = sortedLessons.findIndex(l => l.id === lesson.id);
+      const previousLesson = sortedLessons[lessonIndex - 1];
+
+      toast.error(
+        `🔒 "${previousLesson.title}" must be completed first to unlock this lesson.`,
+        { duration: 4000 }
+      );
       return;
     }
-    navigate(`/science-lens/learn/${courseSlug}/${lesson.slug}`);
+    navigate(`/science-lens/learning/${courseSlug}/${lesson.slug}`);
   };
 
   const toggleGroup = (groupName: string) => {
@@ -260,16 +316,23 @@ export default function CoursePage() {
             if (!group.name) {
               return (
                 <div key="flat" className="space-y-3">
-                  {group.lessons.map((lesson) => (
-                    <LessonCard
-                      key={lesson.id}
-                      lesson={lesson}
-                      status={getLessonStatus(lesson.id)}
-                      isUnlocked={isLessonUnlocked(lesson, course.lessons)}
-                      onClick={() => handleLessonClick(lesson)}
-                      indented={false}
-                    />
-                  ))}
+                  {group.lessons.map((lesson, idx) => {
+                    const sortedLessons = [...course.lessons].sort((a, b) => a.order_index - b.order_index);
+                    const lessonIndex = sortedLessons.findIndex(l => l.id === lesson.id);
+                    const prevLesson = lessonIndex > 0 ? sortedLessons[lessonIndex - 1] : undefined;
+
+                    return (
+                      <LessonCard
+                        key={lesson.id}
+                        lesson={lesson}
+                        status={getLessonStatus(lesson.id)}
+                        isUnlocked={isLessonUnlocked(lesson, course.lessons)}
+                        onClick={() => handleLessonClick(lesson)}
+                        indented={false}
+                        previousLessonTitle={prevLesson?.title}
+                      />
+                    );
+                  })}
                 </div>
               );
             }
@@ -296,16 +359,23 @@ export default function CoursePage() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="ml-4 mt-2 space-y-2 border-l-2 border-muted pl-4">
-                    {group.lessons.map((lesson) => (
-                      <LessonCard
-                        key={lesson.id}
-                        lesson={lesson}
-                        status={getLessonStatus(lesson.id)}
-                        isUnlocked={isLessonUnlocked(lesson, course.lessons)}
-                        onClick={() => handleLessonClick(lesson)}
-                        indented={true}
-                      />
-                    ))}
+                    {group.lessons.map((lesson) => {
+                      const sortedLessons = [...course.lessons].sort((a, b) => a.order_index - b.order_index);
+                      const lessonIndex = sortedLessons.findIndex(l => l.id === lesson.id);
+                      const prevLesson = lessonIndex > 0 ? sortedLessons[lessonIndex - 1] : undefined;
+
+                      return (
+                        <LessonCard
+                          key={lesson.id}
+                          lesson={lesson}
+                          status={getLessonStatus(lesson.id)}
+                          isUnlocked={isLessonUnlocked(lesson, course.lessons)}
+                          onClick={() => handleLessonClick(lesson)}
+                          indented={true}
+                          previousLessonTitle={prevLesson?.title}
+                        />
+                      );
+                    })}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
@@ -313,6 +383,49 @@ export default function CoursePage() {
           })}
         </div>
       </div>
+
+      {/* Related Courses Section */}
+      {relatedCourses.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              More {course.category} Courses
+            </CardTitle>
+            <CardDescription>
+              Explore other courses in {course.category}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              {relatedCourses.map((relatedCourse) => (
+                <Card
+                  key={relatedCourse.id}
+                  className="cursor-pointer hover:shadow-lg transition-all border-muted"
+                  onClick={() => navigate(`/science-lens/learning/${relatedCourse.slug}`)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 space-y-1">
+                        <CardTitle className="text-lg">{relatedCourse.title}</CardTitle>
+                        <CardDescription className="text-sm line-clamp-2">
+                          {relatedCourse.description}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <BookOpen className="w-3 h-3" />
+                      <span>{relatedCourse.lesson_count || 0} lessons</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -323,18 +436,19 @@ interface LessonCardProps {
   isUnlocked: boolean;
   onClick: () => void;
   indented: boolean;
+  previousLessonTitle?: string;
 }
 
-function LessonCard({ lesson, status, isUnlocked, onClick, indented }: LessonCardProps) {
+function LessonCard({ lesson, status, isUnlocked, onClick, indented, previousLessonTitle }: LessonCardProps) {
   const isCompleted = status === 'completed';
 
   return (
-    <Card 
+    <Card
       className={`
         transition-all cursor-pointer
-        ${isUnlocked 
-          ? 'hover:shadow-lg hover:border-primary/50' 
-          : 'opacity-60 cursor-not-allowed'
+        ${isUnlocked
+          ? 'hover:shadow-lg hover:border-primary/50'
+          : 'opacity-60 cursor-not-allowed bg-muted/30'
         }
         ${isCompleted ? 'border-success/30 bg-success/5' : ''}
       `}
@@ -345,10 +459,10 @@ function LessonCard({ lesson, status, isUnlocked, onClick, indented }: LessonCar
           <div className="flex items-center gap-3 flex-1">
             <div className={`
               w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
-              ${isCompleted 
-                ? 'bg-success/20 text-success' 
-                : isUnlocked 
-                  ? 'bg-primary/20 text-primary' 
+              ${isCompleted
+                ? 'bg-success/20 text-success'
+                : isUnlocked
+                  ? 'bg-primary/20 text-primary'
                   : 'bg-muted text-muted-foreground'
               }
             `}>
@@ -372,13 +486,25 @@ function LessonCard({ lesson, status, isUnlocked, onClick, indented }: LessonCar
                   <Award className="w-3 h-3" />
                   <span>+{lesson.xp_reward || 10} XP</span>
                 </div>
+                {!isUnlocked && previousLessonTitle && (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <span>Complete "{previousLessonTitle}" to unlock</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           {!isUnlocked && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs bg-muted/50">
+              <Lock className="w-3 h-3 mr-1" />
               Locked
+            </Badge>
+          )}
+          {isCompleted && (
+            <Badge variant="outline" className="text-xs border-success text-success bg-success/5">
+              <CheckCircle2 className="w-3 h-3 mr-1" />
+              Completed
             </Badge>
           )}
         </div>
