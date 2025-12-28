@@ -49,6 +49,38 @@ serve(async (req) => {
 
         const xpEarned = lesson?.xp_reward || 10;
 
+        // Refresh daily credits
+        await supabase.rpc('refresh_daily_credits', { p_user_id: user.id });
+
+        // Check if user has enough credits (1 credit per lesson)
+        const { data: stats } = await supabase
+          .from('user_stats')
+          .select('credits')
+          .eq('user_id', user.id)
+          .single();
+
+        const currentCredits = stats?.credits || 0;
+        if (currentCredits < 1) {
+          return new Response(JSON.stringify({
+            error: 'credits_exhausted',
+            message: 'No credits remaining. Daily credits refresh at midnight.'
+          }), {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Deduct 1 credit for lesson completion
+        const { error: deductError } = await supabase.rpc('deduct_credits', {
+          p_user_id: user.id,
+          p_amount: 1
+        });
+
+        if (deductError) {
+          console.error('[lessons] Error deducting credits:', deductError);
+          throw new Error('Failed to deduct credits');
+        }
+
         // Check if already completed
         const { data: existing } = await supabase
           .from('user_progress')
@@ -106,6 +138,23 @@ serve(async (req) => {
           .single();
 
         if (updateError) throw updateError;
+
+        // Award coins for lesson completion (10 base coins, 2x for premium)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_premium')
+          .eq('user_id', user.id)
+          .single();
+
+        const isPremium = profile?.is_premium || false;
+        const coinReward = isPremium ? 20 : 10;
+
+        await supabase.rpc('award_coins', {
+          user_id: user.id,
+          amount: coinReward,
+          source: 'lesson',
+          metadata: { lesson_id: lessonId, lesson_title: lesson?.title }
+        });
 
         return new Response(JSON.stringify({ 
           success: true, 

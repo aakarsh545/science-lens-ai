@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Trophy, Target, Flame, Star, Lock, BookOpen, AlertCircle } from "lucide-react";
+import { Loader2, Trophy, Target, Flame, Star, Lock, BookOpen, AlertCircle, Coins } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +34,6 @@ export default function ChallengesPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [completedLessonsCount, setCompletedLessonsCount] = useState(0);
-  const [userLevel, setUserLevel] = useState(1);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -52,8 +51,7 @@ export default function ChallengesPage() {
         await Promise.all([
           loadTopics(),
           loadCourses(),
-          loadUserProgress(session.user.id),
-          loadUserProfile(session.user.id)
+          loadUserProgress(session.user.id)
         ]);
       } catch (error) {
         console.error("Error initializing page:", error);
@@ -116,21 +114,6 @@ export default function ChallengesPage() {
     setCompletedLessonsCount(data?.length || 0);
   };
 
-  const loadUserProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("level")
-      .eq("user_id", userId)
-      .single();
-
-    if (error) {
-      console.error("Error loading user profile:", error);
-      return;
-    }
-
-    setUserLevel(data?.level || 1);
-  };
-
   const startChallenge = (topic: Topic, difficulty: 'beginner' | 'intermediate' | 'advanced' = 'beginner', courseId?: string) => {
     const questionCount = difficulty === 'beginner' ? 15 : difficulty === 'intermediate' ? 30 : 45;
     const xpReward = difficulty === 'beginner' ? 100 : difficulty === 'intermediate' ? 200 : 500;
@@ -172,13 +155,8 @@ export default function ChallengesPage() {
   const intermediateTopics = topics.filter(t => t.difficulty_level === "intermediate");
   const advancedTopics = topics.filter(t => t.difficulty_level === "advanced");
 
-  // Check if user meets level requirements
-  const canAccessIntermediate = userLevel >= 10;
-  const canAccessAdvanced = userLevel >= 20;
-
   const TopicCard = ({ topic, courseId }: { topic: Topic; courseId?: string }) => {
     const difficulties: Array<'beginner' | 'intermediate' | 'advanced'> = ['beginner', 'intermediate', 'advanced'];
-    const levelRequirements = { beginner: 0, intermediate: 10, advanced: 20 };
     const questionCounts = { beginner: 15, intermediate: 30, advanced: 45 };
     const xpRewards = { beginner: 100, intermediate: 200, advanced: 500 };
     const estimatedTimes = { beginner: '10 min', intermediate: '20 min', advanced: '30 min' };
@@ -201,8 +179,6 @@ export default function ChallengesPage() {
         <CardContent>
           <div className="space-y-3">
             {difficulties.map((difficulty) => {
-              const isLocked = userLevel < levelRequirements[difficulty];
-              const requiredLevel = levelRequirements[difficulty];
               const questionCount = questionCounts[difficulty];
               const xpReward = xpRewards[difficulty];
               const estimatedTime = estimatedTimes[difficulty];
@@ -210,11 +186,7 @@ export default function ChallengesPage() {
               return (
                 <div
                   key={difficulty}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    isLocked
-                      ? 'border-yellow-500/20 bg-yellow-500/5'
-                      : 'border-primary/20 hover:border-primary/40 bg-primary/5'
-                  }`}
+                  className="p-4 rounded-lg border-2 transition-all border-primary/20 hover:border-primary/40 bg-primary/5"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -223,12 +195,6 @@ export default function ChallengesPage() {
                         {difficulty === 'intermediate' && '🔷 Intermediate'}
                         {difficulty === 'advanced' && '🔶 Advanced'}
                       </Badge>
-                      {isLocked && (
-                        <Badge variant="outline" className="border-yellow-500/50 text-yellow-600 dark:text-yellow-400">
-                          <Lock className="w-3 h-3 mr-1" />
-                          Level {requiredLevel}
-                        </Badge>
-                      )}
                     </div>
                   </div>
 
@@ -251,26 +217,14 @@ export default function ChallengesPage() {
                     </div>
                   </div>
 
-                  {isLocked ? (
-                    <Button
-                      disabled
-                      className="w-full"
-                      variant="secondary"
-                      size="sm"
-                    >
-                      <Lock className="w-4 h-4 mr-2" />
-                      Reach Level {requiredLevel} to Unlock
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => startChallenge(topic, difficulty, courseId)}
-                      className="w-full"
-                      size="sm"
-                    >
-                      <Star className="w-4 h-4 mr-2" />
-                      Start {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Challenge
-                    </Button>
-                  )}
+                  <Button
+                    onClick={() => startChallenge(topic, difficulty, courseId)}
+                    className="w-full"
+                    size="sm"
+                  >
+                    <Star className="w-4 h-4 mr-2" />
+                    Start {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Challenge
+                  </Button>
                 </div>
               );
             })}

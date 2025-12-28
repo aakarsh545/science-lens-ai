@@ -1,7 +1,6 @@
 import {
   MessageSquare,
   Compass,
-  CreditCard,
   GraduationCap,
   Target,
   Trophy,
@@ -35,7 +34,6 @@ const menuItems = [
   { title: "Ask Questions", icon: MessageSquare, path: "/science-lens/ask" },
   { title: "Profile", icon: User, path: "/science-lens/profile" },
   { title: "Achievements", icon: Trophy, path: "/science-lens/achievements" },
-  { title: "Pricing", icon: CreditCard, path: "/science-lens/pricing" },
   { title: "Settings", icon: SettingsIcon, path: "/science-lens/settings" },
 ];
 

@@ -519,8 +519,7 @@ export default function LessonPlayer() {
 
       if (error) {
         if (error.message?.includes('credits_exhausted')) {
-          toast.error('Credits exhausted! Visit the Pricing page to get more.');
-          navigate('/science-lens/pricing');
+          toast.error('Daily credits exhausted! Come back tomorrow for more free credits.');
           return;
         }
         throw error;
