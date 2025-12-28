@@ -336,6 +336,44 @@ export default function ShopPage() {
     return userProfile?.equipped_avatar === item.id;
   };
 
+  const handlePreviewTheme = (item: ShopItem) => {
+    if (item.type !== 'theme') return;
+
+    const colors = {
+      primary: item.metadata.primary || '#3b82f6',
+      secondary: item.metadata.secondary || '#1e40af',
+      background: item.metadata.background || '#0f172a',
+      text: item.metadata.text || '#f1f5f9',
+      accent: item.metadata.accent || '#60a5fa',
+      gradientColors: item.metadata.gradientColors,
+    };
+
+    const root = document.documentElement;
+    root.style.setProperty('--theme-primary', colors.primary);
+    root.style.setProperty('--theme-secondary', colors.secondary);
+    root.style.setProperty('--theme-background', colors.background);
+    root.style.setProperty('--theme-text', colors.text);
+    root.style.setProperty('--theme-accent', colors.accent);
+
+    if (colors.gradientColors && colors.gradientColors.length > 0) {
+      root.style.setProperty(
+        '--theme-gradient',
+        `linear-gradient(135deg, ${colors.gradientColors.join(', ')})`
+      );
+    } else {
+      root.style.setProperty('--theme-gradient', colors.background);
+    }
+
+    toast({
+      title: "Theme Preview Active",
+      description: `Previewing ${item.name}. Equip to keep it permanently!`,
+    });
+  };
+
+  const handleResetPreview = () => {
+    refreshTheme();
+  };
+
   // Group items by rarity and type
   const themesByRarity = shopItems.filter(item => item.type === 'theme').reduce((acc, item) => {
     if (!acc[item.rarity]) acc[item.rarity] = [];
@@ -487,7 +525,7 @@ export default function ShopPage() {
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 {item.type === 'coin_pack' ? (
                   <>
@@ -504,31 +542,45 @@ export default function ShopPage() {
                 )}
               </div>
 
-              {isConsumable ? (
-                <Button
-                  onClick={() => handlePurchase(item)}
-                  disabled={isPurchasing || !canPurchase || (item.type !== 'coin_pack' && userProfile?.coins < item.price)}
-                  className={item.price === 0 ? 'bg-green-500 hover:bg-green-600' : ''}
-                >
-                  {isPurchasing ? 'Purchasing...' : item.type === 'coin_pack' ? 'Buy' : 'Activate'}
-                </Button>
-              ) : !isOwned ? (
-                <Button
-                  onClick={() => handlePurchase(item)}
-                  disabled={isPurchasing || !canPurchase || userProfile?.coins < item.price}
-                  className={item.price === 0 ? 'bg-green-500 hover:bg-green-600' : ''}
-                >
-                  {isPurchasing ? 'Purchasing...' : item.price === 0 ? 'Claim Free' : 'Purchase'}
-                </Button>
-              ) : (
-                <Button
-                  onClick={() => handleEquip(item)}
-                  disabled={equipped || isEquipping}
-                  variant={equipped ? 'default' : 'outline'}
-                >
-                  {isEquipping ? 'Equipping...' : equipped ? 'Equipped' : 'Equip'}
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {/* Preview button for themes */}
+                {item.type === 'theme' && isOwned && !equipped && (
+                  <Button
+                    onClick={() => handlePreviewTheme(item)}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                  >
+                    👁️ Preview
+                  </Button>
+                )}
+
+                {isConsumable ? (
+                  <Button
+                    onClick={() => handlePurchase(item)}
+                    disabled={isPurchasing || !canPurchase || (item.type !== 'coin_pack' && userProfile?.coins < item.price)}
+                    className={item.price === 0 ? 'bg-green-500 hover:bg-green-600' : ''}
+                  >
+                    {isPurchasing ? 'Purchasing...' : item.type === 'coin_pack' ? 'Buy' : 'Activate'}
+                  </Button>
+                ) : !isOwned ? (
+                  <Button
+                    onClick={() => handlePurchase(item)}
+                    disabled={isPurchasing || !canPurchase || userProfile?.coins < item.price}
+                    className={item.price === 0 ? 'bg-green-500 hover:bg-green-600' : ''}
+                  >
+                    {isPurchasing ? 'Purchasing...' : item.price === 0 ? 'Claim Free' : 'Purchase'}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => handleEquip(item)}
+                    disabled={equipped || isEquipping}
+                    variant={equipped ? 'default' : 'outline'}
+                  >
+                    {isEquipping ? 'Equipping...' : equipped ? 'Equipped' : 'Equip'}
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
