@@ -37,7 +37,6 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
       if (error) throw error;
 
       if (data.user && data.session) {
-        // Create profile
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
@@ -46,9 +45,6 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
           });
 
         if (profileError) console.error("Profile creation error:", profileError);
-        
-        // Store session in localStorage
-        localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
       }
 
       toast({
@@ -79,11 +75,6 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
       });
 
       if (error) throw error;
-
-      // Store session in localStorage
-      if (data.session) {
-        localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
-      }
 
       toast({
         title: "Welcome back! 🌟",
