@@ -165,14 +165,29 @@ export default function ShopPage() {
   const handlePurchase = async (item: ShopItem) => {
     if (!userId || !userProfile) return;
 
-    // Check level requirement
-    if (userProfile.level < item.level_required) {
-      toast({
-        title: "Level requirement not met!",
-        description: `You need to be Level ${item.level_required} to purchase this item. Current level: ${userProfile.level}`,
-        variant: "destructive",
-      });
-      return;
+    // Skip restrictions for coin packs and XP boosts
+    const isConsumable = item.type === 'coin_pack' || item.type === 'xp_boost';
+
+    if (!isConsumable) {
+      // Check level requirement (only for cosmetics)
+      if (userProfile.level < item.level_required) {
+        toast({
+          title: "Level requirement not met!",
+          description: `You need to be Level ${item.level_required} to purchase this item. Current level: ${userProfile.level}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if premium exclusive and user is not premium (only for cosmetics)
+      if (item.is_premium_exclusive && !userProfile.is_premium) {
+        toast({
+          title: "Premium Exclusive!",
+          description: "This item is only available to premium members.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Check if user has enough coins
@@ -180,16 +195,6 @@ export default function ShopPage() {
       toast({
         title: "Not enough coins!",
         description: `You need ${item.price - userProfile.coins} more coins to purchase this item.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check if premium exclusive and user is not premium
-    if (item.is_premium_exclusive && !userProfile.is_premium) {
-      toast({
-        title: "Premium Exclusive!",
-        description: "This item is only available to premium members.",
         variant: "destructive",
       });
       return;
@@ -405,12 +410,13 @@ export default function ShopPage() {
     const equipped = isEquipped(item);
     const isPurchasing = purchasing.has(item.id);
     const isEquipping = equipping.has(item.id);
-    const meetsLevelReq = userProfile ? userProfile.level >= item.level_required : false;
-    const meetsPremiumReq = !item.is_premium_exclusive || userProfile?.is_premium;
-    const canPurchase = meetsLevelReq && meetsPremiumReq;
 
-    // Special handling for coin packs and XP boosts
+    // Skip restrictions for coin packs and XP boosts
     const isConsumable = item.type === 'coin_pack' || item.type === 'xp_boost';
+
+    const meetsLevelReq = isConsumable ? true : (userProfile ? userProfile.level >= item.level_required : false);
+    const meetsPremiumReq = isConsumable ? true : (!item.is_premium_exclusive || userProfile?.is_premium);
+    const canPurchase = meetsLevelReq && meetsPremiumReq;
 
     return (
       <motion.div
@@ -432,7 +438,7 @@ export default function ShopPage() {
                     <span className="mr-1">{RARITY_CONFIG[item.rarity].icon}</span>
                     {RARITY_CONFIG[item.rarity].label}
                   </Badge>
-                  {item.is_premium_exclusive && (
+                  {item.is_premium_exclusive && !isConsumable && (
                     <Badge variant="outline" className="gap-1 border-purple-500 text-purple-400">
                       <Crown className="w-3 h-3" />
                       Premium
@@ -441,9 +447,11 @@ export default function ShopPage() {
                 </div>
                 <CardDescription className="mt-2">{item.description}</CardDescription>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <Badge variant="outline" className="text-xs">
-                    Level {item.level_required}
-                  </Badge>
+                  {!isConsumable && (
+                    <Badge variant="outline" className="text-xs">
+                      Level {item.level_required}
+                    </Badge>
+                  )}
                   {item.type === 'xp_boost' && (
                     <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50">
                       <Clock className="w-3 h-3 mr-1" />
