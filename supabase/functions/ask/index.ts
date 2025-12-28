@@ -60,34 +60,59 @@ serve(async (req) => {
     // Get auth token from request
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
+      console.error("Missing authorization header");
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Initialize Supabase client
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    // Get user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
+    // Extract user ID from JWT (JWT is already verified by verify_jwt=true in config.toml)
+    const token = authHeader.replace("Bearer ", "");
+    const jwtParts = token.split(".");
+    if (jwtParts.length !== 3) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
+        JSON.stringify({ error: "Invalid token format" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Decode JWT payload (no verification needed since verify_jwt=true already did it)
+    const jwtPayload = JSON.parse(atob(jwtParts[1]));
+    const userId = jwtPayload.sub;
+    console.log("User ID from JWT:", userId);
+
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "No user ID in token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Initialize Supabase client with explicit values
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "https://kljndbehjwfdyewgxgaw.supabase.co";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsam5kYmVoandmZHlld2d4Z2F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1NTk1MTksImV4cCI6MjA4MjEzNTUxOX0.3R0SkWwe-uExB1SCOwyb1T3DThBWUYW-1MyAPkhJb8o";
+
+    const supabase = createClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          }
+        }
+      }
+    );
+
+    console.log("User authenticated:", userId);
 
     // Save user message to database
     const { data: userMessage, error: userMsgError } = await supabase
       .from("messages")
       .insert({
         conversation_id: conversationId,
-        user_id: user.id,
+        user_id: userId,
         role: "user",
         content: trimmedMessage,
       })
@@ -114,7 +139,7 @@ serve(async (req) => {
 
     // Call OpenAI with streaming
     const model = Deno.env.get("MODEL") ?? "gpt-4o-mini";
-    console.log(`ask invoked by ${user.id} convo=${conversationId} panel=${panelContext} msgLen=${trimmedMessage.length}`);
+    console.log(`ask invoked by ${userId} convo=${conversationId} panel=${panelContext} msgLen=${trimmedMessage.length}`);
 
     // Context-aware system prompts
     const systemPrompts = {
@@ -171,7 +196,7 @@ serve(async (req) => {
         error: errMsg,
         raw: errorText,
         timestamp: new Date().toISOString(),
-        userId: user.id,
+        userId,
         model,
       });
 

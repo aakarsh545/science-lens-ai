@@ -9,10 +9,11 @@ import { Coins, ShoppingBag, Crown, Check, Palette, Smile, Sparkles, Lock, Star,
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
+import { AdminPanel } from "@/components/AdminPanel";
 
 interface ShopItem {
   id: string;
-  type: 'theme' | 'avatar' | 'coin_pack' | 'xp_boost';
+  type: 'theme' | 'avatar' | 'coin_pack' | 'xp_boost' | 'admin_pass';
   name: string;
   description: string;
   price: number;
@@ -48,6 +49,7 @@ interface UserProfile {
   equipped_avatar: string | null;
   active_xp_boost: number;
   xp_boost_expires_at: string | null;
+  is_admin?: boolean;
 }
 
 // Rarity configuration
@@ -141,63 +143,79 @@ export default function ShopPage() {
   };
 
   const loadUserProfile = async (uid: string) => {
-    const { data, error } = await supabase
+    // Load from profiles table
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('coins, is_premium, level, equipped_theme, equipped_avatar, active_xp_boost, xp_boost_expires_at')
       .eq('user_id', uid)
       .single();
 
-    if (error) {
-      console.error('[ShopPage] Error loading user profile:', error);
+    if (profileError) {
+      console.error('[ShopPage] Error loading user profile:', profileError);
       toast({
         title: "Error loading profile",
-        description: error.message,
+        description: profileError.message,
         variant: "destructive",
       });
       return;
     }
 
-    if (data) {
-      setUserProfile(data);
+    // Load admin status from user_stats
+    const { data: statsData, error: statsError } = await supabase
+      .from('user_stats')
+      .select('is_admin')
+      .eq('user_id', uid)
+      .single();
+
+    if (profileData) {
+      setUserProfile({
+        ...profileData,
+        is_admin: statsData?.is_admin || false,
+      });
     }
   };
 
   const handlePurchase = async (item: ShopItem) => {
     if (!userId || !userProfile) return;
 
-    // Skip restrictions for coin packs and XP boosts
-    const isConsumable = item.type === 'coin_pack' || item.type === 'xp_boost';
+    // Skip ALL restrictions for admin users
+    if (userProfile.is_admin) {
+      // Admin bypass - proceed directly to purchase
+    } else {
+      // Skip restrictions for coin packs and XP boosts
+      const isConsumable = item.type === 'coin_pack' || item.type === 'xp_boost';
 
-    if (!isConsumable) {
-      // Check level requirement (only for cosmetics)
-      if (userProfile.level < item.level_required) {
+      if (!isConsumable) {
+        // Check level requirement (only for cosmetics)
+        if (userProfile.level < item.level_required) {
+          toast({
+            title: "Level requirement not met!",
+            description: `You need to be Level ${item.level_required} to purchase this item. Current level: ${userProfile.level}`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Check if premium exclusive and user is not premium (only for cosmetics)
+        if (item.is_premium_exclusive && !userProfile.is_premium) {
+          toast({
+            title: "Premium Exclusive!",
+            description: "This item is only available to premium members.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Check if user has enough coins (skip for admin)
+      if (userProfile.coins < item.price) {
         toast({
-          title: "Level requirement not met!",
-          description: `You need to be Level ${item.level_required} to purchase this item. Current level: ${userProfile.level}`,
+          title: "Not enough coins!",
+          description: `You need ${item.price - userProfile.coins} more coins to purchase this item.`,
           variant: "destructive",
         });
         return;
       }
-
-      // Check if premium exclusive and user is not premium (only for cosmetics)
-      if (item.is_premium_exclusive && !userProfile.is_premium) {
-        toast({
-          title: "Premium Exclusive!",
-          description: "This item is only available to premium members.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    // Check if user has enough coins
-    if (userProfile.coins < item.price) {
-      toast({
-        title: "Not enough coins!",
-        description: `You need ${item.price - userProfile.coins} more coins to purchase this item.`,
-        variant: "destructive",
-      });
-      return;
     }
 
     setPurchasing(prev => new Set(prev).add(item.id));
@@ -240,6 +258,35 @@ export default function ShopPage() {
         toast({
           title: "XP Boost activated! ⚡",
           description: `${multiplier}x XP for ${duration} minutes!`,
+        });
+      } else if (item.type === 'admin_pass') {
+        // Handle admin pass purchase - grant admin status
+        const { error: adminError } = await supabase
+          .from('user_stats')
+          .update({
+            is_admin: true,
+            admin_purchased_at: new Date().toISOString(),
+            xp_total: 100000, // Max XP
+          })
+          .eq('user_id', userId);
+
+        if (adminError) throw adminError;
+
+        // Add to inventory
+        const { error: invError } = await supabase
+          .from('user_inventory')
+          .insert({
+            user_id: userId,
+            item_id: item.id,
+          });
+
+        if (invError) throw invError;
+
+        await loadUserProfile(userId!);
+
+        toast({
+          title: "🎉 Admin Pass Activated!",
+          description: "You now have unlimited power! All restrictions are bypassed.",
         });
       } else {
         // Handle regular shop items (themes/avatars)
@@ -821,6 +868,15 @@ export default function ShopPage() {
           </div>
         )}
       </div>
+
+      {/* Admin Panel - always shown at top */}
+      {userId && userProfile && (
+        <AdminPanel
+          user={{ id: userId } as any}
+          isAdmin={userProfile.is_admin || false}
+          onPurchaseSuccess={() => loadUserProfile(userId)}
+        />
+      )}
 
       {/* Main Shop Tabs */}
       <Tabs defaultValue="cosmetics" className="w-full">
