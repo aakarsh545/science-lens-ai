@@ -118,13 +118,22 @@ High quality, professional digital art.`;
 
 // Helper function to create avatar prompt
 function createAvatarPrompt(avatar) {
-  return `A unique anime-style character portrait for "${avatar.name}".
+  return `A SINGLE anime character portrait for "${avatar.name}".
+
+CRITICAL: SHOW EXACTLY ONE CHARACTER - NO MULTIPLE CHARACTERS, NO GROUPS, NO BACKGROUND CHARACTERS.
+
 Description: ${avatar.description}.
 Category: ${avatar.category}, Power level: ${avatar.level}.
-Style: Clean anime/manga art style, vibrant colors, professional digital illustration.
-Create a distinctive character with unique features, expressions, and accessories that match their role.
-Make them visually appealing and memorable.
-Face and shoulders portrait, white background, high quality character art.`;
+
+Style: One Piece anime style - cartoony, expressive, bold outlines, vibrant colors, exaggerated features, dynamic pose.
+Think Eiichiro Oda's art style: energetic expressions, distinctive character designs, comic-book flair.
+
+Create ONE distinctive character with unique features, expressions, and accessories that match their role.
+Focus on their face and upper body.
+White or simple solid background.
+High quality cartoony anime character art.
+
+REMEMBER: ONLY ONE CHARACTER IN THE ENTIRE IMAGE!`;
 }
 
 // Generate theme image
