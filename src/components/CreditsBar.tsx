@@ -8,12 +8,14 @@ import { Progress } from "./ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { calculateLevel, getXpForNextLevel, getProgressToNextLevel, getTotalXpForLevel } from "@/utils/levelCalculations";
 import { triggerLevelUpConfetti } from "@/utils/confettiEffects";
+import { CoinBalance } from "./CoinBalance";
 
 interface CreditsBarProps {
   userId: string;
+  showCoins?: boolean;
 }
 
-export function CreditsBar({ userId }: CreditsBarProps) {
+export function CreditsBar({ userId, showCoins = true }: CreditsBarProps) {
   const [credits, setCredits] = useState<number>(0);
   const [xp, setXp] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -129,29 +131,11 @@ export function CreditsBar({ userId }: CreditsBarProps) {
         {/* Credits Display */}
         <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${credits === 0 ? 'bg-destructive/10 border border-destructive' : 'bg-accent'}`}>
           <Coins className={`h-4 w-4 ${credits === 0 ? 'text-destructive' : 'text-accent-foreground'}`} />
-          <span className="text-sm font-medium">{credits} Credits</span>
+          <span className="text-sm font-medium">{credits}/10 Daily Credits</span>
         </div>
 
-        {credits === 0 && (
-          <Button 
-            size="sm" 
-            variant="destructive"
-            onClick={() => navigate('/science-lens/pricing')}
-            className="animate-pulse"
-          >
-            Get Credits
-          </Button>
-        )}
-        
-        {credits > 0 && credits < 3 && (
-          <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => navigate('/science-lens/pricing')}
-          >
-            Buy More
-          </Button>
-        )}
+        {/* Coins Display */}
+        {showCoins && <CoinBalance userId={userId} />}
       </div>
     </div>
   );

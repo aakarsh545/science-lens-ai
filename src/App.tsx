@@ -13,7 +13,6 @@ import TestPage from "./pages/TestPage";
 import AchievementsPage from "./pages/AchievementsPage";
 import SettingsPage from "./pages/SettingsPage";
 import AskPage from "./pages/AskPage";
-import PricingPage from "./pages/PricingPage";
 import LessonPlayer from "./pages/LessonPlayer";
 import DashboardMainPage from "./pages/DashboardMainPage";
 import UnifiedLearningPage from "./pages/UnifiedLearningPage";
@@ -45,7 +44,6 @@ const App = () => (
                 <Route path="leaderboard" element={<LeaderboardPage />} />
                 <Route path="ask" element={<AskPage />} />
                 <Route path="api-test" element={<TestPage />} />
-                <Route path="pricing" element={<PricingPage />} />
                 <Route path="achievements" element={<AchievementsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="settings" element={<SettingsPage />} />

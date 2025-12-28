@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BookOpen, Search, Filter, Loader2, CheckCircle2, Lock, Star } from "lucide-react";
+import { BookOpen, Search, Filter, Loader2, CheckCircle2, Star } from "lucide-react";
 import { calculateLevel, getXpForNextLevel, getXpRemainingToNextLevel, getProgressToNextLevel } from "@/utils/levelCalculations";
 
 // Course emoji mapping
@@ -64,11 +64,6 @@ interface UserProfile {
   xp_total: number;
 }
 
-interface DifficultyRequirement {
-  level: number;
-  label: string;
-}
-
 export default function UnifiedLearningPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -87,13 +82,6 @@ export default function UnifiedLearningPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
-
-  // Difficulty level requirements
-  const difficultyRequirements: Record<string, DifficultyRequirement> = {
-    beginner: { level: 1, label: "Level 1" },
-    intermediate: { level: 10, label: "Level 10" },
-    advanced: { level: 20, label: "Level 20" },
-  };
 
   useEffect(() => {
     initPage();
@@ -175,12 +163,6 @@ export default function UnifiedLearningPage() {
     } catch (error) {
       console.error("Error loading user profile:", error);
     }
-  };
-
-  const isCourseLocked = (course: Course): boolean => {
-    if (!course.difficulty) return false;
-    const requirement = difficultyRequirements[course.difficulty];
-    return requirement ? userProfile.level < requirement.level : false;
   };
 
   // Helper to normalize category names (capitalize first letter)
@@ -350,16 +332,12 @@ export default function UnifiedLearningPage() {
             {items.courses.map((course) => {
               const progress = courseProgress[course.id] || { completed: 0, total: 0, percentage: 0 };
               const isStarted = progress.completed > 0;
-              const locked = isCourseLocked(course);
-              const requirement = course.difficulty ? difficultyRequirements[course.difficulty] : null;
 
               return (
                 <Card
                   key={course.id}
-                  className={`bg-card hover:border-primary/50 transition-all cursor-pointer group overflow-hidden ${
-                    locked ? "opacity-60 bg-muted/30" : ""
-                  }`}
-                  onClick={() => !locked && navigate(`/science-lens/learning/${course.slug}`)}
+                  className="bg-card hover:border-primary/50 transition-all cursor-pointer group overflow-hidden"
+                  onClick={() => navigate(`/science-lens/learning/${course.slug}`)}
                 >
                   <CardContent className="p-4">
                     <div className="flex gap-3">
@@ -368,18 +346,10 @@ export default function UnifiedLearningPage() {
                       </div>
                       <div className="flex-1 min-w-0 space-y-2">
                         <div className="flex items-center justify-between gap-2">
-                          <h4 className={`font-semibold group-hover:text-primary transition-colors min-w-0 truncate ${
-                            locked ? "text-muted-foreground" : ""
-                          }`}>
+                          <h4 className="font-semibold group-hover:text-primary transition-colors min-w-0 truncate">
                             {course.title}
                           </h4>
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            {locked && requirement && (
-                              <Badge variant="outline" className="gap-1">
-                                <Lock className="w-3 h-3" />
-                                {requirement.label}
-                              </Badge>
-                            )}
                             {course.difficulty && (
                               <Badge className={`text-xs ${getDifficultyBadgeClass(course.difficulty)}`}>
                                 {course.difficulty}
@@ -387,66 +357,38 @@ export default function UnifiedLearningPage() {
                             )}
                           </div>
                         </div>
-                        <p className={`text-sm line-clamp-2 ${
-                          locked ? "text-muted-foreground/70" : "text-muted-foreground"
-                        }`}>
+                        <p className="text-sm line-clamp-2 text-muted-foreground">
                           {course.description}
                         </p>
 
-                        {locked && requirement ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
-                              <Lock className="w-4 h-4" />
-                              <span className="font-medium">
-                                Requires Level {requirement.level}
-                              </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              You need to reach Level {requirement.level} to unlock this {course.difficulty} course.
-                              Current level: {userProfile.level}
-                            </p>
-                            <div className="pt-2">
-                              <Progress
-                                value={(userProfile.level / requirement.level) * 100}
-                                className="h-2"
-                              />
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {requirement.level - userProfile.level} more levels to unlock
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <BookOpen className="w-3 h-3" />
-                                {course.lesson_count || 0} {(course.lesson_count || 0) === 1 ? 'lesson' : 'lessons'}
-                              </span>
-                              {isStarted && (
-                                <span className="flex items-center gap-1">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  {progress.completed}/{progress.total}
-                                </span>
-                              )}
-                            </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <BookOpen className="w-3 h-3" />
+                            {course.lesson_count || 0} {(course.lesson_count || 0) === 1 ? 'lesson' : 'lessons'}
+                          </span>
+                          {isStarted && (
+                            <span className="flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              {progress.completed}/{progress.total}
+                            </span>
+                          )}
+                        </div>
 
-                            {isStarted && (
-                              <Progress value={progress.percentage} className="h-1.5" />
-                            )}
-
-                            <Button
-                              size="sm"
-                              className="w-full mt-2"
-                              variant={isStarted ? "outline" : "default"}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/science-lens/learning/${course.slug}`);
-                              }}
-                            >
-                              {isStarted ? "Continue Learning" : "Start Course"}
-                            </Button>
-                          </>
+                        {isStarted && (
+                          <Progress value={progress.percentage} className="h-1.5" />
                         )}
+
+                        <Button
+                          size="sm"
+                          className="w-full mt-2"
+                          variant={isStarted ? "outline" : "default"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/science-lens/learning/${course.slug}`);
+                          }}
+                        >
+                          {isStarted ? "Continue Learning" : "Start Course"}
+                        </Button>
                       </div>
                     </div>
                   </CardContent>

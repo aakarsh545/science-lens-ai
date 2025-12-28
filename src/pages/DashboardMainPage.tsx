@@ -211,14 +211,10 @@ export default function DashboardMainPage() {
             <Zap className="w-4 h-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{profile.credits}</div>
-            <Button 
-              variant="link" 
-              className="p-0 h-auto text-xs text-primary mt-1"
-              onClick={() => navigate("/science-lens/pricing")}
-            >
-              Get more credits
-            </Button>
+            <div className="text-2xl font-bold">{profile.credits}/10</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Resets daily
+            </p>
           </CardContent>
         </Card>
       </div>
