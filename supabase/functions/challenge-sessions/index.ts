@@ -227,6 +227,42 @@ serve(async (req) => {
             xp_total: newXpTotal,
             updated_at: new Date().toISOString(),
           });
+
+        // Award coins for challenge completion
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_premium')
+          .eq('user_id', user.id)
+          .single();
+
+        const isPremium = profile?.is_premium || false;
+
+        // Calculate coin reward based on difficulty and completion
+        // Beginner: 25 coins (50 for premium)
+        // Intermediate: 50 coins (100 for premium)
+        // Advanced: 100 coins (200 for premium)
+        let baseCoinReward = 25;
+        if (session.challenge_difficulty === 'intermediate') {
+          baseCoinReward = 50;
+        } else if (session.challenge_difficulty === 'advanced') {
+          baseCoinReward = 100;
+        }
+
+        const coinReward = isPremium ? baseCoinReward * 2 : baseCoinReward;
+
+        // Only award coins if challenge was completed (not failed)
+        if (newStatus === 'completed') {
+          await supabase.rpc('award_coins', {
+            user_id: user.id,
+            amount: coinReward,
+            source: 'challenge',
+            metadata: {
+              session_id: sessionId,
+              difficulty: session.challenge_difficulty,
+              topic_name: session.topic_name
+            }
+          });
+        }
       }
 
       // Prepare response
