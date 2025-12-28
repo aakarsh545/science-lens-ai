@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Achievement Unlocked - Discovery Made</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #0f172a;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      color: white;
+    }
+
+    .achievement-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .lock-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 30px;
+    }
+
+    .lock-icon {
+      font-size: 120px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 1;
+      animation: shatter 0.6s ease-in 1s forwards;
+    }
+
+    .achievement-icon {
+      font-size: 120px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+      animation: iconAppear 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) 1.2s forwards;
+    }
+
+    .glow-bg {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.3) 0%, transparent 70%);
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      animation: glowPulse 2s ease-in-out 1.5s infinite;
+    }
+
+    .achievement-title {
+      font-size: 14px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 1.8s forwards;
+      margin-bottom: 10px;
+    }
+
+    .achievement-name {
+      font-size: 42px;
+      font-weight: bold;
+      color: #fbbf24;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 2s forwards;
+      margin-bottom: 20px;
+      text-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
+    }
+
+    .achievement-desc {
+      font-size: 18px;
+      color: #cbd5e1;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 2.3s forwards;
+      margin-bottom: 30px;
+      max-width: 500px;
+    }
+
+    .xp-reward {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: 30px;
+      margin-bottom: 30px;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 2.6s forwards;
+    }
+
+    .xp-icon {
+      font-size: 24px;
+    }
+
+    .xp-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #fbbf24;
+    }
+
+    .xp-label {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .continue-button {
+      padding: 14px 40px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.8s ease-out 3s forwards;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+    }
+
+    .continue-button:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
+    }
+
+    .skip-button {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      z-index: 100;
+      padding: 10px 20px;
+      font-size: 14px;
+      color: #94a3b8;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 25px;
+      cursor: pointer;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 2.5s forwards;
+      transition: all 0.3s ease;
+    }
+
+    .skip-button:hover {
+      background: rgba(30, 41, 59, 0.9);
+      border-color: rgba(148, 163, 184, 0.4);
+      color: white;
+    }
+
+    @keyframes shatter {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(2);
+      }
+    }
+
+    @keyframes iconAppear {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeUp {
+      0% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes glowPulse {
+      0%, 100% {
+        opacity: 0.5;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      50% {
+        opacity: 0.8;
+        transform: translate(-50%, -50%) scale(1.2);
+      }
+    }
+
+    .shard {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #94a3b8;
+      top: 50%;
+      left: 50%;
+      opacity: 0;
+    }
+
+    .shard:nth-child(1) { animation: shardFly 0.6s ease-out 1s forwards; --angle: 0deg; --distance: 150px; }
+    .shard:nth-child(2) { animation: shardFly 0.6s ease-out 1s forwards; --angle: 45deg; --distance: 120px; }
+    .shard:nth-child(3) { animation: shardFly 0.6s ease-out 1s forwards; --angle: 90deg; --distance: 180px; }
+    .shard:nth-child(4) { animation: shardFly 0.6s ease-out 1s forwards; --angle: 135deg; --distance: 140px; }
+    .shard:nth-child(5) { animation: shardFly 0.6s ease-out 1s forwards; --angle: 180deg; --distance: 160px; }
+    .shard:nth-child(6) { animation: shardFly 0.6s ease-out 1s forwards; --angle: 225deg; --distance: 130px; }
+    .shard:nth-child(7) { animation: shardFly 0.6s ease-out 1s forwards; --angle: 270deg; --distance: 170px; }
+    .shard:nth-child(8) { animation: shardFly 0.6s ease-out 1s forwards; --angle: 315deg; --distance: 150px; }
+
+    @keyframes shardFly {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(
+          calc(-50% + cos(var(--angle)) * var(--distance)),
+          calc(-50% + sin(var(--angle)) * var(--distance))
+        ) rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <div class="content">
+    <div class="achievement-container">
+      <div class="lock-container">
+        <div class="glow-bg"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="lock-icon">🔒</div>
+        <div class="achievement-icon">🏆</div>
+      </div>
+
+      <div class="achievement-title">Achievement Unlocked</div>
+      <div class="achievement-name">First Steps</div>
+      <div class="achievement-desc">Complete your first lesson and begin your journey of scientific discovery</div>
+
+      <div class="xp-reward">
+        <span class="xp-icon">⭐</span>
+        <span class="xp-value">+100</span>
+        <span class="xp-label">XP</span>
+      </div>
+
+      <button class="continue-button" onclick="endCutscene()">Awesome!</button>
+    </div>
+  </div>
+
+  <button class="skip-button" onclick="endCutscene()">Skip →</button>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const confetti = [];
+    const numConfetti = 100;
+
+    class Confetti {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = -20;
+        this.size = Math.random() * 10 + 5;
+        this.speedY = Math.random() * 3 + 2;
+        this.speedX = Math.random() * 4 - 2;
+        this.rotation = Math.random() * 360;
+        this.rotationSpeed = Math.random() * 10 - 5;
+        this.color = ['#fbbf24', '#3b82f6', '#8b5cf6', '#ec4899', '#10b981'][Math.floor(Math.random() * 5)];
+      }
+
+      update() {
+        this.y += this.speedY;
+        this.x += this.speedX;
+        this.rotation += this.rotationSpeed;
+        this.speedX *= 0.99;
+
+        if (this.y > canvas.height + 20) {
+          this.reset();
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation * Math.PI / 180);
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+        ctx.restore();
+      }
+    }
+
+    // Start confetti after 1.5s (when icon appears)
+    setTimeout(() => {
+      for (let i = 0; i < numConfetti; i++) {
+        confetti.push(new Confetti());
+      }
+    }, 1500);
+
+    function animate() {
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      confetti.forEach(c => {
+        c.update();
+        c.draw();
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    function endCutscene() {
+      document.body.style.transition = 'opacity 0.5s ease';
+      document.body.style.opacity = '0';
+      setTimeout(() => {
+        alert('Achievement unlocked! In production, this would return to the app.');
+      }, 500);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === 'Escape') {
+        endCutscene();
+      }
+    });
+  </script>
+</body>
+</html>

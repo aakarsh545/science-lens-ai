@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-  Telescope, 
-  Sparkles, 
-  Trophy, 
-  Zap, 
+import {
+  Telescope,
+  Sparkles,
+  Trophy,
+  Zap,
   Brain,
   Rocket,
   Star,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import SpaceBackground from './SpaceBackground';
 import AuthModal from './AuthModal';
+import { OnboardingCutscene } from './OnboardingCutscene';
 
 const features = [
   {
@@ -53,10 +54,160 @@ const stats = [
 
 export default function LandingPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
+
+  // Starfield intro animation
+  useEffect(() => {
+    if (!showIntro || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const stars: { x: number; y: number; z: number; pz: number }[] = [];
+    const numStars = 200;
+
+    class Star {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * canvas.width - canvas.width / 2;
+        this.y = Math.random() * canvas.height - canvas.height / 2;
+        this.z = Math.random() * 1000 + 500;
+        this.pz = this.z;
+      }
+
+      update() {
+        this.z -= 8;
+        if (this.z < 1) {
+          this.reset();
+          this.z = 1000;
+          this.pz = this.z;
+        }
+      }
+
+      draw() {
+        const sx = (this.x / this.z) * canvas.width + canvas.width / 2;
+        const sy = (this.y / this.z) * canvas.height + canvas.height / 2;
+        const px = (this.x / this.pz) * canvas.width + canvas.width / 2;
+        const py = (this.y / this.pz) * canvas.height + canvas.height / 2;
+        this.pz = this.z;
+
+        const size = (1 - this.z / 1000) * 3;
+        const alpha = 1 - this.z / 1000;
+
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.lineWidth = size;
+        ctx.moveTo(px, py);
+        ctx.lineTo(sx, sy);
+        ctx.stroke();
+      }
+    }
+
+    for (let i = 0; i < numStars; i++) {
+      stars.push(new Star());
+    }
+
+    let animationId: number;
+    const animate = () => {
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.2)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      stars.forEach(star => {
+        star.update();
+        star.draw();
+      });
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    // End intro after 4 seconds
+    const timer = setTimeout(() => {
+      setShowIntro(false);
+    }, 4000);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      clearTimeout(timer);
+    };
+  }, [showIntro]);
+
+  const handleGetStarted = () => {
+    setShowOnboarding(true);
+  };
+
+  const handleOnboardingComplete = async (data: any) => {
+    // Save onboarding data to profile
+    // For now, just show auth modal
+    setShowOnboarding(false);
+    setShowAuthModal(true);
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      {/* Intro Animation */}
+      <AnimatePresence>
+        {showIntro && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900"
+          >
+            <canvas ref={canvasRef} className="absolute inset-0" />
+
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 1, delay: 0.5 }}
+              className="relative z-10 text-center"
+            >
+              <h1 className="text-7xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-4">
+                🔬 Science Lens
+              </h1>
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 1, delay: 1.5 }}
+                className="text-2xl text-slate-300"
+              >
+                Your journey through science starts now
+              </motion.p>
+            </motion.div>
+
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 2.5 }}
+              onClick={() => setShowIntro(false)}
+              className="absolute bottom-20 left-1/2 -translate-x-1/2 px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full font-semibold hover:scale-105 transition-transform shadow-lg shadow-purple-500/30 z-20"
+            >
+              Skip Intro →
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Onboarding Cutscene */}
+      {showOnboarding && (
+        <OnboardingCutscene
+          onComplete={handleOnboardingComplete}
+          onClose={() => setShowOnboarding(false)}
+        />
+      )}
+
+      {/* Main Landing Page */}
       <SpaceBackground />
       
       {/* Navigation */}
@@ -75,7 +226,7 @@ export default function LandingPage() {
         
         <div className="flex gap-4">
           <Button variant="ghostCosmic" onClick={() => setShowAuthModal(true)}>Sign In</Button>
-          <Button variant="cosmic" onClick={() => setShowAuthModal(true)}>Get Started</Button>
+          <Button variant="cosmic" onClick={handleGetStarted}>Get Started</Button>
         </div>
       </motion.nav>
 
@@ -103,7 +254,7 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="xl" className="group" onClick={() => setShowAuthModal(true)}>
+            <Button variant="hero" size="xl" className="group" onClick={handleGetStarted}>
               <Zap className="w-5 h-5 group-hover:animate-pulse" />
               Start Learning
             </Button>
@@ -275,7 +426,7 @@ export default function LandingPage() {
                 Join thousands of learners who have already discovered the power of AI-assisted science education.
               </p>
               
-              <Button variant="hero" size="xl" className="group" onClick={() => setShowAuthModal(true)}>
+              <Button variant="hero" size="xl" className="group" onClick={handleGetStarted}>
                 <Zap className="w-5 h-5 group-hover:animate-pulse" />
                 Start Learning Now
                 <Sparkles className="w-5 h-5 group-hover:animate-pulse" />
