@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Coins, ShoppingBag, Crown, Check, Palette, Smile, Sparkles } from "lucide-react";
+import { Coins, ShoppingBag, Crown, Check, Palette, Smile, Sparkles, Lock, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
@@ -16,7 +16,9 @@ interface ShopItem {
   description: string;
   price: number;
   is_premium_exclusive: boolean;
-  icon_emoji: string;
+  level_required: number;
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythical' | 'godly';
+  icon_emoji: string | null;
   metadata: {
     primary?: string;
     secondary?: string;
@@ -34,9 +36,21 @@ interface UserInventory {
 interface UserProfile {
   coins: number;
   is_premium: boolean;
+  level: number;
   equipped_theme: string | null;
   equipped_avatar: string | null;
 }
+
+// Rarity configuration
+const RARITY_CONFIG = {
+  common: { color: 'bg-gray-500/20 text-gray-400 border-gray-500/50', icon: '⚪', label: 'Common' },
+  uncommon: { color: 'bg-green-500/20 text-green-400 border-green-500/50', icon: '🟢', label: 'Uncommon' },
+  rare: { color: 'bg-blue-500/20 text-blue-400 border-blue-500/50', icon: '🔵', label: 'Rare' },
+  epic: { color: 'bg-purple-500/20 text-purple-400 border-purple-500/50', icon: '🟣', label: 'Epic' },
+  legendary: { color: 'bg-orange-500/20 text-orange-400 border-orange-500/50', icon: '🟠', label: 'Legendary' },
+  mythical: { color: 'bg-pink-500/20 text-pink-400 border-pink-500/50', icon: '🌟', label: 'Mythical' },
+  godly: { color: 'bg-gradient-to-r from-yellow-500/20 to-red-500/20 text-yellow-400 border-yellow-500/50', icon: '👑', label: 'Godly' },
+};
 
 export default function ShopPage() {
   const navigate = useNavigate();
@@ -73,7 +87,7 @@ export default function ShopPage() {
     const { data, error } = await supabase
       .from('shop_items')
       .select('*')
-      .order('price', { ascending: true });
+      .order('level_required', { ascending: true });
 
     if (!error && data) {
       setShopItems(data);
@@ -95,7 +109,7 @@ export default function ShopPage() {
   const loadUserProfile = async (uid: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('coins, is_premium, equipped_theme, equipped_avatar')
+      .select('coins, is_premium, level, equipped_theme, equipped_avatar')
       .eq('user_id', uid)
       .single();
 
@@ -106,6 +120,16 @@ export default function ShopPage() {
 
   const handlePurchase = async (item: ShopItem) => {
     if (!userId || !userProfile) return;
+
+    // Check level requirement
+    if (userProfile.level < item.level_required) {
+      toast({
+        title: "Level requirement not met!",
+        description: `You need to be Level ${item.level_required} to purchase this item. Current level: ${userProfile.level}`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Check if user has enough coins
     if (userProfile.coins < item.price) {
@@ -223,8 +247,188 @@ export default function ShopPage() {
     return userProfile?.equipped_avatar === item.id;
   };
 
-  const themes = shopItems.filter(item => item.type === 'theme');
-  const avatars = shopItems.filter(item => item.type === 'avatar');
+  // Group items by rarity and type
+  const themesByRarity = shopItems.filter(item => item.type === 'theme').reduce((acc, item) => {
+    if (!acc[item.rarity]) acc[item.rarity] = [];
+    acc[item.rarity].push(item);
+    return acc;
+  }, {} as Record<string, ShopItem[]>);
+
+  const avatarsByRarity = shopItems.filter(item => item.type === 'avatar').reduce((acc, item) => {
+    if (!acc[item.rarity]) acc[item.rarity] = [];
+    acc[item.rarity].push(item);
+    return acc;
+  }, {} as Record<string, ShopItem[]>);
+
+  const renderShopCard = (item: ShopItem) => {
+    const isOwned = userInventory.has(item.id);
+    const equipped = isEquipped(item);
+    const isPurchasing = purchasing.has(item.id);
+    const isEquipping = equipping.has(item.id);
+    const meetsLevelReq = userProfile ? userProfile.level >= item.level_required : false;
+    const meetsPremiumReq = !item.is_premium_exclusive || userProfile?.is_premium;
+    const canPurchase = meetsLevelReq && meetsPremiumReq;
+
+    return (
+      <motion.div
+        key={item.id}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card className={`overflow-hidden transition-all ${
+          equipped ? 'ring-2 ring-primary' : ''
+        } ${!canPurchase ? 'opacity-60' : ''}`}>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  {item.icon_emoji && <span className="text-2xl">{item.icon_emoji}</span>}
+                  <CardTitle className="text-lg">{item.name}</CardTitle>
+                  <Badge className={RARITY_CONFIG[item.rarity].color}>
+                    <span className="mr-1">{RARITY_CONFIG[item.rarity].icon}</span>
+                    {RARITY_CONFIG[item.rarity].label}
+                  </Badge>
+                  {item.is_premium_exclusive && (
+                    <Badge variant="outline" className="gap-1 border-purple-500 text-purple-400">
+                      <Crown className="w-3 h-3" />
+                      Premium
+                    </Badge>
+                  )}
+                </div>
+                <CardDescription className="mt-2">{item.description}</CardDescription>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="outline" className="text-xs">
+                    Level {item.level_required}
+                  </Badge>
+                  {equipped && (
+                    <Badge className="bg-primary">
+                      <Check className="w-3 h-3 mr-1" />
+                      Equipped
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+
+          {/* Preview */}
+          <CardContent className="space-y-4">
+            {item.type === 'theme' ? (
+              <div
+                className="w-full h-24 rounded-lg border-2 flex items-center justify-center text-lg font-semibold"
+                style={{
+                  backgroundColor: item.metadata.background,
+                  color: item.metadata.text,
+                  borderColor: item.metadata.primary,
+                }}
+              >
+                <span style={{ color: item.metadata.accent }}>Preview</span>
+              </div>
+            ) : (
+              <div className="w-full h-24 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 border-2 border-primary/30 flex items-center justify-center text-5xl">
+                {item.icon_emoji}
+              </div>
+            )}
+
+            {/* Requirements */}
+            {!meetsLevelReq && (
+              <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                <Lock className="w-4 h-4" />
+                <span>Requires Level {item.level_required}</span>
+              </div>
+            )}
+
+            {!meetsPremiumReq && (
+              <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400">
+                <Crown className="w-4 h-4" />
+                <span>Premium Exclusive</span>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Coins className="w-4 h-4 text-amber-500" />
+                <span className={`font-bold ${item.price === 0 ? 'text-green-500' : 'text-amber-600 dark:text-amber-400'}`}>
+                  {item.price === 0 ? 'Free' : item.price}
+                </span>
+              </div>
+
+              {!isOwned ? (
+                <Button
+                  onClick={() => handlePurchase(item)}
+                  disabled={isPurchasing || !canPurchase || userProfile?.coins < item.price}
+                  className={item.price === 0 ? 'bg-green-500 hover:bg-green-600' : ''}
+                >
+                  {isPurchasing ? 'Purchasing...' : item.price === 0 ? 'Claim Free' : 'Purchase'}
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => handleEquip(item)}
+                  disabled={equipped || isEquipping}
+                  variant={equipped ? 'default' : 'outline'}
+                >
+                  {isEquipping ? 'Equipping...' : equipped ? 'Equipped' : 'Equip'}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  };
+
+  const renderRaritySection = (rarity: string, title: string) => {
+    const themes = themesByRarity[rarity] || [];
+    const avatars = avatarsByRarity[rarity] || [];
+
+    if (themes.length === 0 && avatars.length === 0) return null;
+
+    return (
+      <div key={rarity} className="space-y-6">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">{RARITY_CONFIG[rarity].icon}</span>
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+            {title}
+          </h2>
+        </div>
+
+        <Tabs defaultValue="themes" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="themes" className="gap-2">
+              <Palette className="w-4 h-4" />
+              Themes ({themes.length})
+            </TabsTrigger>
+            <TabsTrigger value="avatars" className="gap-2">
+              <Smile className="w-4 h-4" />
+              Avatars ({avatars.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="themes" className="mt-6">
+            {themes.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {themes.map(renderShopCard)}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-12">No themes in this rarity tier</p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="avatars" className="mt-6">
+            {avatars.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {avatars.map(renderShopCard)}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-12">No avatars in this rarity tier</p>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -246,226 +450,65 @@ export default function ShopPage() {
         <div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent flex items-center gap-3">
             <ShoppingBag className="w-10 h-10 text-primary" />
-            Shop
+            Rarity Shop
           </h1>
           <p className="text-muted-foreground mt-2">
-            Customize your experience with themes and avatars!
+            Collect items across 7 rarity tiers! Higher rarities require higher levels.
           </p>
         </div>
 
-        {/* Coin Balance */}
+        {/* User Stats */}
         {userProfile && (
-          <Card className="bg-gradient-to-br from-amber-500/10 to-yellow-500/10 border-amber-500/30">
-            <CardContent className="p-4 flex items-center gap-3">
-              <Coins className="w-6 h-6 text-amber-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Your Coins</p>
-                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                  {userProfile.coins}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex gap-4">
+            <Card className="bg-gradient-to-br from-amber-500/10 to-yellow-500/10 border-amber-500/30">
+              <CardContent className="p-4 flex items-center gap-3">
+                <Coins className="w-6 h-6 text-amber-500" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Coins</p>
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                    {userProfile.coins}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-primary/10 to-purple-500/10 border-primary/30">
+              <CardContent className="p-4 flex items-center gap-3">
+                <Star className="w-6 h-6 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Level</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {userProfile.level}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {userProfile.is_premium && (
+              <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <Crown className="w-6 h-6 text-purple-500" />
+                  <div>
+                    <p className="font-semibold text-purple-600 dark:text-purple-400">Premium</p>
+                    <p className="text-xs text-muted-foreground">2x coins</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         )}
       </div>
 
-      {/* Premium Badge */}
-      {userProfile?.is_premium && (
-        <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30">
-          <CardContent className="p-4 flex items-center gap-3">
-            <Crown className="w-6 h-6 text-purple-500" />
-            <div>
-              <p className="font-semibold text-purple-600 dark:text-purple-400">Premium Member</p>
-              <p className="text-sm text-muted-foreground">You earn 2x coins on all activities!</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Shop Tabs */}
-      <Tabs defaultValue="themes" className="w-full">
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-          <TabsTrigger value="themes" className="gap-2">
-            <Palette className="w-4 h-4" />
-            Themes
-          </TabsTrigger>
-          <TabsTrigger value="avatars" className="gap-2">
-            <Smile className="w-4 h-4" />
-            Avatars
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Themes Tab */}
-        <TabsContent value="themes" className="space-y-6 mt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {themes.map((theme) => {
-              const isOwned = userInventory.has(theme.id);
-              const equipped = isEquipped(theme);
-              const isPurchasing = purchasing.has(theme.id);
-              const isEquipping = equipping.has(theme.id);
-
-              return (
-                <motion.div
-                  key={theme.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card className={`overflow-hidden transition-all ${
-                    equipped ? 'ring-2 ring-primary' : ''
-                  } ${theme.is_premium_exclusive && !userProfile?.is_premium ? 'opacity-60' : ''}`}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <CardTitle className="text-lg">{theme.name}</CardTitle>
-                            {theme.is_premium_exclusive && (
-                              <Badge variant="outline" className="gap-1">
-                                <Crown className="w-3 h-3" />
-                                Premium
-                              </Badge>
-                            )}
-                          </div>
-                          <CardDescription className="mt-2">{theme.description}</CardDescription>
-                        </div>
-                        {equipped && (
-                          <Badge className="bg-primary">
-                            <Check className="w-3 h-3 mr-1" />
-                            Equipped
-                          </Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-
-                    {/* Theme Preview */}
-                    <CardContent className="space-y-4">
-                      <div
-                        className="w-full h-24 rounded-lg border-2 flex items-center justify-center text-lg font-semibold"
-                        style={{
-                          backgroundColor: theme.metadata.background,
-                          color: theme.metadata.text,
-                          borderColor: theme.metadata.primary,
-                        }}
-                      >
-                        <span style={{ color: theme.metadata.accent }}>Preview</span>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Coins className="w-4 h-4 text-amber-500" />
-                          <span className={`font-bold ${theme.price === 0 ? 'text-green-500' : 'text-amber-600 dark:text-amber-400'}`}>
-                            {theme.price === 0 ? 'Free' : theme.price}
-                          </span>
-                        </div>
-
-                        {!isOwned ? (
-                          <Button
-                            onClick={() => handlePurchase(theme)}
-                            disabled={isPurchasing || userProfile?.coins < theme.price || (theme.is_premium_exclusive && !userProfile?.is_premium)}
-                            className={theme.price === 0 ? 'bg-green-500 hover:bg-green-600' : ''}
-                          >
-                            {isPurchasing ? 'Purchasing...' : theme.price === 0 ? 'Get Free' : 'Purchase'}
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={() => handleEquip(theme)}
-                            disabled={equipped || isEquipping}
-                            variant={equipped ? 'default' : 'outline'}
-                          >
-                            {isEquipping ? 'Equipping...' : equipped ? 'Equipped' : 'Equip'}
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </div>
-        </TabsContent>
-
-        {/* Avatars Tab */}
-        <TabsContent value="avatars" className="space-y-6 mt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {avatars.map((avatar) => {
-              const isOwned = userInventory.has(avatar.id);
-              const equipped = isEquipped(avatar);
-              const isPurchasing = purchasing.has(avatar.id);
-              const isEquipping = equipping.has(avatar.id);
-
-              return (
-                <motion.div
-                  key={avatar.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card className={`overflow-hidden transition-all ${
-                    equipped ? 'ring-2 ring-primary' : ''
-                  } ${avatar.is_premium_exclusive && !userProfile?.is_premium ? 'opacity-60' : ''}`}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <CardTitle className="text-lg">{avatar.name}</CardTitle>
-                            {avatar.is_premium_exclusive && (
-                              <Badge variant="outline" className="gap-1">
-                                <Crown className="w-3 h-3" />
-                                Premium
-                              </Badge>
-                            )}
-                          </div>
-                          <CardDescription className="mt-2">{avatar.description}</CardDescription>
-                        </div>
-                        {equipped && (
-                          <Badge className="bg-primary">
-                            <Check className="w-3 h-3 mr-1" />
-                            Equipped
-                          </Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-
-                    {/* Avatar Preview */}
-                    <CardContent className="space-y-4">
-                      <div className="w-full h-24 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 border-2 border-primary/30 flex items-center justify-center text-5xl">
-                        {avatar.icon_emoji}
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Coins className="w-4 h-4 text-amber-500" />
-                          <span className={`font-bold ${avatar.price === 0 ? 'text-green-500' : 'text-amber-600 dark:text-amber-400'}`}>
-                            {avatar.price === 0 ? 'Free' : avatar.price}
-                          </span>
-                        </div>
-
-                        {!isOwned ? (
-                          <Button
-                            onClick={() => handlePurchase(avatar)}
-                            disabled={isPurchasing || userProfile?.coins < avatar.price || (avatar.is_premium_exclusive && !userProfile?.is_premium)}
-                            className={avatar.price === 0 ? 'bg-green-500 hover:bg-green-600' : ''}
-                          >
-                            {isPurchasing ? 'Purchasing...' : avatar.price === 0 ? 'Get Free' : 'Purchase'}
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={() => handleEquip(avatar)}
-                            disabled={equipped || isEquipping}
-                            variant={equipped ? 'default' : 'outline'}
-                          >
-                            {isEquipping ? 'Equipping...' : equipped ? 'Equipped' : 'Equip'}
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </div>
-        </TabsContent>
-      </Tabs>
+      {/* Rarity Sections */}
+      <div className="space-y-12">
+        {renderRaritySection('common', '⚪ Common (Level 1)')}
+        {renderRaritySection('uncommon', '🟢 Uncommon (Level 5)')}
+        {renderRaritySection('rare', '🔵 Rare (Level 10)')}
+        {renderRaritySection('epic', '🟣 Epic (Level 20)')}
+        {renderRaritySection('legendary', '🟠 Legendary (Level 40)')}
+        {renderRaritySection('mythical', '🌟 Mythical (Level 60) - 50% Premium')}
+        {renderRaritySection('godly', '👑 Godly (Level 100) - 90% Premium')}
+      </div>
     </div>
   );
 }
