@@ -5,10 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { 
-  BookOpen, Clock, Award, Loader2, Lock, CheckCircle2, ArrowLeft, 
-  ChevronDown, ChevronRight, FolderOpen, FileText 
+import {
+  BookOpen, Clock, Award, Loader2, Lock, CheckCircle2, ArrowLeft,
+  ChevronDown, ChevronRight, FolderOpen, FileText
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Lesson {
   id: string;
