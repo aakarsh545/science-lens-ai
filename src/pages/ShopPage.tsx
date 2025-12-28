@@ -483,37 +483,151 @@ export default function ShopPage() {
           {/* Preview */}
           <CardContent className="space-y-4">
             {item.type === 'theme' ? (
-              <div
-                className="w-full h-24 rounded-lg border-2 flex items-center justify-center text-lg font-semibold"
-                style={{
-                  backgroundColor: item.metadata.background,
-                  color: item.metadata.text,
-                  borderColor: item.metadata.primary,
-                }}
-              >
-                <span style={{ color: item.metadata.accent }}>Preview</span>
+              <div className="relative group">
+                {/* Theme Preview - Large and Attractive */}
+                <div
+                  className="w-full h-40 rounded-xl border-4 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl"
+                  style={{
+                    backgroundColor: item.metadata.background,
+                    borderColor: item.metadata.primary,
+                    boxShadow: `0 0 20px ${item.metadata.primary}40`,
+                  }}
+                >
+                  {/* Gradient overlay if available */}
+                  {item.metadata.gradientColors && (
+                    <div
+                      className="absolute inset-0 opacity-30"
+                      style={{
+                        background: `linear-gradient(135deg, ${item.metadata.gradientColors.join(', ')})`,
+                      }}
+                    />
+                  )}
+
+                  {/* Color swatches */}
+                  <div className="absolute top-3 left-3 flex gap-2">
+                    <div
+                      className="w-6 h-6 rounded-full border-2 border-white/50 shadow-lg"
+                      style={{ backgroundColor: item.metadata.primary }}
+                      title="Primary"
+                    />
+                    <div
+                      className="w-6 h-6 rounded-full border-2 border-white/50 shadow-lg"
+                      style={{ backgroundColor: item.metadata.secondary }}
+                      title="Secondary"
+                    />
+                    <div
+                      className="w-6 h-6 rounded-full border-2 border-white/50 shadow-lg"
+                      style={{ backgroundColor: item.metadata.accent }}
+                      title="Accent"
+                    />
+                  </div>
+
+                  {/* Preview text */}
+                  <div className="relative z-10 text-center">
+                    <p
+                      className="text-2xl font-bold mb-1"
+                      style={{ color: item.metadata.text }}
+                    >
+                      {item.name}
+                    </p>
+                    <p
+                      className="text-sm opacity-80"
+                      style={{ color: item.metadata.accent }}
+                    >
+                      Theme Preview
+                    </p>
+                  </div>
+
+                  {/* Shine effect on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                </div>
               </div>
             ) : item.type === 'avatar' ? (
-              <div className="w-full h-24 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 border-2 border-primary/30 flex items-center justify-center text-5xl">
-                {item.icon_emoji}
+              <div className="relative group">
+                {/* Avatar Preview - Large and Animated */}
+                <div className="w-full h-40 rounded-xl border-4 bg-gradient-to-br from-primary/20 via-purple-500/20 to-pink-500/20 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl"
+                     style={{ borderColor: item.metadata.primary || 'var(--theme-primary)' }}>
+                  {/* Animated background particles */}
+                  <div className="absolute inset-0">
+                    <div className="absolute top-2 left-4 w-2 h-2 bg-white/30 rounded-full animate-ping" style={{ animationDelay: '0s' }} />
+                    <div className="absolute top-8 right-6 w-3 h-3 bg-white/20 rounded-full animate-ping" style={{ animationDelay: '0.5s' }} />
+                    <div className="absolute bottom-4 left-8 w-2 h-2 bg-white/25 rounded-full animate-ping" style={{ animationDelay: '1s' }} />
+                    <div className="absolute top-1/2 right-4 w-2 h-2 bg-white/30 rounded-full animate-ping" style={{ animationDelay: '1.5s' }} />
+                  </div>
+
+                  {/* Avatar emoji */}
+                  <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                    <div className="text-8xl drop-shadow-2xl filter group-hover:brightness-125 transition-all duration-300">
+                      {item.icon_emoji}
+                    </div>
+                  </div>
+
+                  {/* Rarity glow */}
+                  <div className="absolute -inset-2 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-xl blur-xl group-hover:from-primary/30 group-hover:to-purple-500/30 transition-all duration-300" />
+
+                  {/* Shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                </div>
               </div>
             ) : item.type === 'coin_pack' ? (
-              <div className="w-full h-24 rounded-lg bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border-2 border-amber-500/30 flex flex-col items-center justify-center text-center">
-                <span className="text-4xl mb-1">💰</span>
-                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
-                  {item.metadata.coin_amount?.toLocaleString()} Coins
-                </span>
-                {item.metadata.bonus && (
-                  <span className="text-xs text-green-500">+{item.metadata.bonus} bonus</span>
-                )}
+              <div className="relative group">
+                <div className="w-full h-40 rounded-xl border-4 bg-gradient-to-br from-amber-500/20 via-yellow-500/30 to-amber-600/20 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl"
+                     style={{ borderColor: '#fbbf24' }}>
+                  {/* Coin animation */}
+                  <div className="absolute top-4 right-4 text-4xl animate-bounce">💰</div>
+                  <div className="absolute top-8 right-12 text-3xl animate-bounce" style={{ animationDelay: '0.2s' }}>💰</div>
+                  <div className="absolute bottom-6 right-8 text-3xl animate-bounce" style={{ animationDelay: '0.4s' }}>💰</div>
+
+                  {/* Main content */}
+                  <div className="relative z-10 text-center">
+                    <div className="text-5xl mb-2">💰</div>
+                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-1">
+                      {item.metadata.coin_amount?.toLocaleString()}
+                    </p>
+                    <p className="text-sm text-amber-500">Coins</p>
+                    {item.metadata.bonus && (
+                      <div className="mt-2 inline-flex items-center gap-1 bg-green-500/20 text-green-400 text-xs px-3 py-1 rounded-full border border-green-500/30">
+                        <span>✨</span>
+                        <span>+{item.metadata.bonus.toLocaleString()} Bonus</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                </div>
               </div>
             ) : (
-              <div className="w-full h-24 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-500/30 flex flex-col items-center justify-center text-center">
-                <Zap className="w-8 h-8 mb-2 text-purple-500" />
-                <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
-                  {item.metadata.bonus_multiplier}x XP
-                </span>
-                <span className="text-xs text-muted-foreground">{item.metadata.duration_minutes} min</span>
+              <div className="relative group">
+                <div className="w-full h-40 rounded-xl border-4 bg-gradient-to-br from-purple-500/20 via-pink-500/20 to-purple-600/20 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl"
+                     style={{ borderColor: '#a855f7' }}>
+                  {/* Lightning bolt animations */}
+                  <div className="absolute top-3 left-1/2 transform -translate-x-1/2">
+                    <Zap className="w-6 h-6 text-purple-400 animate-pulse" />
+                  </div>
+
+                  {/* Main content */}
+                  <div className="relative z-10 text-center">
+                    <Zap className="w-12 h-12 mx-auto mb-2 text-purple-500 animate-pulse" />
+                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                      {item.metadata.bonus_multiplier}x XP
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-purple-400">
+                      <Clock className="w-4 h-4" />
+                      <span className="text-lg">{item.metadata.duration_minutes} min</span>
+                    </div>
+                  </div>
+
+                  {/* Animated particles */}
+                  <div className="absolute inset-0 overflow-hidden">
+                    <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-purple-400/50 rounded-full animate-ping" />
+                    <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-pink-400/50 rounded-full animate-ping" style={{ animationDelay: '0.3s' }} />
+                    <div className="absolute bottom-1/4 left-1/3 w-1 h-1 bg-purple-400/50 rounded-full animate-ping" style={{ animationDelay: '0.6s' }} />
+                  </div>
+
+                  {/* Shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-400/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                </div>
               </div>
             )}
 
