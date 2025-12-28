@@ -123,6 +123,10 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
       };
       console.log('Request body:', body);
 
+      // Add timeout for the initial request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
@@ -130,7 +134,10 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(body),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       console.log('Response status:', resp.status, resp.statusText);
 
@@ -156,14 +163,41 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
       let textBuffer = "";
       let streamDone = false;
       let assistantSoFar = "";
+      let lastChunkTime = Date.now();
+      let noDataTimeoutId: NodeJS.Timeout;
 
       // Create placeholder assistant message
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+      // Set up timeout for no data received
+      const resetNoDataTimeout = () => {
+        if (noDataTimeoutId) clearTimeout(noDataTimeoutId);
+        noDataTimeoutId = setTimeout(() => {
+          if (!streamDone) {
+            console.error('No data received for 20 seconds, aborting stream');
+            reader.cancel();
+            toast({
+              title: "Response Timeout",
+              description: "The AI response took too long. Please try again.",
+              variant: "destructive",
+            });
+            setMessages((prev) => prev.slice(0, -1));
+            streamDone = true;
+          }
+        }, 20000); // 20 seconds without any data
+      };
+
+      resetNoDataTimeout();
 
       while (!streamDone) {
         const { done, value } = await reader.read();
         if (done) break;
         console.log('Chunk received bytes:', value?.length || 0);
+
+        // Update last chunk time and reset timeout
+        lastChunkTime = Date.now();
+        resetNoDataTimeout();
+
         textBuffer += decoder.decode(value, { stream: true });
 
         let newlineIndex: number;
@@ -200,6 +234,9 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
         }
       }
 
+      // Clear the no data timeout
+      if (noDataTimeoutId) clearTimeout(noDataTimeoutId);
+
       // Save question & response
       const { data: questionData } = await supabase
         .from("questions")
@@ -232,11 +269,21 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
       }
     } catch (error: any) {
       console.error("Chat error:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to get response",
-      });
+
+      if (error.name === 'AbortError') {
+        toast({
+          variant: "destructive",
+          title: "Request Timeout",
+          description: "The request took too long to respond. Please try again.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to get response",
+        });
+      }
+
       setMessages((prev) => prev.slice(0, -1));
     }
   };

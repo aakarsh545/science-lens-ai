@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, Zap, Target } from "lucide-react";
+import { Trophy, Zap, Target, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { calculateLevel, getXpRemainingToNextLevel, getProgressToNextLevel, getTotalXpForLevel } from "@/utils/levelCalculations";
 
 interface GamificationBarProps {
   userId: string;
@@ -14,6 +16,7 @@ interface Stats {
   level: number;
   total_questions: number;
   achievementCount: number;
+  xp_total: number;
 }
 
 export function GamificationBar({ userId }: GamificationBarProps) {
@@ -23,12 +26,93 @@ export function GamificationBar({ userId }: GamificationBarProps) {
     level: 1,
     total_questions: 0,
     achievementCount: 0,
+    xp_total: 0,
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+
+    const loadStats = async () => {
+      try {
+        setError(false);
+
+        // Add timeout for stats loading
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Stats loading timed out")), 5000);
+        });
+
+        const fetchPromise = (async () => {
+          // Load credits and xp_total from user_stats
+          const { data: userStats, error: userStatsError } = await supabase
+            .from("user_stats")
+            .select("credits, xp_total")
+            .eq("user_id", userId)
+            .single();
+
+          if (userStatsError && userStatsError.code !== 'PGRST116') {
+            throw userStatsError;
+          }
+
+          // Load other fields from profiles
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("xp_points, level, total_questions")
+            .eq("user_id", userId)
+            .single();
+
+          if (profileError) throw profileError;
+
+          const { count, error: countError } = await supabase
+            .from("achievements")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", userId);
+
+          if (countError) throw countError;
+
+          return { userStats, profile, count };
+        })();
+
+        const { userStats, profile, count } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
+        if (mounted && (userStats || profile)) {
+          setStats({
+            credits: userStats?.credits || 0,
+            xp_total: userStats?.xp_total || 0,
+            xp_points: profile?.xp_points || 0,
+            level: profile?.level || 1,
+            total_questions: profile?.total_questions || 0,
+            achievementCount: count || 0,
+          });
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Error loading stats:", err);
+        if (mounted) {
+          setError(true);
+          setLoading(false);
+        }
+      }
+    };
+
     loadStats();
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates from both tables
+    const statsChannel = supabase
+      .channel("stats-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "user_stats",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => loadStats()
+      )
+      .subscribe();
+
     const profileChannel = supabase
       .channel("profile-updates")
       .on(
@@ -58,36 +142,55 @@ export function GamificationBar({ userId }: GamificationBarProps) {
       .subscribe();
 
     return () => {
+      mounted = false;
+      supabase.removeChannel(statsChannel);
       supabase.removeChannel(profileChannel);
       supabase.removeChannel(achievementChannel);
     };
   }, [userId]);
 
-  const loadStats = async () => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("credits, xp_points, level, total_questions")
-      .eq("user_id", userId)
-      .single();
+  // Calculate level from xp_total using exponential progression
+  const calculatedLevel = calculateLevel(stats.xp_total);
+  const xpRemaining = getXpRemainingToNextLevel(stats.xp_total);
+  const progressPercentage = getProgressToNextLevel(stats.xp_total);
+  const xpForCurrentLevelTotal = getTotalXpForLevel(calculatedLevel);
+  const xpForNextLevelTotal = getTotalXpForLevel(calculatedLevel + 1);
+  const xpInCurrentLevel = stats.xp_total - xpForCurrentLevelTotal;
 
-    const { count } = await supabase
-      .from("achievements")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId);
+  if (loading) {
+    return (
+      <Card className="p-4 bg-gradient-to-r from-primary/10 to-purple-500/10 border-primary/20">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Skeleton className="w-10 h-10 rounded-full" />
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+          </div>
+          <Skeleton className="h-2 w-full" />
+        </div>
+      </Card>
+    );
+  }
 
-    if (profile) {
-      setStats({
-        credits: profile.credits || 0,
-        xp_points: profile.xp_points || 0,
-        level: profile.level || 1,
-        total_questions: profile.total_questions || 0,
-        achievementCount: count || 0,
-      });
-    }
-  };
-
-  const xpForNextLevel = stats.level * 100;
-  const progressPercentage = (stats.xp_points % xpForNextLevel) / xpForNextLevel * 100;
+  if (error) {
+    return (
+      <Card className="p-4 bg-gradient-to-r from-primary/10 to-purple-500/10 border-primary/20">
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading stats...</span>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-4 bg-gradient-to-r from-primary/10 to-purple-500/10 border-primary/20">
@@ -95,12 +198,12 @@ export function GamificationBar({ userId }: GamificationBarProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="text-lg font-bold">L{stats.level}</span>
+              <span className="text-lg font-bold">L{calculatedLevel}</span>
             </div>
             <div>
-              <p className="text-sm font-medium">Level {stats.level}</p>
+              <p className="text-sm font-medium">Level {calculatedLevel}</p>
               <p className="text-xs text-muted-foreground">
-                {stats.xp_points % xpForNextLevel} / {xpForNextLevel} XP
+                {xpInCurrentLevel} / {xpForNextLevelTotal - xpForCurrentLevelTotal} XP
               </p>
             </div>
           </div>
@@ -127,7 +230,7 @@ export function GamificationBar({ userId }: GamificationBarProps) {
         <div className="space-y-1">
           <Progress value={progressPercentage} className="h-2" />
           <p className="text-xs text-muted-foreground text-right">
-            {xpForNextLevel - (stats.xp_points % xpForNextLevel)} XP to next level
+            {xpRemaining} XP to next level
           </p>
         </div>
       </div>

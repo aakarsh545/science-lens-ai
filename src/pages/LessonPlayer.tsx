@@ -1,4 +1,4 @@
-import { useEffect, useState, Suspense, lazy } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,30 +20,22 @@ import {
   Award,
   Loader2,
   BookOpen,
-  Box,
   Trophy
 } from "lucide-react";
 import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
 import { triggerLevelUpConfetti, triggerLessonCompleteConfetti } from "@/utils/confettiEffects";
 
-// Lazy load 3D component for performance
-const LessonModel = lazy(() => import("@/components/3d/LessonModel"));
-
-// Import ModelType for type safety
-import type { ModelType } from "@/components/3d/LessonModel";
 
 interface Lesson {
   id: string;
   title: string;
   content: string;
-  animations: any;
-  examples: any;
-  quiz: any;
+  animations?: unknown[];
+  examples?: unknown[];
+  quiz?: QuizQuestion[];
   xp_reward: number;
   order_index: number;
   chapter?: string;
-  model_type?: ModelType | null;
-  model_config?: Record<string, unknown> | null;
 }
 
 interface QuizQuestion {
@@ -58,11 +50,12 @@ export default function LessonPlayer() {
   const { courseSlug, lessonSlug } = useParams();
   const navigate = useNavigate();
   const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [courseLessons, setCourseLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [completingLesson, setCompletingLesson] = useState(false);
-  
+
   // Quiz state
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [showResults, setShowResults] = useState<Record<number, boolean>>({});
@@ -95,11 +88,14 @@ export default function LessonPlayer() {
       });
 
       if (courseData?.lessons) {
+        // Sort lessons by order_index and store in state
+        const sortedLessons = [...courseData.lessons].sort((a: any, b: any) => a.order_index - b.order_index);
+        setCourseLessons(sortedLessons);
+
         const foundLesson = courseData.lessons.find((l: any) => l.slug === lessonSlug);
 
         if (foundLesson) {
           // Check if lesson is unlocked (sequential unlocking)
-          const sortedLessons = [...courseData.lessons].sort((a: any, b: any) => a.order_index - b.order_index);
           const lessonIndex = sortedLessons.findIndex((l: any) => l.id === foundLesson.id);
 
           // If not the first lesson, check if previous lesson is completed
@@ -154,6 +150,41 @@ export default function LessonPlayer() {
     }
   };
 
+  // Helper function to get next lesson
+  const getNextLesson = () => {
+    if (!lesson || courseLessons.length === 0) return null;
+
+    const currentIndex = courseLessons.findIndex(l => l.id === lesson.id);
+    if (currentIndex === -1 || currentIndex === courseLessons.length - 1) {
+      return null; // This is the last lesson
+    }
+
+    return courseLessons[currentIndex + 1];
+  };
+
+  // Helper function to check if all quizzes are answered
+  const allQuizzesAnswered = () => {
+    const quiz = lesson?.quiz;
+    if (!quiz?.questions || quiz.questions.length === 0) return true;
+
+    // Require at least 2 quizzes, or all if less than 2
+    const requiredQuizzes = Math.min(2, quiz.questions.length);
+    const answeredQuizzes = Object.keys(showResults).length;
+
+    return answeredQuizzes >= requiredQuizzes;
+  };
+
+  // Helper function to get quiz progress text
+  const getQuizProgress = () => {
+    const quiz = lesson?.quiz;
+    if (!quiz?.questions || quiz.questions.length === 0) return null;
+
+    const answeredQuizzes = Object.keys(showResults).length;
+    const requiredQuizzes = Math.min(2, quiz.questions.length);
+
+    return `${answeredQuizzes}/${requiredQuizzes} quizzes completed`;
+  };
+
   const handleQuizSubmit = (questionIndex: number) => {
     // Start quiz timer on first answer
     if (!quizStartTime) {
@@ -172,6 +203,14 @@ export default function LessonPlayer() {
         toast.success('Correct! Well done! 🎉');
       } else {
         toast.error('Not quite right. Review the explanation below.');
+      }
+
+      // Check if all required quizzes are now answered
+      const answeredQuizzes = Object.keys({ ...showResults, [questionIndex]: true }).length;
+      const requiredQuizzes = Math.min(2, quiz.questions.length);
+
+      if (answeredQuizzes === requiredQuizzes) {
+        toast.success(`Great! You've completed ${requiredQuizzes} quizzes. You can now mark this lesson complete! 🌟`);
       }
     }
   };
@@ -301,6 +340,16 @@ export default function LessonPlayer() {
   const handleMarkComplete = async () => {
     if (!userId || !lesson) return;
 
+    // Check if all required quizzes are answered
+    if (!allQuizzesAnswered()) {
+      const quiz = lesson?.quiz;
+      const requiredQuizzes = Math.min(2, quiz?.questions?.length || 0);
+      toast.error(
+        `Please complete at least ${requiredQuizzes} quiz questions before marking this lesson complete.`
+      );
+      return;
+    }
+
     setCompletingLesson(true);
     try {
       // Get current XP
@@ -314,7 +363,7 @@ export default function LessonPlayer() {
 
       // Mark lesson complete
       const { data, error } = await supabase.functions.invoke('lessons', {
-        body: { 
+        body: {
           id: lesson.id,
           action: 'complete'
         }
@@ -346,11 +395,36 @@ export default function LessonPlayer() {
       }
 
       setIsCompleted(true);
+
+      // Auto-navigate to next lesson after a short delay
+      const nextLesson = getNextLesson();
+      if (nextLesson) {
+        setTimeout(() => {
+          toast.info(`Moving to next lesson: "${nextLesson.title}"...`);
+          navigate(`/science-lens/learning/${courseSlug}/lesson/${nextLesson.slug}`);
+        }, 2000);
+      } else {
+        // This was the last lesson
+        setTimeout(() => {
+          toast.success('🎉 Congratulations! You have completed all lessons in this course!');
+          navigate(`/science-lens/learning/${courseSlug}`);
+        }, 2000);
+      }
     } catch (error) {
       console.error('Error completing lesson:', error);
       toast.error('Failed to mark lesson as complete');
     } finally {
       setCompletingLesson(false);
+    }
+  };
+
+  const handleNextLesson = () => {
+    const nextLesson = getNextLesson();
+    if (nextLesson) {
+      navigate(`/science-lens/learning/${courseSlug}/lesson/${nextLesson.slug}`);
+    } else {
+      toast.success('🎉 This is the last lesson! Course complete!');
+      navigate(`/science-lens/learning/${courseSlug}`);
     }
   };
 
@@ -478,35 +552,6 @@ export default function LessonPlayer() {
         chapter={lesson.chapter as string}
       />
 
-      {/* Interactive 3D Model */}
-      {lesson?.model_type && (
-        <Card className="overflow-hidden" style={{
-          background: 'rgba(13, 27, 42, 0.95)',
-          border: '1px solid rgba(0, 212, 255, 0.3)',
-        }}>
-          <CardHeader className="border-b border-[rgba(0,212,255,0.2)]">
-            <CardTitle className="text-xl flex items-center gap-2" style={{ color: '#00d4ff' }}>
-              <Box className="w-5 h-5" />
-              Interactive 3D Model
-            </CardTitle>
-            <p className="text-sm text-gray-400">Drag to rotate, scroll to zoom</p>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Suspense fallback={
-              <div className="h-[400px] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#00d4ff' }} />
-              </div>
-            }>
-              <LessonModel
-                type={lesson.model_type}
-                config={lesson.model_config || {}}
-                title={lesson.title}
-              />
-            </Suspense>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Visual Concepts - Topic-specific images */}
       <Card>
         <CardHeader>
@@ -541,10 +586,17 @@ export default function LessonPlayer() {
       {quiz?.questions && quiz.questions.length > 0 && !showQuizResults && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl">Test Your Knowledge</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Answer all questions to see your detailed results
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl">Test Your Knowledge</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Complete at least 2 quizzes to finish this lesson
+                </p>
+              </div>
+              <Badge variant={allQuizzesAnswered() ? "default" : "secondary"} className="text-sm">
+                {getQuizProgress()}
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {quiz.questions.map((q: QuizQuestion, qIdx: number) => {
@@ -552,7 +604,15 @@ export default function LessonPlayer() {
 
               return (
                 <div key={qIdx} className="space-y-4">
-                  <h4 className="font-semibold text-lg">{q.question}</h4>
+                  <div className="flex items-start gap-2">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-sm flex items-center justify-center font-semibold">
+                      {qIdx + 1}
+                    </span>
+                    <h4 className="font-semibold text-lg flex-1">{q.question}</h4>
+                    {showResults[qIdx] && (
+                      <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
+                    )}
+                  </div>
 
                   <RadioGroup
                     value={selectedAnswers[qIdx]?.toString() ?? ''}
@@ -587,7 +647,7 @@ export default function LessonPlayer() {
                   </RadioGroup>
 
                   {!showResults[qIdx] && selectedAnswers[qIdx] !== undefined && (
-                    <Button onClick={() => handleQuizSubmit(qIdx)}>
+                    <Button onClick={() => handleQuizSubmit(qIdx)} size="sm">
                       Submit Answer
                     </Button>
                   )}
@@ -699,38 +759,92 @@ export default function LessonPlayer() {
 
       {/* Action Buttons - Hide if showing quiz results */}
       {!showQuizResults && (
-        <div className="flex items-center justify-between pt-6 border-t border-border">
-        <Button 
-          variant="outline"
-          onClick={() => navigate(`/science-lens/learning/${courseSlug}`)}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Course
-        </Button>
+        <Card className="border-primary/20">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {/* Quiz requirement notice */}
+              {quiz?.questions && quiz.questions.length > 0 && !allQuizzesAnswered() && (
+                <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <Lightbulb className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-amber-700 dark:text-amber-400">
+                      Complete the quizzes first
+                    </p>
+                    <p className="text-sm text-amber-600 dark:text-amber-500 mt-1">
+                      Answer at least {Math.min(2, quiz.questions.length)} quiz questions to unlock the Mark Complete button.
+                    </p>
+                  </div>
+                </div>
+              )}
 
-        <Button
-          onClick={handleMarkComplete}
-          disabled={isCompleted || completingLesson}
-          className="btn-achievement"
-        >
-          {completingLesson ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Completing...
-            </>
-          ) : isCompleted ? (
-            <>
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Completed
-            </>
-          ) : (
-            <>
-              <Award className="w-4 h-4 mr-2" />
-              Mark Complete
-            </>
-          )}
-        </Button>
-      </div>
+              {/* Completion status for already completed lessons */}
+              {isCompleted && (
+                <div className="flex items-center gap-2 p-4 bg-success/10 border border-success/30 rounded-lg">
+                  <CheckCircle2 className="w-5 h-5 text-success" />
+                  <p className="text-success font-semibold">You've already completed this lesson! Review mode active.</p>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex items-center justify-between gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`/science-lens/learning/${courseSlug}`)}
+                  className="flex-1 sm:flex-none"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Course
+                </Button>
+
+                <div className="flex items-center gap-3">
+                  {/* Next Lesson Button - Only show after completing */}
+                  {isCompleted && getNextLesson() && (
+                    <Button
+                      onClick={handleNextLesson}
+                      variant="default"
+                      className="btn-primary"
+                    >
+                      Next Lesson
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  )}
+
+                  {/* Mark Complete Button */}
+                  <Button
+                    onClick={handleMarkComplete}
+                    disabled={completingLesson || (!allQuizzesAnswered() && !isCompleted)}
+                    className="btn-achievement"
+                    title={!allQuizzesAnswered() && !isCompleted ? "Complete the required quizzes first" : ""}
+                  >
+                    {completingLesson ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Completing...
+                      </>
+                    ) : isCompleted ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Completed
+                      </>
+                    ) : (
+                      <>
+                        <Award className="w-4 h-4 mr-2" />
+                        Mark Complete
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Last lesson notice */}
+              {isCompleted && !getNextLesson() && (
+                <p className="text-center text-sm text-muted-foreground pt-2">
+                  This is the final lesson in this course. Great work!
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

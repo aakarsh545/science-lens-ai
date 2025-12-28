@@ -3,10 +3,12 @@ import {
   Compass,
   CreditCard,
   GraduationCap,
+  Target,
   Trophy,
   Settings as SettingsIcon,
   LogOut,
-  Atom
+  User,
+  Award
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -28,10 +30,12 @@ import { Separator } from "@/components/ui/separator";
 const menuItems = [
   { title: "Home", icon: Compass, path: "/science-lens" },
   { title: "Learning", icon: GraduationCap, path: "/science-lens/learning" },
-  { title: "Simulations", icon: Atom, path: "/science-lens/simulations" },
+  { title: "Challenges", icon: Target, path: "/science-lens/challenges" },
+  { title: "Leaderboard", icon: Award, path: "/science-lens/leaderboard" },
   { title: "Ask Questions", icon: MessageSquare, path: "/science-lens/ask" },
-  { title: "Pricing", icon: CreditCard, path: "/science-lens/pricing" },
+  { title: "Profile", icon: User, path: "/science-lens/profile" },
   { title: "Achievements", icon: Trophy, path: "/science-lens/achievements" },
+  { title: "Pricing", icon: CreditCard, path: "/science-lens/pricing" },
   { title: "Settings", icon: SettingsIcon, path: "/science-lens/settings" },
 ];
 

@@ -16,9 +16,15 @@ const Settings = () => {
     setConnectionStatus("idle");
 
     try {
+      // Add timeout for connection test
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
       const { data, error } = await supabase.functions.invoke("ask", {
         body: { message: "test", conversationId: "test" },
       });
+
+      clearTimeout(timeoutId);
 
       if (error) throw error;
 
@@ -33,12 +39,22 @@ const Settings = () => {
       }
     } catch (error: any) {
       console.error("Connection test error:", error);
-      setConnectionStatus("error");
-      toast({
-        variant: "destructive",
-        title: "Connection Failed",
-        description: error.message || "Failed to connect to OpenAI. Please check your API key.",
-      });
+
+      if (error.name === 'AbortError') {
+        setConnectionStatus("error");
+        toast({
+          variant: "destructive",
+          title: "Connection Timeout",
+          description: "The connection test took too long. Please try again.",
+        });
+      } else {
+        setConnectionStatus("error");
+        toast({
+          variant: "destructive",
+          title: "Connection Failed",
+          description: error.message || "Failed to connect to OpenAI. Please check your API key.",
+        });
+      }
     } finally {
       setIsTestingConnection(false);
     }

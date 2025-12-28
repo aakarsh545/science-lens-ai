@@ -16,9 +16,12 @@ import TopicsPage from "./pages/TopicsPage";
 import PricingPage from "./pages/PricingPage";
 import LessonPlayer from "./pages/LessonPlayer";
 import DashboardMainPage from "./pages/DashboardMainPage";
-import SimulationsPage from "./pages/SimulationsPage";
 import UnifiedLearningPage from "./pages/UnifiedLearningPage";
 import CoursePage from "./pages/CoursePage";
+import ChallengesPage from "./pages/ChallengesPage";
+import ChallengeSession from "./pages/ChallengeSession";
+import ProfilePage from "./pages/ProfilePage";
+import LeaderboardPage from "./pages/LeaderboardPage";
 
 const queryClient = new QueryClient();
 
@@ -34,14 +37,17 @@ const App = () => (
             <Route path="/science-lens" element={<AuthenticatedLayout />}>
               <Route index element={<DashboardMainPage />} />
               <Route path="learning" element={<UnifiedLearningPage />} />
-              <Route path="learn/:courseSlug" element={<CoursePage />} />
-              <Route path="learn/:courseSlug/:lessonSlug" element={<LessonPlayer />} />
+              <Route path="learning/:courseSlug" element={<CoursePage />} />
+              <Route path="learning/:courseSlug/:lessonSlug" element={<LessonPlayer />} />
+              <Route path="challenges" element={<ChallengesPage />} />
+              <Route path="challenges/session/:sessionId" element={<ChallengeSession />} />
+              <Route path="leaderboard" element={<LeaderboardPage />} />
               <Route path="ask" element={<AskPage />} />
               <Route path="topics" element={<TopicsPage />} />
               <Route path="api-test" element={<TestPage />} />
               <Route path="pricing" element={<PricingPage />} />
               <Route path="achievements" element={<AchievementsPage />} />
-              <Route path="simulations" element={<SimulationsPage />} />
+              <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
