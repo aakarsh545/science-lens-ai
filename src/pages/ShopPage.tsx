@@ -178,33 +178,79 @@ export default function ShopPage() {
   const handlePurchase = async (item: ShopItem) => {
     if (!userId || !userProfile) return;
 
+    // Real-money purchases - navigate to billing page
+    if (item.type === 'coin_pack') {
+      // Navigate to billing page with purchase details
+      const amount = item.metadata.usd_price || item.price;
+      navigate('/science-lens/billing', {
+        state: {
+          purchase: {
+            type: 'coins' as const,
+            amount: item.metadata.coin_amount || 0,
+            usdPrice: amount,
+            description: item.name
+          }
+        }
+      });
+      return;
+    }
+
+    if (item.type === 'xp_boost') {
+      // Navigate to billing page with purchase details
+      const amount = item.metadata.usd_price || item.price;
+      navigate('/science-lens/billing', {
+        state: {
+          purchase: {
+            type: 'xp_boost' as const,
+            amount: item.price,
+            usdPrice: amount,
+            description: `${item.metadata.bonus_multiplier}x XP Boost - ${item.metadata.duration_minutes} min`,
+            duration: item.metadata.duration_minutes,
+            multiplier: item.metadata.bonus_multiplier
+          }
+        }
+      });
+      return;
+    }
+
+    if (item.type === 'admin_pass') {
+      // Navigate to billing page with purchase details
+      navigate('/science-lens/billing', {
+        state: {
+          purchase: {
+            type: 'admin_pass' as const,
+            amount: item.price,
+            usdPrice: 10000,
+            description: 'Admin Pass - Ultimate Power'
+          }
+        }
+      });
+      return;
+    }
+
+    // Regular cosmetic purchases (themes/avatars) with coins
     // Skip ALL restrictions for admin users
     if (userProfile.is_admin) {
       // Admin bypass - proceed directly to purchase
     } else {
-      // Skip restrictions for coin packs and XP boosts
-      const isConsumable = item.type === 'coin_pack' || item.type === 'xp_boost';
+      // Check level requirement (only for cosmetics)
+      if (userProfile.level < item.level_required) {
+        toast({
+          title: "Level requirement not met!",
+          description: `You need to be Level ${item.level_required} to purchase this item. Current level: ${userProfile.level}`,
+          variant: "destructive",
+        });
+        return;
+      }
 
-      if (!isConsumable) {
-        // Check level requirement (only for cosmetics)
-        if (userProfile.level < item.level_required) {
-          toast({
-            title: "Level requirement not met!",
-            description: `You need to be Level ${item.level_required} to purchase this item. Current level: ${userProfile.level}`,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        // Check if premium exclusive and user is not premium (only for cosmetics)
-        if (item.is_premium_exclusive && !userProfile.is_premium) {
-          toast({
-            title: "Premium Exclusive!",
-            description: "This item is only available to premium members.",
-            variant: "destructive",
-          });
-          return;
-        }
+      // Check if premium exclusive and user is not premium (only for cosmetics)
+      if (item.is_premium_exclusive && !userProfile.is_premium) {
+        toast({
+          title: "Premium Exclusive!",
+          description: "This item is only available to premium members.",
+          variant: "destructive",
+        });
+        return;
       }
 
       // Check if user has enough coins (skip for admin)
@@ -221,109 +267,40 @@ export default function ShopPage() {
     setPurchasing(prev => new Set(prev).add(item.id));
 
     try {
-      if (item.type === 'coin_pack') {
-        // Handle coin pack purchase - add coins directly
-        const coinAmount = item.metadata.coin_amount || 0;
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ coins: userProfile.coins + coinAmount })
-          .eq('user_id', userId);
+      // Handle regular shop items (themes/avatars)
+      const { error: spendError } = await supabase.rpc('spend_coins', {
+        user_id: userId,
+        amount: item.price,
+        item_id: item.id
+      });
 
-        if (updateError) throw updateError;
-
-        setUserProfile(prev => prev ? { ...prev, coins: prev.coins + coinAmount } : null);
-
+      if (spendError) {
         toast({
-          title: "Coins purchased! 💰",
-          description: `You received ${coinAmount.toLocaleString()} coins!`,
+          title: "Purchase failed",
+          description: spendError.message,
+          variant: "destructive",
         });
-      } else if (item.type === 'xp_boost') {
-        // Handle XP boost - activate immediately
-        const duration = item.metadata.duration_minutes || 15;
-        const multiplier = item.metadata.bonus_multiplier || 2;
-        const expiresAt = new Date(Date.now() + duration * 60 * 1000).toISOString();
+        return;
+      }
 
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            active_xp_boost: multiplier,
-            xp_boost_expires_at: expiresAt
-          })
-          .eq('user_id', userId);
-
-        if (updateError) throw updateError;
-
-        await loadUserProfile(userId!);
-
-        toast({
-          title: "XP Boost activated! ⚡",
-          description: `${multiplier}x XP for ${duration} minutes!`,
-        });
-      } else if (item.type === 'admin_pass') {
-        // Handle admin pass purchase - grant admin status
-        const { error: adminError } = await supabase
-          .from('user_stats')
-          .update({
-            is_admin: true,
-            admin_purchased_at: new Date().toISOString(),
-            xp_total: 100000, // Max XP
-          })
-          .eq('user_id', userId);
-
-        if (adminError) throw adminError;
-
-        // Add to inventory
-        const { error: invError } = await supabase
-          .from('user_inventory')
-          .insert({
-            user_id: userId,
-            item_id: item.id,
-          });
-
-        if (invError) throw invError;
-
-        await loadUserProfile(userId!);
-
-        toast({
-          title: "🎉 Admin Pass Activated!",
-          description: "You now have unlimited power! All restrictions are bypassed.",
-        });
-      } else {
-        // Handle regular shop items (themes/avatars)
-        const { error: spendError } = await supabase.rpc('spend_coins', {
+      // Add to inventory
+      const { error: invError } = await supabase
+        .from('user_inventory')
+        .insert({
           user_id: userId,
-          amount: item.price,
           item_id: item.id
         });
 
-        if (spendError) {
-          toast({
-            title: "Purchase failed",
-            description: spendError.message,
-            variant: "destructive",
-          });
-          return;
-        }
+      if (invError) throw invError;
 
-        // Add to inventory
-        const { error: invError } = await supabase
-          .from('user_inventory')
-          .insert({
-            user_id: userId,
-            item_id: item.id
-          });
+      // Update local state
+      setUserInventory(prev => new Set(prev).add(item.id));
+      setUserProfile(prev => prev ? { ...prev, coins: prev.coins - item.price } : null);
 
-        if (invError) throw invError;
-
-        // Update local state
-        setUserInventory(prev => new Set(prev).add(item.id));
-        setUserProfile(prev => prev ? { ...prev, coins: prev.coins - item.price } : null);
-
-        toast({
-          title: "Purchase successful! 🎉",
-          description: `You purchased ${item.name} for ${item.price} coins!`,
-        });
-      }
+      toast({
+        title: "Purchase successful! 🎉",
+        description: `You purchased ${item.name} for ${item.price} coins!`,
+      });
     } catch (error: any) {
       toast({
         title: "Purchase failed",
@@ -705,7 +682,7 @@ export default function ShopPage() {
                 {isConsumable ? (
                   <Button
                     onClick={() => handlePurchase(item)}
-                    disabled={isPurchasing || !canPurchase || (item.type !== 'coin_pack' && userProfile?.coins < item.price)}
+                    disabled={isPurchasing || !canPurchase}
                     className={item.price === 0 ? 'bg-green-500 hover:bg-green-600' : ''}
                   >
                     {isPurchasing ? 'Purchasing...' : item.type === 'coin_pack' ? 'Buy' : 'Activate'}
