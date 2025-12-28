@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import TopicVisual from "@/components/animations/TopicVisual";
+import RelatedConceptsDropdown from "@/components/lessons/RelatedConceptsDropdown";
+import QuizResults from "@/pages/QuizResults";
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,7 +20,8 @@ import {
   Award,
   Loader2,
   BookOpen,
-  Box
+  Box,
+  Trophy
 } from "lucide-react";
 import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
 import { triggerLevelUpConfetti, triggerLessonCompleteConfetti } from "@/utils/confettiEffects";
@@ -26,134 +29,8 @@ import { triggerLevelUpConfetti, triggerLessonCompleteConfetti } from "@/utils/c
 // Lazy load 3D component for performance
 const LessonModel = lazy(() => import("@/components/3d/LessonModel"));
 
-// Comprehensive lesson-to-3D-model mapping
+// Import ModelType for type safety
 import type { ModelType } from "@/components/3d/LessonModel";
-
-const lessonModelMap: Record<string, { type: ModelType; config?: Record<string, unknown> }> = {
-  // ========== BASIC PHYSICS ==========
-  // Introduction
-  'intro': { type: 'atom', config: { protons: 6 } },
-
-  // Units & Measurement
-  'basics-units': { type: 'pendulum' },
-
-  // Motion
-  'motion-basics': { type: 'projectile' },
-  'motion-acceleration': { type: 'projectile' },
-
-  // Forces
-  'forces-intro': { type: 'force-vectors' },
-  'forces-newtons-laws': { type: 'force-vectors' },
-
-  // Energy
-  'energy-work': { type: 'pendulum' },
-  'energy-kinetic-potential': { type: 'pendulum' },
-
-  // Everyday Physics (Level 1)
-  'everyday-physics': { type: 'pendulum' },
-  'why-things-fall': { type: 'gravity' },
-
-  // Basic Understanding (Level 2)
-  'pressure-basics': { type: 'pressure' },
-  'waves-intro': { type: 'wave' },
-
-  // Intermediate (Level 3)
-  'sound-physics': { type: 'wave', config: { frequency: 3 } },
-  'light-basics': { type: 'wave', config: { frequency: 4 } },
-  'momentum-impulse': { type: 'projectile' },
-  'circular-motion': { type: 'planet' },
-
-  // Advanced (Level 4)
-  'electricity-basics': { type: 'electric-field' },
-  'magnetism-basics': { type: 'electric-field' },
-  'relativity-intro': { type: 'spacetime' },
-  'quantum-concepts': { type: 'quantum' },
-
-  // Expert (Level 5)
-  'thermodynamics-advanced': { type: 'thermodynamics' },
-  'general-relativity': { type: 'spacetime' },
-  'standard-model': { type: 'atom', config: { protons: 12 } },
-  'quantum-field-theory': { type: 'quantum' },
-
-  // ========== CHEMISTRY ==========
-  // Chemistry Introduction
-  'basics-matter': { type: 'molecule', config: { molecule: 'water' } },
-  'basics-atoms': { type: 'atom', config: { protons: 8 } },
-
-  // Reactions
-  'reactions-intro': { type: 'molecule', config: { molecule: 'co2' } },
-  'reactions-balancing': { type: 'molecule', config: { molecule: 'methane' } },
-
-  // Advanced Chemistry
-  'advanced-bonding': { type: 'molecule', config: { molecule: 'nacl' } },
-
-  // Comprehensive Chemistry
-  'kitchen-chemistry': { type: 'molecule', config: { molecule: 'water' } },
-  'acids-bases-ph': { type: 'molecule', config: { molecule: 'water' } },
-  'electrochemistry': { type: 'electric-field' },
-  'organic-reactions': { type: 'molecule', config: { molecule: 'methane' } },
-
-  // ========== ASTRONOMY ==========
-  // Basic Astronomy
-  'planets-inner': { type: 'planet', config: { planet: 'earth' } },
-  'planets-outer': { type: 'planet', config: { planet: 'saturn' } },
-  'stars-lifecycle': { type: 'star' },
-  'galaxies-types': { type: 'galaxy' },
-  'cosmology-big-bang': { type: 'galaxy' },
-
-  // Comprehensive Astronomy
-  'night-sky': { type: 'planet', config: { planet: 'saturn' } },
-  'stellar-evolution': { type: 'star' },
-  'black-holes': { type: 'black-hole' },
-  'cosmology': { type: 'galaxy' },
-
-  // ========== BIOLOGY ==========
-  // Cell Biology
-  'cell-intro': { type: 'cell' },
-
-  // Genetics
-  'genetics-intro': { type: 'dna' },
-
-  // Ecology
-  'ecology-intro': { type: 'ecosystem' },
-
-  // ========== OTHER SCIENCES ==========
-  // Thermodynamics
-  'thermo-intro': { type: 'thermodynamics' },
-
-  // Organic Chemistry
-  'organic-intro': { type: 'molecule', config: { molecule: 'methane' } },
-
-  // Biochemistry
-  'biochem-intro': { type: 'dna' },
-
-  // Neurobiology
-  'neuro-intro': { type: 'cell' },
-
-  // Robotics
-  'robotics-intro': { type: 'robot' },
-
-  // Environmental Science
-  'environment-intro': { type: 'ecosystem' },
-
-  // Materials Science
-  'materials-intro': { type: 'atom', config: { protons: 14 } },
-
-  // Astrophysics
-  'astrophysics-intro': { type: 'star' },
-
-  // Planetary Science
-  'planetary-intro': { type: 'planet', config: { planet: 'mars' } },
-
-  // Quantum Mechanics
-  'quantum-intro': { type: 'quantum' },
-
-  // General Science
-  'general-intro': { type: 'atom', config: { protons: 6 } },
-
-  // Origins
-  'origins-intro': { type: 'galaxy' },
-};
 
 interface Lesson {
   id: string;
@@ -164,6 +41,9 @@ interface Lesson {
   quiz: any;
   xp_reward: number;
   order_index: number;
+  chapter?: string;
+  model_type?: ModelType | null;
+  model_config?: Record<string, unknown> | null;
 }
 
 interface QuizQuestion {
@@ -186,7 +66,10 @@ export default function LessonPlayer() {
   // Quiz state
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [showResults, setShowResults] = useState<Record<number, boolean>>({});
-  
+  const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
+  const [showQuizResults, setShowQuizResults] = useState(false);
+  const [quizResultsData, setQuizResultsData] = useState<any>(null);
+
   // AI hint state
   const [aiHint, setAiHint] = useState<string | null>(null);
   const [loadingHint, setLoadingHint] = useState(false);
@@ -213,8 +96,37 @@ export default function LessonPlayer() {
 
       if (courseData?.lessons) {
         const foundLesson = courseData.lessons.find((l: any) => l.slug === lessonSlug);
-        
+
         if (foundLesson) {
+          // Check if lesson is unlocked (sequential unlocking)
+          const sortedLessons = [...courseData.lessons].sort((a: any, b: any) => a.order_index - b.order_index);
+          const lessonIndex = sortedLessons.findIndex((l: any) => l.id === foundLesson.id);
+
+          // If not the first lesson, check if previous lesson is completed
+          if (lessonIndex > 0) {
+            const previousLesson = sortedLessons[lessonIndex - 1];
+
+            // Fetch user progress for previous lesson
+            const { data: prevProgress } = await supabase
+              .from('user_progress')
+              .select('status')
+              .eq('user_id', uid)
+              .eq('lesson_id', previousLesson.id)
+              .maybeSingle();
+
+            const isPreviousCompleted = prevProgress?.status === 'completed';
+
+            if (!isPreviousCompleted) {
+              // Lesson is locked, redirect to course page with message
+              toast.error(
+                `🔒 Lesson Locked! Please complete "${previousLesson.title}" first to unlock this lesson.`,
+                { duration: 5000 }
+              );
+              navigate(`/science-lens/learning/${courseSlug}`);
+              return;
+            }
+          }
+
           const { data: lessonData } = await supabase.functions.invoke('lessons', {
             body: { id: foundLesson.id }
           });
@@ -243,20 +155,147 @@ export default function LessonPlayer() {
   };
 
   const handleQuizSubmit = (questionIndex: number) => {
+    // Start quiz timer on first answer
+    if (!quizStartTime) {
+      setQuizStartTime(Date.now());
+    }
+
     setShowResults(prev => ({ ...prev, [questionIndex]: true }));
-    
+
     const quiz = lesson?.quiz;
     if (quiz?.questions?.[questionIndex]) {
       const q = quiz.questions[questionIndex];
       const correctIdx = q.correct ?? q.correctAnswer ?? 0;
       const isCorrect = selectedAnswers[questionIndex] === correctIdx;
-      
+
       if (isCorrect) {
         toast.success('Correct! Well done! 🎉');
       } else {
         toast.error('Not quite right. Review the explanation below.');
       }
     }
+  };
+
+  const saveQuizResults = async () => {
+    if (!userId || !lesson) return;
+
+    const quiz = lesson?.quiz;
+    if (!quiz?.questions) return;
+
+    const totalQuestions = quiz.questions.length;
+    let correctCount = 0;
+    const answers: any[] = [];
+    const topicsToReview: string[] = [];
+
+    quiz.questions.forEach((q: QuizQuestion, idx: number) => {
+      const correctIdx = q.correct ?? q.correctAnswer ?? 0;
+      const isCorrect = selectedAnswers[idx] === correctIdx;
+
+      if (isCorrect) {
+        correctCount++;
+      } else {
+        topicsToReview.push(`Question ${idx + 1}: ${q.question.substring(0, 50)}...`);
+      }
+
+      answers.push({
+        question: q.question,
+        userAnswer: q.options[selectedAnswers[idx]] || 'Not answered',
+        correctAnswer: q.options[correctIdx],
+        isCorrect,
+        explanation: q.explanation,
+      });
+    });
+
+    const timeTaken = quizStartTime ? Math.floor((Date.now() - quizStartTime) / 1000) : 0;
+    const accuracyPercentage = Math.round((correctCount / totalQuestions) * 100);
+    const averageTimePerQuestion = totalQuestions > 0 ? timeTaken / totalQuestions : 0;
+    const questionsPerMinute = timeTaken > 0 ? (totalQuestions / timeTaken) * 60 : 0;
+
+    // Calculate perfect streaks
+    let perfectStreaks = 0;
+    let currentStreak = 0;
+    answers.forEach((answer) => {
+      if (answer.isCorrect) {
+        currentStreak++;
+        if (currentStreak >= 3) perfectStreaks++;
+      } else {
+        currentStreak = 0;
+      }
+    });
+
+    // Fetch previous attempt for comparison
+    const { data: previousAttempt } = await supabase
+      .from('quiz_results')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('lesson_id', lesson.id)
+      .order('completed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const improvementPercentage = previousAttempt
+      ? accuracyPercentage - previousAttempt.accuracy_percentage
+      : undefined;
+
+    // Save quiz results
+    const { data: quizResult, error } = await supabase
+      .from('quiz_results')
+      .insert({
+        user_id: userId,
+        lesson_id: lesson.id,
+        quiz_type: 'lesson',
+        total_questions: totalQuestions,
+        correct_answers: correctCount,
+        incorrect_answers: totalQuestions - correctCount,
+        accuracy_percentage: accuracyPercentage,
+        time_taken_seconds: timeTaken,
+        average_time_per_question: averageTimePerQuestion,
+        xp_earned: 0, // XP is awarded separately on lesson completion
+        streak_bonus: 0,
+        answers,
+        previous_attempt_id: previousAttempt?.id,
+        improvement_percentage: improvementPercentage,
+        difficulty_level: 'intermediate',
+        questions_per_minute: questionsPerMinute,
+        perfect_streaks: perfectStreaks,
+        topics_to_review: topicsToReview,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving quiz results:', error);
+    }
+
+    // Set quiz results data
+    setQuizResultsData({
+      id: quizResult?.id,
+      quizType: 'lesson' as const,
+      lessonId: lesson.id,
+      totalQuestions,
+      correctAnswers: correctCount,
+      incorrectAnswers: totalQuestions - correctCount,
+      accuracyPercentage,
+      timeTakenSeconds: timeTaken,
+      averageTimePerQuestion,
+      xpEarned: 0,
+      streakBonus: 0,
+      answers,
+      previousAttempt: previousAttempt ? {
+        id: previousAttempt.id,
+        accuracyPercentage: previousAttempt.accuracy_percentage,
+        completedAt: previousAttempt.completed_at,
+      } : undefined,
+      improvementPercentage,
+      difficultyLevel: 'intermediate',
+      completedAt: new Date().toISOString(),
+      questionsPerMinute,
+      perfectStreaks,
+      topicsToReview,
+      lessonTitle: lesson.title,
+    });
+
+    setShowQuizResults(true);
   };
 
   const handleMarkComplete = async () => {
@@ -361,7 +400,7 @@ export default function LessonPlayer() {
           <div className="text-center space-y-2">
             <BookOpen className="w-12 h-12 mx-auto text-muted-foreground" />
             <h3 className="text-xl font-semibold">Lesson Not Found</h3>
-            <Button onClick={() => navigate(`/science-lens/learn/${courseSlug}`)} className="mt-4">
+            <Button onClick={() => navigate(`/science-lens/learning/${courseSlug}`)} className="mt-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Course
             </Button>
@@ -392,7 +431,7 @@ export default function LessonPlayer() {
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate(`/science-lens/learn/${courseSlug}`)}
+          onClick={() => navigate(`/science-lens/learning/${courseSlug}`)}
         >
           {courseSlug?.replace(/-/g, ' ')}
         </Button>
@@ -432,8 +471,15 @@ export default function LessonPlayer() {
         </CardContent>
       </Card>
 
+      {/* Related Concepts Dropdown */}
+      <RelatedConceptsDropdown
+        lessonTitle={lesson.title}
+        courseSlug={courseSlug}
+        chapter={lesson.chapter as string}
+      />
+
       {/* Interactive 3D Model */}
-      {lessonSlug && lessonModelMap[lessonSlug] && (
+      {lesson?.model_type && (
         <Card className="overflow-hidden" style={{
           background: 'rgba(13, 27, 42, 0.95)',
           border: '1px solid rgba(0, 212, 255, 0.3)',
@@ -452,8 +498,8 @@ export default function LessonPlayer() {
               </div>
             }>
               <LessonModel
-                type={lessonModelMap[lessonSlug].type}
-                config={lessonModelMap[lessonSlug].config}
+                type={lesson.model_type}
+                config={lesson.model_config || {}}
                 title={lesson.title}
               />
             </Suspense>
@@ -492,19 +538,22 @@ export default function LessonPlayer() {
       )}
 
       {/* Quiz */}
-      {quiz?.questions && quiz.questions.length > 0 && (
+      {quiz?.questions && quiz.questions.length > 0 && !showQuizResults && (
         <Card>
           <CardHeader>
             <CardTitle className="text-xl">Test Your Knowledge</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Answer all questions to see your detailed results
+            </p>
           </CardHeader>
           <CardContent className="space-y-6">
             {quiz.questions.map((q: QuizQuestion, qIdx: number) => {
               const correctIdx = q.correct ?? q.correctAnswer ?? 0;
-              
+
               return (
                 <div key={qIdx} className="space-y-4">
                   <h4 className="font-semibold text-lg">{q.question}</h4>
-                  
+
                   <RadioGroup
                     value={selectedAnswers[qIdx]?.toString() ?? ''}
                     onValueChange={(val) => setSelectedAnswers(prev => ({ ...prev, [qIdx]: parseInt(val) }))}
@@ -516,7 +565,7 @@ export default function LessonPlayer() {
                       const showFeedback = showResults[qIdx];
 
                       return (
-                        <div 
+                        <div
                           key={optIdx}
                           className={`
                             flex items-center space-x-2 p-3 rounded-lg border transition-colors
@@ -555,6 +604,30 @@ export default function LessonPlayer() {
                 </div>
               );
             })}
+
+            {/* Submit Quiz Button */}
+            {Object.keys(showResults).length === quiz.questions.length && (
+              <div className="pt-4 border-t">
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={saveQuizResults}
+                  disabled={completingLesson}
+                >
+                  {completingLesson ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving Results...
+                    </>
+                  ) : (
+                    <>
+                      <Trophy className="w-4 h-4 mr-2" />
+                      View Quiz Results
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -601,11 +674,35 @@ export default function LessonPlayer() {
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-between pt-6 border-t border-border">
+      {/* Quiz Results - Show after completing quiz */}
+      {showQuizResults && quizResultsData && (
+        <QuizResults
+          results={quizResultsData}
+          onReturn={() => {
+            setShowQuizResults(false);
+            setQuizResultsData(null);
+          }}
+          onRetry={() => {
+            setShowQuizResults(false);
+            setQuizResultsData(null);
+            setSelectedAnswers({});
+            setShowResults({});
+            setQuizStartTime(null);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          onContinue={async () => {
+            await handleMarkComplete();
+          }}
+          showReviewButton={true}
+        />
+      )}
+
+      {/* Action Buttons - Hide if showing quiz results */}
+      {!showQuizResults && (
+        <div className="flex items-center justify-between pt-6 border-t border-border">
         <Button 
           variant="outline"
-          onClick={() => navigate(`/science-lens/learn/${courseSlug}`)}
+          onClick={() => navigate(`/science-lens/learning/${courseSlug}`)}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Course
@@ -634,6 +731,7 @@ export default function LessonPlayer() {
           )}
         </Button>
       </div>
+      )}
     </div>
   );
 }
