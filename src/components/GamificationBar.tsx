@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Trophy, Zap, Target, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { calculateLevel, getXpRemainingToNextLevel, getProgressToNextLevel, getTotalXpForLevel } from "@/utils/levelCalculations";
+import { createTimeout } from "@/utils/timeout";
 
 interface GamificationBarProps {
   userId: string;
@@ -39,9 +40,7 @@ export function GamificationBar({ userId }: GamificationBarProps) {
         setError(false);
 
         // Add timeout for stats loading
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Stats loading timed out")), 5000);
-        });
+        const timeoutPromise = createTimeout(5000, "Stats loading timed out");
 
         const fetchPromise = (async () => {
           // Load credits and xp_total from user_stats

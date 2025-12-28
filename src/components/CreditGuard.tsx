@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, Zap } from "lucide-react";
@@ -17,40 +17,7 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadCredits();
-    
-    // Subscribe to credit changes from user_stats
-    const subscription = supabase
-      .channel('credit-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'user_stats',
-          filter: `user_id=eq.${userId}`
-        },
-        (payload) => {
-          const newCredits = payload.new.credits;
-          setCredits(newCredits);
-          
-          // Auto-redirect to pricing if credits hit 0
-          if (newCredits === 0) {
-            navigate('/science-lens/pricing');
-          } else if (newCredits <= 5 && onCreditsLow) {
-            onCreditsLow();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [userId, navigate]);
-
-  const loadCredits = async () => {
+  const loadCredits = useCallback(async () => {
     try {
       // Refresh daily credits first
       await supabase.rpc('refresh_daily_credits', { p_user_id: userId });
@@ -77,7 +44,40 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, navigate, onCreditsLow]);
+
+  useEffect(() => {
+    loadCredits();
+
+    // Subscribe to credit changes from user_stats
+    const subscription = supabase
+      .channel('credit-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_stats',
+          filter: `user_id=eq.${userId}`
+        },
+        (payload) => {
+          const newCredits = payload.new.credits;
+          setCredits(newCredits);
+
+          // Auto-redirect to pricing if credits hit 0
+          if (newCredits === 0) {
+            navigate('/science-lens/pricing');
+          } else if (newCredits <= 5 && onCreditsLow) {
+            onCreditsLow();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [userId, navigate, onCreditsLow, loadCredits]);
 
   if (loading) {
     return <div className="flex items-center justify-center p-8">

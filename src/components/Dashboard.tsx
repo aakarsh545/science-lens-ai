@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,9 +13,17 @@ import ThemeToggle from "./ThemeToggle";
 import Settings from "./Settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createTimeout } from "@/utils/timeout";
 
 interface DashboardProps {
   user: User;
+}
+
+interface Topic {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
 }
 
 interface Profile {
@@ -36,7 +44,7 @@ const Dashboard = ({ user }: DashboardProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [showChat, setShowChat] = useState(false);
-  const [selectedTopic, setSelectedTopic] = useState<any>(null);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [showTopicSelector, setShowTopicSelector] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -52,9 +60,7 @@ const Dashboard = ({ user }: DashboardProps) => {
         setError(null);
 
         // Add timeout for data fetching
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Data loading timed out")), 10000);
-        });
+        const timeoutPromise = createTimeout(10000, "Data loading timed out");
 
         const dataPromise = Promise.all([
           loadProfile(),
@@ -66,10 +72,10 @@ const Dashboard = ({ user }: DashboardProps) => {
         if (mounted) {
           setLoading(false);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error loading dashboard data:", err);
         if (mounted) {
-          setError(err?.message || "Failed to load dashboard data");
+          setError(err instanceof Error ? err.message : "Failed to load dashboard data");
           setLoading(false);
         }
       }
@@ -80,9 +86,9 @@ const Dashboard = ({ user }: DashboardProps) => {
     return () => {
       mounted = false;
     };
-  }, [user]);
+  }, [user, loadProfile, loadAchievements]);
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
@@ -91,9 +97,9 @@ const Dashboard = ({ user }: DashboardProps) => {
 
     if (error) throw error;
     if (data) setProfile(data);
-  };
+  }, [user.id]);
 
-  const loadAchievements = async () => {
+  const loadAchievements = useCallback(async () => {
     const { data, error } = await supabase
       .from("achievements")
       .select("*")
@@ -102,7 +108,7 @@ const Dashboard = ({ user }: DashboardProps) => {
 
     if (error) throw error;
     if (data) setAchievements(data);
-  };
+  }, [user.id]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();

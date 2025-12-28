@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,15 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
 
+  const handleTimeout = useCallback(() => {
+    setIsActive(false);
+    toast({
+      title: "Time's up!",
+      description: "Try another challenge to earn XP.",
+      variant: "destructive",
+    });
+  }, [toast]);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isActive && timeLeft > 0 && !submitted) {
@@ -46,16 +55,7 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
       handleTimeout();
     }
     return () => clearInterval(interval);
-  }, [isActive, timeLeft, submitted]);
-
-  const handleTimeout = () => {
-    setIsActive(false);
-    toast({
-      title: "Time's up!",
-      description: "Try another challenge to earn XP.",
-      variant: "destructive",
-    });
-  };
+  }, [isActive, timeLeft, submitted, handleTimeout]);
 
   const loadChallenge = async () => {
     setLoading(true);
@@ -88,8 +88,8 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
       setSubmitted(false);
       setAnswer("");
       setSelectedOption(null);
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') {
         toast({
           title: "Timeout",
           description: "Challenge loading took too long. Please try again.",
@@ -98,7 +98,7 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
       } else {
         toast({
           title: "Error",
-          description: error.message || "Failed to load challenge",
+          description: error instanceof Error ? error.message : "Failed to load challenge",
           variant: "destructive",
         });
       }
@@ -187,8 +187,8 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
           variant: "destructive",
         });
       }
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') {
         toast({
           title: "Timeout",
           description: "Submission took too long. Please try again.",
@@ -198,7 +198,7 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
       } else {
         toast({
           title: "Error",
-          description: error.message || "Failed to submit answer",
+          description: error instanceof Error ? error.message : "Failed to submit answer",
           variant: "destructive",
         });
         setIsActive(true); // Re-enable timer on error

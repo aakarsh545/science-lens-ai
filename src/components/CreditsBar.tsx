@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Coins, Zap, TrendingUp } from "lucide-react";
 import { Button } from "./ui/button";
@@ -21,46 +21,7 @@ export function CreditsBar({ userId }: CreditsBarProps) {
   const [prevLevel, setPrevLevel] = useState<number>(1);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadStats();
-
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel('user_stats_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_stats',
-          filter: `user_id=eq.${userId}`
-        },
-        (payload) => {
-          if (payload.new && typeof payload.new === 'object') {
-            const newData = payload.new as { credits?: number; xp_total?: number };
-            const newXp = newData.xp_total ?? 0;
-            const newLevel = calculateLevel(newXp);
-            
-            // Check for level up
-            if (newLevel > level) {
-              setPrevLevel(level);
-              triggerLevelUpConfetti();
-            }
-            
-            setCredits(newData.credits ?? 0);
-            setXp(newXp);
-            setLevel(newLevel);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userId, level]);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       // First, refresh daily credits
       await supabase.rpc('refresh_daily_credits', { p_user_id: userId });
@@ -84,7 +45,46 @@ export function CreditsBar({ userId }: CreditsBarProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    loadStats();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel('user_stats_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_stats',
+          filter: `user_id=eq.${userId}`
+        },
+        (payload) => {
+          if (payload.new && typeof payload.new === 'object') {
+            const newData = payload.new as { credits?: number; xp_total?: number };
+            const newXp = newData.xp_total ?? 0;
+            const newLevel = calculateLevel(newXp);
+
+            // Check for level up
+            if (newLevel > level) {
+              setPrevLevel(level);
+              triggerLevelUpConfetti();
+            }
+
+            setCredits(newData.credits ?? 0);
+            setXp(newXp);
+            setLevel(newLevel);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, level, loadStats]);
 
   const progressToNext = getProgressToNextLevel(xp);
   const xpForNext = getXpForNextLevel(xp);

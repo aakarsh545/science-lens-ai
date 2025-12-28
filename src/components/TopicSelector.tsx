@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { createTimeout } from "@/utils/timeout";
 
 interface Topic {
   id: string;
@@ -44,9 +45,7 @@ export default function TopicSelector({ onSelectTopic, selectedTopicId }: TopicS
         setError(null);
 
         // Add timeout for topics loading
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Topics loading timed out")), 8000);
-        });
+        const timeoutPromise = createTimeout(8000, "Topics loading timed out");
 
         const fetchPromise = (async () => {
           const { data: topicsData, error: topicsError } = await supabase

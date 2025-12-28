@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,11 +78,7 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadRecommendations();
-  }, [userId]);
-
-  const loadRecommendations = async () => {
+  const loadRecommendations = useCallback(async () => {
     try {
       // Fetch all data in parallel for better performance
       const [coursesResult, lessonsResult, progressResult, questionsResult, messagesResult, profileResult] = await Promise.all([
@@ -312,7 +308,11 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    loadRecommendations();
+  }, [loadRecommendations]);
 
   if (loading) {
     return (

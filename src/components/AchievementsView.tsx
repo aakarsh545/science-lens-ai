@@ -7,6 +7,7 @@ import { Trophy, Loader2, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { createTimeout } from "@/utils/timeout";
 
 interface Achievement {
   id: string;
@@ -37,9 +38,7 @@ export function AchievementsView({ user }: AchievementsViewProps) {
         setError(null);
 
         // Add timeout for achievements loading
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Achievements loading timed out")), 8000);
-        });
+        const timeoutPromise = createTimeout(8000, "Achievements loading timed out");
 
         const fetchPromise = supabase
           .from("achievements")
@@ -47,7 +46,10 @@ export function AchievementsView({ user }: AchievementsViewProps) {
           .eq("user_id", user.id)
           .order("earned_at", { ascending: false });
 
-        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as {
+          data: Achievement[] | null;
+          error: { message: string } | null;
+        };
 
         if (error) throw error;
 
@@ -55,10 +57,10 @@ export function AchievementsView({ user }: AchievementsViewProps) {
           setAchievements(data);
           setLoading(false);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error loading achievements:", err);
         if (mounted) {
-          setError(err?.message || "Failed to load achievements");
+          setError(err instanceof Error ? err.message : "Failed to load achievements");
           setLoading(false);
         }
       }
