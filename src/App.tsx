@@ -23,6 +23,7 @@ import ProfilePage from "./pages/ProfilePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import ShopPage from "./pages/ShopPage";
 import PricingPage from "./pages/PricingPage";
+import BillingPage from "./pages/BillingPage";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="api-test" element={<TestPage />} />
                 <Route path="shop" element={<ShopPage />} />
                 <Route path="pricing" element={<PricingPage />} />
+                <Route path="billing" element={<BillingPage />} />
                 <Route path="achievements" element={<AchievementsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="settings" element={<SettingsPage />} />

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Crown, Zap, Coins, Sparkles, Check, Star, ArrowLeft } from "lucide-react";
-import { DummyPaymentCard } from "@/components/DummyPaymentCard";
 import { useToast } from "@/hooks/use-toast";
 
 interface UserProfile {
@@ -21,12 +20,6 @@ export default function PricingPage() {
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [showPayment, setShowPayment] = useState(false);
-  const [selectedPurchase, setSelectedPurchase] = useState<{
-    type: 'premium' | 'coins' | 'xp_boost';
-    amount: number;
-    description: string;
-  } | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -54,94 +47,14 @@ export default function PricingPage() {
     }
   };
 
-  const handlePurchase = async (type: 'premium' | 'coins' | 'xp_boost', amount: number, description: string) => {
-    setSelectedPurchase({ type, amount, description });
-    setShowPayment(true);
-  };
-
-  const handlePaymentSuccess = async () => {
-    if (!user || !selectedPurchase) return;
-
-    try {
-      if (selectedPurchase.type === 'premium') {
-        // Grant premium status
-        const { error } = await supabase
-          .from('profiles')
-          .update({ is_premium: true })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "🎉 Premium Activated!",
-          description: "You now have 2x coins on all activities!",
-        });
-      } else if (selectedPurchase.type === 'coins') {
-        // Add coins
-        const { error } = await supabase
-          .from('profiles')
-          .update({ coins: (userProfile?.coins || 0) + selectedPurchase.amount })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "💰 Coins Purchased!",
-          description: `You received ${selectedPurchase.amount.toLocaleString()} coins!`,
-        });
-      } else if (selectedPurchase.type === 'xp_boost') {
-        // Activate XP boost (2x for 1 hour)
-        const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            active_xp_boost: 2,
-            xp_boost_expires_at: expiresAt
-          })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "⚡ XP Boost Activated!",
-          description: "2x XP for 1 hour!",
-        });
+  const handlePurchase = (type: 'premium' | 'coins' | 'xp_boost', amount: number, description: string) => {
+    // Navigate to billing page with purchase details
+    navigate('/science-lens/billing', {
+      state: {
+        purchase: { type, amount, description }
       }
-
-      await loadUserProfile(user.id);
-      setShowPayment(false);
-      setSelectedPurchase(null);
-    } catch (error) {
-      console.error('Payment processing error:', error);
-      toast({
-        title: "Payment Failed",
-        description: error instanceof Error ? error.message : "Failed to process payment",
-        variant: "destructive",
-      });
-    }
+    });
   };
-
-  if (showPayment && selectedPurchase) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-primary/5 p-6">
-        <div className="max-w-md mx-auto mt-10">
-          <Button
-            variant="ghost"
-            onClick={() => setShowPayment(false)}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Pricing
-          </Button>
-          <DummyPaymentCard
-            amount={selectedPurchase.amount}
-            description={selectedPurchase.description}
-            onSuccess={handlePaymentSuccess}
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-primary/5 p-6">
