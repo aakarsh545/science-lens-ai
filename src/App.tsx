@@ -21,6 +21,7 @@ import ChallengesPage from "./pages/ChallengesPage";
 import ChallengeSession from "./pages/ChallengeSession";
 import ProfilePage from "./pages/ProfilePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
+import ShopPage from "./pages/ShopPage";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
                 <Route path="leaderboard" element={<LeaderboardPage />} />
                 <Route path="ask" element={<AskPage />} />
                 <Route path="api-test" element={<TestPage />} />
+                <Route path="shop" element={<ShopPage />} />
                 <Route path="achievements" element={<AchievementsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="settings" element={<SettingsPage />} />
