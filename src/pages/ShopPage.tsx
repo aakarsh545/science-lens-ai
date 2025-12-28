@@ -145,7 +145,17 @@ export default function ShopPage() {
       .eq('user_id', uid)
       .single();
 
-    if (!error && data) {
+    if (error) {
+      console.error('[ShopPage] Error loading user profile:', error);
+      toast({
+        title: "Error loading profile",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data) {
       setUserProfile(data);
     }
   };
@@ -711,7 +721,7 @@ export default function ShopPage() {
               <li>• Purchase a boost to activate it immediately</li>
               <li>• All XP earned during the boost period is multiplied</li>
               <li>• Boost expires after the duration (15/30/50/60 minutes)</li>
-li>• Boost works on lessons, challenges, and achievements</li>
+              <li>• Boost works on lessons, challenges, and achievements</li>
             </ul>
           </div>
 
