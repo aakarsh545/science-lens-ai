@@ -5,6 +5,9 @@ import { useNavigate, Outlet } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { UserAvatar } from "@/components/UserAvatar";
+import { Button } from "@/components/ui/button";
 
 export default function AppLayout() {
   const [user, setUser] = useState<User | null>(null);
@@ -54,6 +57,11 @@ export default function AppLayout() {
     }
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -63,25 +71,35 @@ export default function AppLayout() {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar 
-          userId={user.id}
-          conversationId={conversationId}
-          onSelectConversation={handleSelectConversation}
-          onNewConversation={handleNewConversation}
-        />
-        
-        <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center border-b px-4 bg-background">
-            <SidebarTrigger className="mr-4" />
-          </header>
+    <ThemeProvider userId={user.id}>
+      <SidebarProvider defaultOpen={true}>
+        <div className="min-h-screen flex w-full">
+          <AppSidebar
+            userId={user.id}
+            conversationId={conversationId}
+            onSelectConversation={handleSelectConversation}
+            onNewConversation={handleNewConversation}
+          />
 
-          <main className="flex-1 overflow-auto">
-            <Outlet />
-          </main>
+          <div className="flex-1 flex flex-col">
+            <header className="h-14 flex items-center justify-between border-b px-4 bg-background">
+              <div className="flex items-center">
+                <SidebarTrigger className="mr-4" />
+              </div>
+              <div className="flex items-center gap-3">
+                <UserAvatar userId={user.id} className="h-9 w-9 cursor-pointer hover:ring-2 hover:ring-primary transition-all" />
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                  Sign Out
+                </Button>
+              </div>
+            </header>
+
+            <main className="flex-1 overflow-auto">
+              <Outlet />
+            </main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </ThemeProvider>
   );
 }

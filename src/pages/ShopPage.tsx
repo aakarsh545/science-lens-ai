@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Coins, ShoppingBag, Crown, Check, Palette, Smile, Sparkles, Lock, Star, Zap, Clock, DollarSign, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface ShopItem {
   id: string;
@@ -63,6 +64,7 @@ const RARITY_CONFIG = {
 export default function ShopPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { refreshTheme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
@@ -302,6 +304,11 @@ export default function ShopPage() {
 
       // Update local state
       await loadUserProfile(userId);
+
+      // Refresh theme if a theme was equipped
+      if (item.type === 'theme') {
+        await refreshTheme();
+      }
 
       toast({
         title: "Item equipped! ✨",
