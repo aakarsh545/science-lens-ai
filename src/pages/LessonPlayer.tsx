@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
 import { triggerLevelUpConfetti, triggerLessonCompleteConfetti } from "@/utils/confettiEffects";
+import { logLessonCompleted, logQuizCompleted, logLevelUp } from "@/utils/activityLogging";
+import { checkLessonAchievements, checkQuizAchievements, checkLevelAchievements } from "@/utils/achievements";
 
 interface LessonExample {
   title: string;
@@ -346,6 +348,19 @@ export default function LessonPlayer() {
       console.error('Error saving quiz results:', error);
     }
 
+    // Log quiz activity
+    await logQuizCompleted(
+      userId,
+      lesson.id,
+      lesson.title,
+      correctCount,
+      totalQuestions,
+      0 // XP is awarded separately on lesson completion
+    );
+
+    // Check quiz achievements
+    await checkQuizAchievements(userId, accuracyPercentage);
+
     // Set quiz results data
     setQuizResultsData({
       id: quizResult?.id,
@@ -424,8 +439,35 @@ export default function LessonPlayer() {
         triggerLevelUpConfetti();
         const newLevel = calculateLevel(newXp);
         toast.success(`🎊 Level Up! You're now level ${newLevel}!`);
+
+        // Log level up activity
+        await logLevelUp(userId, newLevel, newXp);
+
+        // Check level achievements
+        await checkLevelAchievements(userId, newLevel);
       } else {
         triggerLessonCompleteConfetti();
+      }
+
+      // Log lesson completion (only if not already completed)
+      if (!data?.alreadyCompleted) {
+        await logLessonCompleted(
+          userId,
+          lesson.id,
+          lesson.title,
+          lesson.xp_reward || 10
+        );
+
+        // Check lesson completion achievements
+        // Get total completed lessons count
+        const { data: completedLessons } = await supabase
+          .from('user_progress')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('completed', true);
+
+        const lessonCount = completedLessons?.length || 0;
+        await checkLessonAchievements(userId, lessonCount);
       }
 
       if (data?.alreadyCompleted) {

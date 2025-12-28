@@ -21,6 +21,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
 import { triggerLevelUpConfetti, triggerSuccessConfetti } from "@/utils/confettiEffects";
+import { logChallengeCompleted, logLevelUp } from "@/utils/activityLogging";
+import { checkChallengeAchievements, checkLevelAchievements } from "@/utils/achievements";
 
 interface QuizQuestion {
   question: string;
@@ -311,14 +313,26 @@ export default function ChallengeSession() {
 
         // Award XP and check for level up
         if (data.xpEarned > 0) {
+          const userId = (await supabase.auth.getUser()).data.user?.id;
           const { data: currentStats } = await supabase
             .from('user_stats')
             .select('xp_total')
-            .eq('user_id', (await supabase.auth.getUser()).data.user?.id!)
+            .eq('user_id', userId!)
             .single();
 
           const oldXp = currentStats?.xp_total || 0;
           const newXp = oldXp + data.xpEarned;
+
+          // Log challenge completion
+          await logChallengeCompleted(
+            userId!,
+            sessionId!,
+            state?.topicName || 'General Science Challenge',
+            data.correctAnswers,
+            totalQuestions,
+            challengeDifficulty,
+            data.xpEarned
+          );
 
           if (didLevelUp(oldXp, newXp)) {
             const newLevel = calculateLevel(newXp);
@@ -327,12 +341,28 @@ export default function ChallengeSession() {
               title: `Level Up! You're now Level ${newLevel}!`,
               description: `You earned ${data.xpEarned} XP from this challenge!`,
             });
+
+            // Log level up activity
+            await logLevelUp(userId!, newLevel, newXp);
+
+            // Check level achievements
+            await checkLevelAchievements(userId!, newLevel);
           } else if (data.status === 'completed') {
             setTimeout(() => triggerSuccessConfetti(), 500);
             toast({
               title: "Challenge Complete! 🎉",
               description: `You earned ${data.xpEarned} XP!`,
             });
+
+            // Check challenge completion achievements
+            const { data: completedChallenges } = await supabase
+              .from('challenge_sessions')
+              .select('id')
+              .eq('user_id', userId!)
+              .eq('status', 'completed');
+
+            const challengeCount = completedChallenges?.length || 0;
+            await checkChallengeAchievements(userId!, challengeCount);
           }
         }
       } else {
