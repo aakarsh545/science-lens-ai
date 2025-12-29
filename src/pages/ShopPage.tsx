@@ -9,6 +9,7 @@ import { Coins, ShoppingBag, Crown, Check, Palette, Smile, Sparkles, Lock, Star,
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
+import { AdminToggle } from "@/components/AdminToggle";
 
 interface ShopItem {
   id: string;
@@ -837,6 +838,9 @@ export default function ShopPage() {
           </div>
         )}
       </div>
+
+      {/* Admin Toggle - For testing */}
+      <AdminToggle />
 
       {/* Main Shop Tabs */}
       <Tabs defaultValue="cosmetics" className="w-full">
