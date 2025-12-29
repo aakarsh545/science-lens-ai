@@ -12,7 +12,7 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderProps) {
-  const displayName = profile?.display_name || user?.email?.split("@")[0] || "Explorer";
+  const displayName = profile?.username || profile?.display_name || profile?.full_name || user?.email?.split("@")[0] || "Explorer";
   const initials = displayName
     .split(" ")
     .map((n: string) => n[0])
