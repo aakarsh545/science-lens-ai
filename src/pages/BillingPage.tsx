@@ -56,7 +56,7 @@ export default function BillingPage() {
   const loadUserProfile = async (userId: string) => {
     const { data: profileData } = await supabase
       .from('profiles')
-      .select('coins, is_premium, active_xp_boost')
+      .select('coins, is_premium, active_xp_boost, level')
       .eq('user_id', userId)
       .single();
 
@@ -115,7 +115,7 @@ export default function BillingPage() {
           description: `${multiplier}x XP for ${duration} minutes!`,
         });
       } else if (purchase.type === 'admin_pass') {
-        // Grant admin status
+        // Grant admin status in user_stats
         const { error: adminError } = await supabase
           .from('user_stats')
           .update({
@@ -127,9 +127,22 @@ export default function BillingPage() {
 
         if (adminError) throw adminError;
 
+        // Also update profiles table to set level, coins, and premium status
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            level: 1000, // Max level
+            xp_points: 100000, // Max XP to match user_stats
+            coins: 999999999, // Essentially infinite coins
+            is_premium: true, // Also grant premium
+          })
+          .eq('user_id', user.id);
+
+        if (profileError) throw profileError;
+
         toast({
           title: "👑 Admin Pass Activated!",
-          description: "You now have unlimited power! All restrictions are bypassed.",
+          description: "You now have unlimited power! Level 1000, infinite coins, all restrictions bypassed.",
         });
       }
 
