@@ -18,6 +18,7 @@ import LearningStreakHeatMap from "@/components/profile/LearningStreakHeatMap";
 import RecentActivityTimeline from "@/components/profile/RecentActivityTimeline";
 import AchievementsGrid from "@/components/profile/AchievementsGrid";
 import PerformanceBySubject from "@/components/profile/PerformanceBySubject";
+import { EditProfileDialog } from "@/components/EditProfileDialog";
 
 interface UserProfile {
   id: string;
@@ -47,6 +48,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -145,7 +147,11 @@ export default function ProfilePage() {
         </Button>
 
         {/* Profile Header */}
-        <ProfileHeader user={user} profile={profile} />
+        <ProfileHeader
+          user={user}
+          profile={profile}
+          onEdit={() => setEditDialogOpen(true)}
+        />
 
         {/* Stats Overview Cards */}
         <StatsOverview stats={stats} />
@@ -192,6 +198,20 @@ export default function ProfilePage() {
             <AchievementsGrid achievements={stats.achievements} />
           </TabsContent>
         </Tabs>
+
+        {/* Edit Profile Dialog */}
+        <EditProfileDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          userId={user.id}
+          currentProfile={{
+            username: profile?.username,
+            full_name: profile?.full_name,
+            bio: profile?.bio,
+            avatar_url: profile?.avatar_url,
+          }}
+          onProfileUpdate={() => loadProfileData(user.id)}
+        />
       </div>
     </div>
   );

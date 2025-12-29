@@ -8,9 +8,10 @@ import { Edit, Award } from "lucide-react";
 interface ProfileHeaderProps {
   user: User;
   profile: any;
+  onEdit?: () => void;
 }
 
-export default function ProfileHeader({ user, profile }: ProfileHeaderProps) {
+export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderProps) {
   const displayName = profile?.display_name || user?.email?.split("@")[0] || "Explorer";
   const initials = displayName
     .split(" ")
@@ -69,7 +70,7 @@ export default function ProfileHeader({ user, profile }: ProfileHeaderProps) {
             </div>
 
             {/* Edit Profile Button */}
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2" onClick={onEdit}>
               <Edit className="h-4 w-4" />
               Edit Profile
             </Button>

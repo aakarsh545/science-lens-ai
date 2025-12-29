@@ -18,14 +18,85 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const checkUsernameAvailability = async (name: string): Promise<boolean> => {
+    if (!name || name.length < 3) return false;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', name)
+      .single();
+
+    return !!error || !data;
+  };
+
+  const handleUsernameChange = async (value: string) => {
+    setUsername(value);
+
+    // Validate username format
+    if (value.length > 0 && value.length < 3) {
+      setUsernameError("Username must be at least 3 characters");
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+      setUsernameError("Only letters, numbers, and underscores allowed");
+      return;
+    }
+
+    if (value.length >= 3) {
+      setCheckingUsername(true);
+      const available = await checkUsernameAvailability(value);
+      setUsernameError(available ? "" : "Username already taken");
+      setCheckingUsername(false);
+    } else {
+      setUsernameError("");
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate username
+    if (!username || username.length < 3) {
+      toast({
+        variant: "destructive",
+        title: "Username required",
+        description: "Please choose a username (min 3 characters)",
+      });
+      return;
+    }
+
+    if (usernameError) {
+      toast({
+        variant: "destructive",
+        title: "Invalid username",
+        description: usernameError,
+      });
+      return;
+    }
+
     setIsLoading(true);
-    
+
     try {
+      // Final username check
+      const available = await checkUsernameAvailability(username);
+      if (!available) {
+        toast({
+          variant: "destructive",
+          title: "Username taken",
+          description: "Please choose a different username",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const { error, data } = await supabase.auth.signUp({
         email,
         password,
@@ -41,10 +112,26 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
           .from("profiles")
           .insert({
             user_id: data.user.id,
-            display_name: email.split("@")[0],
+            username: username,
+            display_name: username,
           });
 
-        if (profileError) console.error("Profile creation error:", profileError);
+        if (profileError) {
+          // If username is duplicate, try with a unique suffix
+          if (profileError.message.includes('duplicate') || profileError.message.includes('unique')) {
+            const { error: retryError } = await supabase
+              .from("profiles")
+              .insert({
+                user_id: data.user.id,
+                username: `${username}_${data.user.id.slice(0, 4)}`,
+                display_name: username,
+              });
+
+            if (retryError) throw retryError;
+          } else {
+            throw profileError;
+          }
+        }
       }
 
       toast({
@@ -162,6 +249,32 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="signup-username">Username</Label>
+                <div className="relative">
+                  <Input
+                    id="signup-username"
+                    type="text"
+                    placeholder="Choose a unique username"
+                    value={username}
+                    onChange={(e) => handleUsernameChange(e.target.value)}
+                    required
+                    minLength={3}
+                    maxLength={20}
+                    pattern="[a-zA-Z0-9_]+"
+                    className={usernameError ? "border-red-500" : ""}
+                  />
+                  {checkingUsername && (
+                    <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+                {usernameError && (
+                  <p className="text-sm text-red-500">{usernameError}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Only letters, numbers, and underscores. Min 3 characters.
+                </p>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="signup-password">Password</Label>
                 <Input
                   id="signup-password"
@@ -173,7 +286,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                   minLength={6}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading || !!usernameError || checkingUsername}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
