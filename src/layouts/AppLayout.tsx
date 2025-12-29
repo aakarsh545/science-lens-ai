@@ -17,6 +17,21 @@ export default function AppLayout() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Apply user's theme to DOM (called immediately when user loads)
+  const applyUserTheme = (userId: string) => {
+    const themeKey = `theme_${userId}`;
+    const savedTheme = localStorage.getItem(themeKey) as "dark" | "light" | null;
+    const themeToApply = savedTheme || "dark";
+
+    // Clear and apply theme
+    document.documentElement.classList.remove("light");
+    if (themeToApply === "light") {
+      document.documentElement.classList.add("light");
+    }
+
+    console.log(`[AppLayout] Applied theme ${themeToApply} for user ${userId}`);
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
@@ -26,6 +41,8 @@ export default function AppLayout() {
       setUser(session.user);
       // Migrate any old generic localStorage to user-scoped
       migrateUserData(session.user);
+      // Apply user's theme immediately to DOM
+      applyUserTheme(session.user.id);
       setLoading(false);
     });
 
@@ -37,6 +54,8 @@ export default function AppLayout() {
       setUser(session.user);
       // Migrate any old generic localStorage to user-scoped
       migrateUserData(session.user);
+      // Apply user's theme immediately to DOM
+      applyUserTheme(session.user.id);
       setLoading(false);
     });
 
