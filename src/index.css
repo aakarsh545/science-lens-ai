@@ -2,146 +2,164 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Science Lens Cosmic Design System - All colors MUST be HSL */
+/**
+ * SCALABLE THEME SYSTEM
+ *
+ * All colors are CSS variables set by ThemeContext + generateThemeTokens()
+ * No hardcoded colors - everything reads from theme tokens
+ *
+ * Adding a new theme requires ONLY:
+ * 1. Adding a row to shop_items table
+ * 2. Configuring the palette/metadata
+ * 3. That's it. No code changes needed.
+ */
 
 @layer base {
   :root {
-    /* Deep Space Theme - Base Colors */
-    --background: 225 39% 8%;
-    --foreground: 210 40% 98%;
+    /* Default tokens - will be overridden by theme system */
+    /* These are fallbacks if theme fails to load */
 
-    /* Cards & Surfaces */
-    --card: 225 39% 12%;
-    --card-foreground: 210 40% 98%;
-    --card-hover: 225 39% 16%;
+    /* Semantic color tokens (set by theme system) */
+    --color-primary: 212 100% 60%;
+    --color-secondary: 263 85% 70%;
+    --color-accent: 189 94% 43%;
+    --color-surface: 225 39% 12%;
+    --color-background: 225 39% 8%;
 
-    /* Popover/Dropdown - solid dark background */
-    --popover: 225 39% 12%;
-    --popover-foreground: 210 40% 98%;
+    --color-text-primary: 210 40% 98%;
+    --color-text-secondary: 215 20.2% 65.1%;
+    --color-text-muted: 215 20.2% 65.1%;
 
-    /* Cosmic Primary - Electric Blue */
-    --primary: 212 100% 60%;
+    /* Derived tokens (auto-generated from palette) */
+    --color-primary-hover: 212 100% 50%;
+    --color-accent-hover: 189 94% 33%;
+
+    --color-border: 225 39% 24%;
+    --color-border-subtle: 225 39% 29%;
+
+    --color-card: 225 39% 12%;
+    --color-card-hover: 225 39% 16%;
+    --color-popover: 225 39% 12%;
+    --color-muted: 225 39% 20%;
+    --color-input: 225 39% 16%;
+
+    /* Effect tokens (set by theme system) */
+    --glow-primary: 0 0 20px hsla(212, 100%, 60%, 0.15);
+    --glow-accent: 0 0 20px hsla(189, 94%, 43%, 0.15);
+
+    --shadow-sm: 0 1px 2px 0 hsla(0, 0%, 0%, 0.3);
+    --shadow-md: 0 4px 6px -1px hsla(0, 0%, 0%, 0.3);
+    --shadow-lg: 0 16px 16px -5px hsla(0, 0%, 0%, 0.3);
+
+    --gradient-primary: linear-gradient(135deg, hsla(212, 100%, 60%, 0.8), hsla(263, 85%, 70%, 0.8));
+    --gradient-surface: linear-gradient(180deg, hsla(225, 39%, 8%, 1), hsla(225, 39%, 12%, 1));
+    --bg-decoration: none;
+
+    --blur-backdrop: 8px;
+    --radius-sm: 0.375rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1.125rem;
+
+    --decoration-type: cosmic;
+    --particle-intensity: subtle;
+    --animation-speed: 3s;
+
+    /* Map tokens to Tailwind's expected variable names */
+    --background: var(--color-background);
+    --foreground: var(--color-text-primary);
+    --card: var(--color-card);
+    --card-foreground: var(--color-text-primary);
+    --popover: var(--color-popover);
+    --popover-foreground: var(--color-text-primary);
+    --primary: var(--color-primary);
     --primary-foreground: 225 39% 8%;
-    --primary-glow: 212 100% 75%;
-
-    /* Achievement Gold */
-    --achievement: 45 93% 58%;
-    --achievement-foreground: 225 39% 8%;
-    --achievement-glow: 45 93% 75%;
-
-    /* Success Emerald */
-    --success: 156 81% 67%;
-    --success-foreground: 225 39% 8%;
-    --success-glow: 156 81% 80%;
-
-    /* Secondary - Space Purple */
-    --secondary: 263 85% 70%;
+    --secondary: var(--color-secondary);
     --secondary-foreground: 225 39% 8%;
-
-    /* Muted Space Elements */
-    --muted: 225 39% 20%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    /* Accent - Cosmic Cyan */
-    --accent: 189 94% 43%;
+    --muted: var(--color-muted);
+    --muted-foreground: var(--color-text-muted);
+    --accent: var(--color-accent);
     --accent-foreground: 225 39% 8%;
-
-    /* Danger - Cosmic Red */
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
+    --border: var(--color-border);
+    --input: var(--color-input);
+    --ring: var(--color-primary);
 
-    /* Borders & Inputs */
-    --border: 225 39% 24%;
-    --input: 225 39% 16%;
-    --ring: 212 100% 60%;
-
-    /* Gradients */
-    --gradient-cosmic: linear-gradient(135deg, hsl(212 100% 60%), hsl(263 85% 70%));
-    --gradient-achievement: linear-gradient(135deg, hsl(45 93% 58%), hsl(35 91% 62%));
-    --gradient-space: linear-gradient(180deg, hsl(225 39% 8%), hsl(225 39% 12%));
-    --gradient-card: linear-gradient(145deg, hsl(225 39% 12%), hsl(225 39% 16%));
-
-    /* Dynamic Theme Variables (updated by ThemeContext) */
-    --theme-primary: #3b82f6;
-    --theme-secondary: #1e40af;
-    --theme-background: #0f172a;
-    --theme-text: #f1f5f9;
-    --theme-accent: #60a5fa;
-    --theme-gradient: #0f172a;
-
-    /* Shadows & Glows */
-    --shadow-cosmic: 0 10px 40px -10px hsl(212 100% 60% / 0.3);
-    --shadow-achievement: 0 10px 40px -10px hsl(45 93% 58% / 0.3);
-    --shadow-glow: 0 0 40px hsl(212 100% 75% / 0.4);
-
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-    --radius: 0.75rem;
-
-    /* Sidebar (keeping minimal for space theme) */
-    --sidebar-background: 225 39% 10%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 212 100% 60%;
-    --sidebar-primary-foreground: 225 39% 8%;
-    --sidebar-accent: 225 39% 16%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 225 39% 24%;
-    --sidebar-ring: 212 100% 60%;
+    --radius: var(--radius-md);
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground font-sans;
-    background: var(--theme-gradient);
+    background:
+      var(--bg-decoration),
+      var(--gradient-surface);
+    background-attachment: fixed;
     min-height: 100vh;
-    transition: background 0.5s ease, color 0.3s ease;
+    transition: background 0.5s ease;
+    position: relative;
+    overflow-x: hidden;
   }
 
-  /* Apply theme colors to common elements */
+  /* Theme-aware animations */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  /* Text uses theme colors */
   h1, h2, h3, h4, h5, h6 {
-    color: var(--theme-text);
+    color: hsl(var(--foreground));
     transition: color 0.3s ease;
   }
 
+  /* Links use theme primary */
   a {
-    color: var(--theme-primary);
+    color: hsl(var(--primary));
     transition: color 0.3s ease;
   }
 
   a:hover {
-    color: var(--theme-accent);
+    color: hsl(var(--color-primary-hover));
   }
 
   /* Theme-aware primary buttons */
   .btn-primary-themed {
-    background: var(--theme-primary);
-    color: var(--theme-text);
-    border-color: var(--theme-primary);
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+    box-shadow: var(--glow-primary);
   }
 
   .btn-primary-themed:hover {
-    background: var(--theme-accent);
-    border-color: var(--theme-accent);
+    background: hsl(var(--color-primary-hover));
+    box-shadow: var(--glow-primary), var(--shadow-md);
   }
 
   /* Theme-aware cards */
   .card-themed {
-    background: var(--theme-background);
-    border-color: var(--theme-primary);
-    opacity: 0.9;
+    background: hsl(var(--card));
+    border-color: hsl(var(--border));
+    box-shadow: var(--shadow-md);
   }
 
   /* Theme badges */
   .badge-themed {
-    background: var(--theme-primary);
-    color: var(--theme-text);
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
   }
 
   /* Custom scrollbar that adapts to theme */
@@ -150,16 +168,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--theme-background);
+    background: hsl(var(--background));
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--theme-primary);
+    background: hsl(var(--primary));
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--theme-accent);
+    background: hsl(var(--color-primary-hover));
   }
 }
 
@@ -193,7 +211,7 @@
 
   /* Glow Effects */
   .glow-primary {
-    box-shadow: 0 0 20px hsl(212 100% 60% / 0.3);
+    box-shadow: var(--glow-primary);
   }
 
   .glow-achievement {
@@ -202,7 +220,7 @@
 
   /* Starfield Animation */
   .starfield {
-    background-image: 
+    background-image:
       radial-gradient(2px 2px at 20px 30px, #eee, transparent),
       radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
       radial-gradient(1px 1px at 90px 40px, #fff, transparent),

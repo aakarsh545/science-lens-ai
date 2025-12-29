@@ -9,11 +9,10 @@ import { Coins, ShoppingBag, Crown, Check, Palette, Smile, Sparkles, Lock, Star,
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
-import { AdminPanel } from "@/components/AdminPanel";
 
 interface ShopItem {
   id: string;
-  type: 'theme' | 'avatar' | 'coin_pack' | 'xp_boost' | 'admin_pass';
+  type: 'theme' | 'avatar' | 'coin_pack' | 'xp_boost';
   name: string;
   description: string;
   price: number;
@@ -143,10 +142,10 @@ export default function ShopPage() {
   };
 
   const loadUserProfile = async (uid: string) => {
-    // Load from profiles table
+    // Load from profiles table (including is_admin)
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('coins, is_premium, level, equipped_theme, equipped_avatar, active_xp_boost, xp_boost_expires_at')
+      .select('coins, is_premium, level, equipped_theme, equipped_avatar, active_xp_boost, xp_boost_expires_at, is_admin')
       .eq('user_id', uid)
       .single();
 
@@ -160,17 +159,10 @@ export default function ShopPage() {
       return;
     }
 
-    // Load admin status from user_stats
-    const { data: statsData, error: statsError } = await supabase
-      .from('user_stats')
-      .select('is_admin')
-      .eq('user_id', uid)
-      .single();
-
     if (profileData) {
       setUserProfile({
         ...profileData,
-        is_admin: statsData?.is_admin || false,
+        is_admin: profileData.is_admin || false,
       });
     }
   };
@@ -845,15 +837,6 @@ export default function ShopPage() {
           </div>
         )}
       </div>
-
-      {/* Admin Panel - always shown at top */}
-      {userId && userProfile && (
-        <AdminPanel
-          user={{ id: userId } as any}
-          isAdmin={userProfile.is_admin || false}
-          onPurchaseSuccess={() => loadUserProfile(userId)}
-        />
-      )}
 
       {/* Main Shop Tabs */}
       <Tabs defaultValue="cosmetics" className="w-full">
