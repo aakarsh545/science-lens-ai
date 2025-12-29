@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ConversationsList } from "./ConversationsList";
 import { Separator } from "@/components/ui/separator";
+import { clearUserDataById } from "@/utils/userStorage";
 
 const menuItems = [
   { title: "Home", icon: Compass, path: "/science-lens" },
@@ -52,6 +53,8 @@ export function AppSidebar({ userId, conversationId, onSelectConversation, onNew
   const { toast } = useToast();
 
   const handleSignOut = async () => {
+    // Clear user-specific localStorage before signing out
+    clearUserDataById(userId);
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast({
