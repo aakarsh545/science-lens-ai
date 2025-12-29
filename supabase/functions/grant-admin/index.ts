@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const SUPER_ADMIN_EMAIL = 'aakarsh545@gmail.com';
+
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -19,20 +21,56 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
 
-    // Get user from auth
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
+    // Get requesting user from auth
+    const { data: { user: requestingUser }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !requestingUser) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    const userId = user.id;
+    // SERVER-SIDE AUTHORIZATION: Check if requesting user is super admin
+    const { data: requestingProfile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('is_admin, email')
+      .eq('user_id', requestingUser.id)
+      .single();
 
-    // Grant admin privileges
+    if (profileError || !requestingProfile) {
+      return new Response(JSON.stringify({ error: 'Failed to verify admin status' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Get requesting user's email from auth
+    const requestingUserEmail = requestingUser.email;
+
+    // ONLY super admin can grant admin privileges
+    if (requestingUserEmail !== SUPER_ADMIN_EMAIL) {
+      console.error(`Unauthorized admin grant attempt by user ${requestingUser.id} (${requestingUserEmail})`);
+      return new Response(JSON.stringify({ error: 'Forbidden: Only super admin can grant admin privileges' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Get target user ID from request body
+    const { userId } = await req.json();
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: 'userId is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log(`Super admin ${requestingUserEmail} granting admin to user ${userId}`);
+
+    // Grant admin privileges to target user
     // 1. Set max level and coins in profiles
-    const { error: profileError } = await supabaseClient
+    const { error: profileError2 } = await supabaseClient
       .from('profiles')
       .update({
         is_admin: true,
@@ -43,8 +81,8 @@ serve(async (req) => {
       })
       .eq('user_id', userId);
 
-    if (profileError) {
-      throw profileError;
+    if (profileError2) {
+      throw profileError2;
     }
 
     // 2. Set admin flag in user_stats
@@ -64,15 +102,18 @@ serve(async (req) => {
 
     // 4. Add all items to user inventory
     if (shopItems && shopItems.length > 0) {
-      const inventoryItems = shopItems.map(item => ({
-        user_id: userId,
-        item_id: item.id
-      }));
-
-      await supabaseClient
-        .from('user_inventory')
-        .insert(inventoryItems, { count: 'exact' })
-        .ignoreDuplicates();
+      for (const item of shopItems) {
+        try {
+          await supabaseClient
+            .from('user_inventory')
+            .insert({ user_id: userId, item_id: item.id });
+        } catch (err) {
+          // Ignore duplicate errors
+          if (!err.message?.includes('duplicate')) {
+            console.warn('Failed to add item:', err);
+          }
+        }
+      }
     }
 
     return new Response(JSON.stringify({
