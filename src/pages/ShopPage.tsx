@@ -84,7 +84,7 @@ export default function ShopPage() {
   useEffect(() => {
     if (!userProfile?.xp_boost_expires_at) return;
 
-    const updateTimer = () => {
+    const updateTimer = async () => {
       if (userProfile?.xp_boost_expires_at) {
         const expiresAt = new Date(userProfile.xp_boost_expires_at).getTime();
         const now = Date.now();
@@ -92,7 +92,18 @@ export default function ShopPage() {
         setActiveBoostTime(remaining);
 
         if (remaining === 0) {
-          // Boost expired, refresh profile
+          // Update database to reset boost
+          if (userId) {
+            await supabase
+              .from('profiles')
+              .update({
+                active_xp_boost: 1,
+                xp_boost_expires_at: null
+              })
+              .eq('user_id', userId);
+          }
+
+          // Then refresh profile
           loadUserProfile(userId!);
         }
       }
