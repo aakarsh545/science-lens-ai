@@ -5,14 +5,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
+const SUPER_ADMIN_EMAIL = 'aakarsh545@gmail.com';
+
 export function AdminToggle() {
   const [loading, setLoading] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<{ level: number; coins: number; is_admin: boolean } | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    checkSuperAdmin();
     loadCurrentStatus();
   }, []);
+
+  const checkSuperAdmin = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const userEmail = user.email;
+    if (userEmail === SUPER_ADMIN_EMAIL) {
+      setIsSuperAdmin(true);
+    }
+  };
 
   const loadCurrentStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -184,6 +198,11 @@ export function AdminToggle() {
       setLoading(false);
     }
   };
+
+  // Don't render if not super admin
+  if (!isSuperAdmin) {
+    return null;
+  }
 
   return (
     <Card className="border-yellow-500/50 bg-gradient-to-br from-yellow-50/50 to-orange-50/50 dark:from-yellow-950/20 dark:to-orange-950/20">
