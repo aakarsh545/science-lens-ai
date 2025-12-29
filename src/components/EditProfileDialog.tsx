@@ -78,12 +78,15 @@ export function EditProfileDialog({
   const handleSave = async () => {
     setLoading(true);
     try {
+      // Convert empty string back to null for database
+      const avatarValue = selectedAvatar === "" ? null : selectedAvatar;
+
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: fullName,
           bio: bio,
-          avatar_url: selectedAvatar,
+          equipped_avatar: avatarValue,
         })
         .eq('user_id', userId);
 
@@ -95,7 +98,14 @@ export function EditProfileDialog({
       });
 
       onOpenChange(false);
-      if (onProfileUpdate) onProfileUpdate();
+
+      // Trigger profile refresh callback
+      if (onProfileUpdate) {
+        onProfileUpdate();
+      }
+
+      // Dispatch custom event for global profile update
+      window.dispatchEvent(new CustomEvent('profile-updated', { detail: { userId } }));
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({

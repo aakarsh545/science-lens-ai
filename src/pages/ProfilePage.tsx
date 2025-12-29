@@ -208,7 +208,7 @@ export default function ProfilePage() {
             username: profile?.username,
             full_name: profile?.full_name,
             bio: profile?.bio,
-            avatar_url: profile?.avatar_url,
+            avatar_url: profile?.equipped_avatar, // Use equipped_avatar for shop avatars
           }}
           onProfileUpdate={() => loadProfileData(user.id)}
         />
