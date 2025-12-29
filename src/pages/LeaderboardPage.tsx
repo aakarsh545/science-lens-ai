@@ -14,7 +14,9 @@ import { SearchPeople } from "@/components/SearchPeople";
 
 interface LeaderboardEntry {
   user_id: string;
+  username?: string | null;
   display_name: string | null;
+  full_name?: string | null;
   avatar_url: string | null;
   rank_num: number;
   xp_points?: number;
@@ -29,7 +31,9 @@ interface LeaderboardEntry {
 }
 
 interface UserProfile {
+  username?: string | null;
   display_name: string | null;
+  full_name?: string | null;
   avatar_url: string | null;
   show_in_leaderboard: boolean;
 }
@@ -69,13 +73,19 @@ export default function LeaderboardPage() {
   const loadUserProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("display_name, avatar_url, show_in_leaderboard")
+      .select("username, display_name, full_name, avatar_url, show_in_leaderboard")
       .eq("user_id", userId)
       .single();
 
     if (data) {
       setUserProfile(data);
     }
+  };
+
+  // Helper function to get display name with priority
+  const getDisplayName = (entry: LeaderboardEntry | UserProfile | null, userEmail?: string) => {
+    if (!entry) return "Anonymous";
+    return entry.username || entry.display_name || entry.full_name || userEmail?.split("@")[0] || "Anonymous";
   };
 
   const loadLeaderboard = useCallback(async (tab: string) => {
@@ -164,8 +174,9 @@ export default function LeaderboardPage() {
     }
   };
 
-  const getInitials = (name: string | null) => {
-    if (!name) return "U";
+  const getInitials = (entry: LeaderboardEntry | UserProfile | null, userEmail?: string) => {
+    const name = getDisplayName(entry, userEmail);
+    if (!name || name === "Anonymous") return "U";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -175,7 +186,7 @@ export default function LeaderboardPage() {
   };
 
   const filteredLeaderboard = leaderboard.filter((entry) =>
-    entry.display_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    getDisplayName(entry)?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const isUserInTop100 = userRank !== null && userRank <= 100;
@@ -250,14 +261,14 @@ export default function LeaderboardPage() {
                   {user && (
                     <Avatar className="h-12 w-12">
                       <AvatarFallback className="bg-primary text-primary-foreground">
-                        {getInitials(userProfile.display_name)}
+                        {getInitials(userProfile, user.email)}
                       </AvatarFallback>
                     </Avatar>
                   )}
                   <div>
-                    <div className="font-semibold">{userProfile.display_name || "Anonymous"}</div>
+                    <div className="font-semibold">{getDisplayName(userProfile, user.email)}</div>
                     <div className="text-sm text-muted-foreground">
-                      {activeTab === "all_time" && `${userProfile.display_name}'s total XP`}
+                      {activeTab === "all_time" && `${getDisplayName(userProfile, user.email)}'s total XP`}
                       {activeTab === "weekly" && "XP earned this week"}
                       {activeTab === "monthly" && "XP earned this month"}
                       {activeTab === "streaks" && "Day streak"}
@@ -318,13 +329,13 @@ export default function LeaderboardPage() {
                           <AvatarFallback
                             className={isCurrentUser ? "bg-primary text-primary-foreground" : ""}
                           >
-                            {getInitials(entry.display_name)}
+                            {getInitials(entry)}
                           </AvatarFallback>
                         </Avatar>
 
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold truncate">
-                            {entry.display_name || "Anonymous"}
+                            {getDisplayName(entry)}
                             {isCurrentUser && (
                               <Badge variant="default" className="ml-2">
                                 You
@@ -384,10 +395,10 @@ export default function LeaderboardPage() {
               <div className="flex items-center gap-4">
                 <div className="text-2xl font-bold">#{userRank}</div>
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback>{getInitials(userProfile.display_name)}</AvatarFallback>
+                  <AvatarFallback>{getInitials(userProfile, user?.email)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <div className="font-semibold">{userProfile.display_name || "Anonymous"}</div>
+                  <div className="font-semibold">{getDisplayName(userProfile, user?.email)}</div>
                 </div>
               </div>
             </CardContent>

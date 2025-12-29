@@ -27,7 +27,9 @@ interface Topic {
 }
 
 interface Profile {
+  username?: string | null;
   display_name: string | null;
+  full_name?: string | null;
   streak_count: number;
   total_questions: number;
   level: number;
@@ -249,10 +251,10 @@ const Dashboard = ({ user }: DashboardProps) => {
         >
           <div>
             <h1 className="text-4xl font-bold bg-gradient-cosmic bg-clip-text text-transparent">
-              Welcome back, {profile?.display_name || "Explorer"}!
+              Welcome back, {profile?.username || profile?.display_name || profile?.full_name || user?.email?.split("@")[0] || "Explorer"}!
             </h1>
             <p className="text-muted-foreground mt-2">
-              Level {profile?.level || 1} Science Explorer
+              Level {profile?.level || 1}
             </p>
           </div>
           <div className="flex items-center gap-2">

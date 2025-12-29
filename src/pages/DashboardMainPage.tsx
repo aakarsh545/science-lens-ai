@@ -11,7 +11,9 @@ import { GamificationBar } from "@/components/GamificationBar";
 import { ChallengePanel } from "@/components/ChallengePanel";
 
 interface Profile {
+  username?: string | null;
   display_name: string | null;
+  full_name?: string | null;
   streak_count: number;
   total_questions: number;
   level: number;
@@ -159,7 +161,7 @@ export default function DashboardMainPage() {
       {/* Welcome Header */}
       <div>
         <h1 className="text-4xl font-bold bg-gradient-cosmic bg-clip-text text-transparent mb-2">
-          Welcome back, {profile.display_name || "Scientist"}!
+          Welcome back, {profile.username || profile.display_name || profile.full_name || user?.email?.split("@")[0] || "Scientist"}!
         </h1>
         <p className="text-muted-foreground">
           Continue your learning journey
