@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, ShieldOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,19 +7,26 @@ import { useToast } from "@/hooks/use-toast";
 
 export function AdminToggle() {
   const [loading, setLoading] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<{ level: number; coins: number; is_admin: boolean } | null>(null);
   const { toast } = useToast();
 
-  const checkCurrentStatus = async () => {
+  useEffect(() => {
+    loadCurrentStatus();
+  }, []);
+
+  const loadCurrentStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    if (!user) return;
 
     const { data } = await supabase
       .from('profiles')
-      .select('is_admin, level, coins')
+      .select('level, coins, is_admin')
       .eq('user_id', user.id)
       .single();
 
-    return data;
+    if (data) {
+      setCurrentStatus(data);
+    }
   };
 
   const grantAdmin = async () => {
@@ -30,7 +37,7 @@ export function AdminToggle() {
 
       const userId = user.id;
 
-      // 1. Set admin flag and max privileges
+      // 1. Set admin flag and max privileges in profiles
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -40,23 +47,27 @@ export function AdminToggle() {
           coins: 999999999,
           is_premium: true
         })
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select();
 
       if (profileError) throw profileError;
 
       // 2. Set admin flag in user_stats
-      await supabase
+      const { error: statsError } = await supabase
         .from('user_stats')
         .update({ is_admin: true })
         .eq('user_id', userId);
 
+      if (statsError) {
+        console.warn('Failed to update user_stats:', statsError);
+      }
+
       // 3. Get all shop items
-      const { data: shopItems } = await supabase
+      const { data: shopItems, error: itemsError } = await supabase
         .from('shop_items')
         .select('id');
 
-      // 4. Add all items to inventory
-      if (shopItems && shopItems.length > 0) {
+      if (!itemsError && shopItems && shopItems.length > 0) {
         const inventoryItems = shopItems.map(item => ({
           user_id: userId,
           item_id: item.id
@@ -73,15 +84,20 @@ export function AdminToggle() {
         description: "You now have Level 1000, infinite coins, and all items unlocked!",
       });
 
-      // Reload page to show changes
-      setTimeout(() => window.location.reload(), 1500);
+      // Update local status before reload
+      setCurrentStatus({ level: 1000, coins: 999999999, is_admin: true });
+
+      // Force hard reload to clear all caches
+      setTimeout(() => {
+        window.location.href = window.location.href;
+      }, 1000);
     } catch (error: any) {
+      console.error('Error granting admin:', error);
       toast({
         title: "Error granting admin",
-        description: error.message,
+        description: error.message || "Unknown error occurred",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -92,29 +108,47 @@ export function AdminToggle() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not logged in');
 
-      await supabase
+      const userId = user.id;
+
+      // Revoke admin in profiles
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({ is_admin: false })
-        .eq('user_id', user.id);
+        .eq('user_id', userId);
 
-      await supabase
+      if (profileError) throw profileError;
+
+      // Revoke admin in user_stats
+      const { error: statsError } = await supabase
         .from('user_stats')
         .update({ is_admin: false })
-        .eq('user_id', user.id);
+        .eq('user_id', userId);
+
+      if (statsError) {
+        console.warn('Failed to update user_stats:', statsError);
+      }
 
       toast({
         title: "Admin Mode Deactivated",
         description: "Your admin privileges have been revoked.",
       });
 
-      setTimeout(() => window.location.reload(), 1500);
+      // Update local status
+      if (currentStatus) {
+        setCurrentStatus({ ...currentStatus, is_admin: false });
+      }
+
+      // Force hard reload
+      setTimeout(() => {
+        window.location.href = window.location.href;
+      }, 1000);
     } catch (error: any) {
+      console.error('Error revoking admin:', error);
       toast({
         title: "Error revoking admin",
-        description: error.message,
+        description: error.message || "Unknown error occurred",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -127,10 +161,38 @@ export function AdminToggle() {
             <CardTitle className="text-lg">Admin Control Panel</CardTitle>
             <CardDescription>Toggle admin mode for testing</CardDescription>
           </div>
-          <Shield className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+          {currentStatus?.is_admin ? (
+            <Shield className="w-6 h-6 text-green-600 dark:text-green-400" />
+          ) : (
+            <ShieldOff className="w-6 h-6 text-gray-400" />
+          )}
         </div>
       </CardHeader>
       <CardContent>
+        {/* Current Status Display */}
+        {currentStatus && (
+          <div className="mb-4 p-3 bg-background/50 rounded-lg space-y-1">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Status:</span>
+              <span className={`font-medium ${currentStatus.is_admin ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
+                {currentStatus.is_admin ? '👑 Admin Active' : '🔓 User Mode'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Level:</span>
+              <span className={`font-medium ${currentStatus.level >= 1000 ? 'text-yellow-600 dark:text-yellow-400' : ''}`}>
+                {currentStatus.level}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Coins:</span>
+              <span className="font-medium">
+                {currentStatus.coins.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-2">
           <Button
             onClick={grantAdmin}
@@ -168,7 +230,7 @@ export function AdminToggle() {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-3">
-          Admin mode: Level 1000, 999M coins, all items unlocked
+          Admin: Level 1000, 999M coins, all items unlocked
         </p>
       </CardContent>
     </Card>
