@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { DecorationSystem } from "@/components/DecorationSystem";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 
@@ -74,6 +75,7 @@ export default function AppLayout() {
     <ThemeProvider userId={user.id}>
       <SidebarProvider defaultOpen={true}>
         <div className="min-h-screen flex w-full">
+          <DecorationSystem />
           <AppSidebar
             userId={user.id}
             conversationId={conversationId}
