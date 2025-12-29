@@ -11,11 +11,8 @@ export function UserAvatar({ userId, className = "" }: UserAvatarProps) {
   const [avatarEmoji, setAvatarEmoji] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadEquippedAvatar();
-  }, [userId]);
-
   const loadEquippedAvatar = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -51,6 +48,27 @@ export function UserAvatar({ userId, className = "" }: UserAvatarProps) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadEquippedAvatar();
+  }, [userId]);
+
+  // Listen for profile update events and refresh avatar
+  useEffect(() => {
+    const handleProfileUpdate = (event: CustomEvent) => {
+      if (event.detail?.userId === userId) {
+        console.log('[UserAvatar] Profile update detected, refreshing avatar');
+        loadEquippedAvatar();
+      }
+    };
+
+    // Type the event properly
+    window.addEventListener('profile-updated', handleProfileUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('profile-updated', handleProfileUpdate as EventListener);
+    };
+  }, [userId]);
 
   if (loading) {
     return (

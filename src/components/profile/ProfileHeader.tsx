@@ -4,6 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Award } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProfileHeaderProps {
   user: User;
@@ -12,6 +14,8 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderProps) {
+  const [avatarEmoji, setAvatarEmoji] = useState<string | null>(null);
+
   const displayName = profile?.username || profile?.display_name || profile?.full_name || user?.email?.split("@")[0] || "Explorer";
   const initials = displayName
     .split(" ")
@@ -25,6 +29,45 @@ export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderPr
     month: "long",
   });
 
+  // Load avatar emoji from equipped_avatar
+  useEffect(() => {
+    const loadAvatar = async () => {
+      if (profile?.equipped_avatar) {
+        const { data } = await supabase
+          .from('shop_items')
+          .select('icon_emoji')
+          .eq('id', profile.equipped_avatar)
+          .eq('type', 'avatar')
+          .single();
+
+        if (data?.icon_emoji) {
+          setAvatarEmoji(data.icon_emoji);
+        }
+      }
+    };
+    loadAvatar();
+  }, [profile?.equipped_avatar]);
+
+  // Listen for profile updates to refresh avatar
+  useEffect(() => {
+    const handleProfileUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail?.userId === user.id) {
+        console.log('[ProfileHeader] Profile update detected, refreshing');
+        // Force a reload by triggering parent's onProfileUpdate callback
+        if (onEdit) {
+          window.location.reload(); // Hard refresh to ensure all data is up-to-date
+        }
+      }
+    };
+
+    window.addEventListener('profile-updated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('profile-updated', handleProfileUpdate);
+    };
+  }, [user.id, onEdit]);
+
   return (
     <>
       <Card className="card-cosmic border-2">
@@ -32,10 +75,18 @@ export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderPr
           <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Avatar */}
             <Avatar className="h-24 w-24 border-4 border-primary/20">
-              <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="text-2xl bg-gradient-to-br from-primary to-primary/60 text-white">
-                {initials}
-              </AvatarFallback>
+              {avatarEmoji ? (
+                <AvatarFallback className="text-5xl bg-gradient-to-br from-primary/20 to-purple-500/20">
+                  {avatarEmoji}
+                </AvatarFallback>
+              ) : (
+                <>
+                  <AvatarImage src={profile?.avatar_url || undefined} />
+                  <AvatarFallback className="text-2xl bg-gradient-to-br from-primary to-primary/60 text-white">
+                    {initials}
+                  </AvatarFallback>
+                </>
+              )}
             </Avatar>
 
             {/* User Info */}
