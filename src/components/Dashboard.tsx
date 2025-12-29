@@ -14,6 +14,7 @@ import Settings from "./Settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createTimeout } from "@/utils/timeout";
+import { clearUserData } from "@/utils/userStorage";
 
 interface DashboardProps {
   user: User;
@@ -113,6 +114,8 @@ const Dashboard = ({ user }: DashboardProps) => {
   }, [user.id]);
 
   const handleSignOut = async () => {
+    // Clear user-specific localStorage before signing out
+    clearUserData(user);
     await supabase.auth.signOut();
     toast({
       title: "Signed out successfully",
@@ -135,7 +138,7 @@ const Dashboard = ({ user }: DashboardProps) => {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Dashboard
             </Button>
-            <ThemeToggle />
+            <ThemeToggle user={user} />
           </div>
           <ChatInterface user={user} topic={selectedTopic} />
         </div>
@@ -155,7 +158,7 @@ const Dashboard = ({ user }: DashboardProps) => {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Dashboard
             </Button>
-            <ThemeToggle />
+            <ThemeToggle user={user} />
           </div>
           <Settings />
         </div>
@@ -175,7 +178,7 @@ const Dashboard = ({ user }: DashboardProps) => {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Dashboard
             </Button>
-            <ThemeToggle />
+            <ThemeToggle user={user} />
           </div>
           <div className="mb-6">
             <h2 className="text-3xl font-bold text-foreground mb-2">Choose a Topic</h2>
@@ -258,7 +261,7 @@ const Dashboard = ({ user }: DashboardProps) => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
+            <ThemeToggle user={user} />
             <Button variant="ghost" onClick={() => setShowSettings(true)}>
               <SettingsIcon className="mr-2 h-4 w-4" />
               Settings

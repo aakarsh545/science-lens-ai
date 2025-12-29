@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { DecorationSystem } from "@/components/DecorationSystem";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
+import { clearUserData, migrateUserData } from "@/utils/userStorage";
 
 export default function AppLayout() {
   const [user, setUser] = useState<User | null>(null);
@@ -23,6 +24,8 @@ export default function AppLayout() {
         return;
       }
       setUser(session.user);
+      // Migrate any old generic localStorage to user-scoped
+      migrateUserData(session.user);
       setLoading(false);
     });
 
@@ -32,6 +35,8 @@ export default function AppLayout() {
         return;
       }
       setUser(session.user);
+      // Migrate any old generic localStorage to user-scoped
+      migrateUserData(session.user);
       setLoading(false);
     });
 
@@ -59,6 +64,8 @@ export default function AppLayout() {
   };
 
   const handleSignOut = async () => {
+    // Clear user-specific localStorage before signing out
+    clearUserData(user);
     await supabase.auth.signOut();
     navigate("/");
   };
