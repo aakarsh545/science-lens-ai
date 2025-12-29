@@ -68,16 +68,22 @@ export function AdminToggle() {
         .select('id');
 
       if (!itemsError && shopItems && shopItems.length > 0) {
-        const inventoryItems = shopItems.map(item => ({
-          user_id: userId,
-          item_id: item.id
-        }));
-
-        await supabase
-          .from('user_inventory')
-          .insert(inventoryItems)
-          .onConflict('user_id,item_id')
-          .ignore();
+        // Insert items one at a time to handle duplicates gracefully
+        for (const item of shopItems) {
+          try {
+            await supabase
+              .from('user_inventory')
+              .insert({
+                user_id: userId,
+                item_id: item.id
+              });
+          } catch (err) {
+            // Ignore duplicate errors
+            if (!err.message?.includes('duplicate')) {
+              console.warn('Failed to add item to inventory:', err);
+            }
+          }
+        }
       }
 
       toast({
