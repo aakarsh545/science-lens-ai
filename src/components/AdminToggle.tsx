@@ -37,7 +37,23 @@ export function AdminToggle() {
 
       const userId = user.id;
 
-      // 1. Set admin flag and max privileges in profiles
+      // 1. Save original state BEFORE granting admin
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('level, xp_points, coins, is_premium')
+        .eq('user_id', userId)
+        .single();
+
+      // Save original state to user_stats metadata
+      await supabase
+        .from('user_stats')
+        .update({
+          is_admin: true,
+          original_state: currentProfile || { level: 1, xp_points: 0, coins: 100, is_premium: false }
+        })
+        .eq('user_id', userId);
+
+      // 2. Set admin flag and max privileges in profiles
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -51,16 +67,6 @@ export function AdminToggle() {
         .select();
 
       if (profileError) throw profileError;
-
-      // 2. Set admin flag in user_stats
-      const { error: statsError } = await supabase
-        .from('user_stats')
-        .update({ is_admin: true })
-        .eq('user_id', userId);
-
-      if (statsError) {
-        console.warn('Failed to update user_stats:', statsError);
-      }
 
       // 3. Get all shop items
       const { data: shopItems, error: itemsError } = await supabase
@@ -117,32 +123,51 @@ export function AdminToggle() {
 
       const userId = user.id;
 
-      // Revoke admin in profiles
+      // 1. Get original state from user_stats
+      const { data: userStats } = await supabase
+        .from('user_stats')
+        .select('original_state')
+        .eq('user_id', userId)
+        .single();
+
+      const originalState = userStats?.original_state || { level: 1, xp_points: 0, coins: 100, is_premium: false };
+
+      // 2. Restore original state in profiles
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ is_admin: false })
+        .update({
+          is_admin: false,
+          level: originalState.level,
+          xp_points: originalState.xp_points,
+          coins: originalState.coins,
+          is_premium: originalState.is_premium
+        })
         .eq('user_id', userId);
 
       if (profileError) throw profileError;
 
-      // Revoke admin in user_stats
-      const { error: statsError } = await supabase
+      // 3. Clear admin status and original_state in user_stats
+      await supabase
         .from('user_stats')
-        .update({ is_admin: false })
+        .update({
+          is_admin: false,
+          original_state: null
+        })
         .eq('user_id', userId);
-
-      if (statsError) {
-        console.warn('Failed to update user_stats:', statsError);
-      }
 
       toast({
         title: "Admin Mode Deactivated",
-        description: "Your admin privileges have been revoked.",
+        description: "Your account has been restored to its original state.",
       });
 
       // Update local status
       if (currentStatus) {
-        setCurrentStatus({ ...currentStatus, is_admin: false });
+        setCurrentStatus({
+          ...currentStatus,
+          is_admin: false,
+          level: originalState.level,
+          coins: originalState.coins
+        });
       }
 
       // Force hard reload
