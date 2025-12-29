@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SearchPeople } from "@/components/SearchPeople";
 
 interface LeaderboardEntry {
   user_id: string;
@@ -193,6 +194,9 @@ export default function LeaderboardPage() {
         <h1 className="text-4xl font-bold mb-2">Leaderboard</h1>
         <p className="text-muted-foreground">See how you stack up against other learners</p>
       </div>
+
+      {/* Search People - Only visible to super admin */}
+      <SearchPeople />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
