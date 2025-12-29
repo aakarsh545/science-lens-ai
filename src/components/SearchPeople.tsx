@@ -47,27 +47,14 @@ export function SearchPeople() {
 
     setSearching(true);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, level, coins, is_admin, is_premium')
-        .order('level', { ascending: false })
-        .limit(10);
+      const { data, error } = await supabase.functions.invoke('search-users');
 
       if (error) throw error;
 
-      // Get auth users to match emails
-      const { data: { users: authUsers } } = await supabase.auth.admin.listUsers();
-
-      const profiles: UserProfile[] = (data || []).map((profile: any) => {
-        const authUser = authUsers?.find((u: any) => u.id === profile.id);
-        return {
-          ...profile,
-          email: authUser?.email || 'Unknown'
-        };
-      });
+      let allUsers = data?.users || [];
 
       // Filter by search query
-      const filtered = profiles.filter((user: UserProfile) =>
+      const filtered = allUsers.filter((user: UserProfile) =>
         user.email.toLowerCase().includes(query.toLowerCase()) ||
         user.id.toLowerCase().includes(query.toLowerCase())
       );
@@ -77,7 +64,7 @@ export function SearchPeople() {
       console.error('Error searching users:', error);
       toast({
         title: "Search failed",
-        description: "Could not search for users",
+        description: "Could not search for users. Service role key may not be configured.",
         variant: "destructive",
       });
     } finally {
