@@ -15,22 +15,34 @@ export default function ThemeToggle({ user }: ThemeToggleProps) {
     return user ? `theme_${user.id}` : "theme";
   };
 
+  // Force apply theme to DOM
+  const applyThemeToDOM = (themeValue: "dark" | "light") => {
+    // Clear any existing theme classes first
+    document.documentElement.classList.remove("light");
+    // Apply the new theme
+    if (themeValue === "light") {
+      document.documentElement.classList.add("light");
+    }
+  };
+
   useEffect(() => {
-    // Load theme for current user
+    // Load theme for current user and force apply to DOM
     const themeKey = getThemeKey();
     const savedTheme = localStorage.getItem(themeKey) as "dark" | "light" | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.classList.toggle("light", savedTheme === "light");
-    }
-  }, [user]);
+
+    // Default to dark if no saved theme
+    const themeToApply = savedTheme || "dark";
+
+    setTheme(themeToApply);
+    applyThemeToDOM(themeToApply);
+  }, [user]); // Re-run whenever user changes
 
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
     const themeKey = getThemeKey();
     localStorage.setItem(themeKey, newTheme);
-    document.documentElement.classList.toggle("light", newTheme === "light");
+    applyThemeToDOM(newTheme);
   };
 
   return (
