@@ -76,7 +76,8 @@ export function AdminToggle() {
         await supabase
           .from('user_inventory')
           .insert(inventoryItems)
-          .ignoreDuplicates();
+          .onConflict('user_id,item_id')
+          .ignore();
       }
 
       toast({
