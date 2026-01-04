@@ -33,10 +33,9 @@ const App = () => (
       <Toaster />
       <Sonner />
       <ErrorBoundary>
-        <BrowserRouter>
+        <BrowserRouter basename="/science-lens">
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/science-lens" element={<AuthenticatedLayout />}>
+            <Route path="/" element={<AuthenticatedLayout />}>
               <Route index element={<DashboardMainPage />} />
               <Route path="learning" element={<UnifiedLearningPage />} />
               <Route path="learning/:courseSlug" element={<CoursePage />} />
