@@ -17,6 +17,7 @@ import {
 import SpaceBackground from './SpaceBackground';
 import AuthModal from './AuthModal';
 import { OnboardingCutscene } from './OnboardingCutscene';
+import { supabase } from '@/integrations/supabase/client';
 
 const features = [
   {
@@ -54,10 +55,32 @@ const stats = [
 
 export default function LandingPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showIntro, setShowIntro] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    // Check if user has already seen the onboarding
+    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+    return !hasSeenOnboarding;
+  });
+  const [showIntro, setShowIntro] = useState(() => {
+    // Check if user has already seen the intro animation
+    const hasSeenIntro = localStorage.getItem('hasSeenIntro');
+    return !hasSeenIntro;
+  });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
+
+  // Listen for authentication state changes and navigate to dashboard
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' && session) {
+        // User is authenticated, navigate to dashboard
+        navigate('/', { replace: true });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   // Starfield intro animation
   useEffect(() => {
@@ -134,6 +157,7 @@ export default function LandingPage() {
 
     // End intro after 4 seconds
     const timer = setTimeout(() => {
+      localStorage.setItem('hasSeenIntro', 'true');
       setShowIntro(false);
     }, 4000);
 
@@ -147,9 +171,12 @@ export default function LandingPage() {
     setShowOnboarding(true);
   };
 
-  const handleOnboardingComplete = async (data: any) => {
-    // Save onboarding data to profile
-    // For now, just show auth modal
+  const handleOnboardingComplete = async () => {
+    // Save that user has completed onboarding
+    localStorage.setItem('hasSeenOnboarding', 'true');
+    // Save that user has seen intro
+    localStorage.setItem('hasSeenIntro', 'true');
+
     setShowOnboarding(false);
     setShowAuthModal(true);
   };
@@ -190,7 +217,10 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 2.5 }}
-              onClick={() => setShowIntro(false)}
+              onClick={() => {
+                localStorage.setItem('hasSeenIntro', 'true');
+                setShowIntro(false);
+              }}
               className="absolute bottom-20 left-1/2 -translate-x-1/2 px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full font-semibold hover:scale-105 transition-transform shadow-lg shadow-purple-500/30 z-20"
             >
               Skip Intro →
@@ -203,7 +233,10 @@ export default function LandingPage() {
       {showOnboarding && (
         <OnboardingCutscene
           onComplete={handleOnboardingComplete}
-          onClose={() => setShowOnboarding(false)}
+          onClose={() => {
+            localStorage.setItem('hasSeenOnboarding', 'true');
+            setShowOnboarding(false);
+          }}
         />
       )}
 
