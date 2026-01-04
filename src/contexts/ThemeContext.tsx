@@ -127,7 +127,7 @@ export function ThemeProvider({ children, userId }: { children: ReactNode; userI
     loadTheme();
   }, [userId]);
 
-  const contextValue = useMemo(
+  const contextValue: ThemeContextType = useMemo(
     () => ({ theme, loading, refreshTheme }),
     [theme, loading, refreshTheme]
   );
