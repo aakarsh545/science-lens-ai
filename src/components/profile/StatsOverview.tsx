@@ -2,7 +2,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Flame, Target, BookOpen, Trophy, TrendingUp, CheckCircle, Award } from "lucide-react";
 
 interface StatsOverviewProps {
-  stats: any;
+  stats: {
+    lessonsCompleted: number;
+    quizzesTaken: number;
+    challengesCompleted: number;
+    streakCount: number;
+    totalQuestions: number;
+    xpPoints: number;
+    level: number;
+  };
 }
 
 export default function StatsOverview({ stats }: StatsOverviewProps) {

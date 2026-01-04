@@ -9,7 +9,7 @@ interface Activity {
   activity_type: string;
   xp_earned: number;
   created_at: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 interface RecentActivityTimelineProps {

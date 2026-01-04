@@ -50,7 +50,7 @@ export default function PerformanceBySubject({ userId }: PerformanceBySubjectPro
       // Group by category and aggregate
       const performanceByCategory: { [key: string]: SubjectPerformance } = {};
 
-      topicProgress?.forEach((item: any) => {
+      topicProgress?.forEach((item) => {
         const category = item.learning_topics?.category || "General";
         const completion = item.completion_percentage || 0;
         const correct = item.correct_answers || 0;

@@ -84,7 +84,7 @@ export default function ShopPage() {
   useEffect(() => {
     if (!userProfile?.xp_boost_expires_at) return;
 
-    const updateTimer = async () => {
+    const updateTimer = () => {
       if (userProfile?.xp_boost_expires_at) {
         const expiresAt = new Date(userProfile.xp_boost_expires_at).getTime();
         const now = Date.now();
@@ -94,17 +94,18 @@ export default function ShopPage() {
         if (remaining === 0) {
           // Update database to reset boost
           if (userId) {
-            await supabase
+            supabase
               .from('profiles')
               .update({
                 active_xp_boost: 1,
                 xp_boost_expires_at: null
               })
-              .eq('user_id', userId);
+              .eq('user_id', userId)
+              .then(() => {
+                // Then refresh profile
+                loadUserProfile(userId!);
+              });
           }
-
-          // Then refresh profile
-          loadUserProfile(userId!);
         }
       }
     };
@@ -233,10 +234,9 @@ export default function ShopPage() {
     }
 
     // Regular cosmetic purchases (themes/avatars) with coins
-    // Skip ALL restrictions for admin users
-    if (userProfile.is_admin) {
-      // Admin bypass - proceed directly to purchase
-    } else {
+    // UI checks only - server-side spend_coins RPC is the authority for all security
+    // Show friendly UI to real admins, but server validates actual admin status
+    if (!userProfile.is_admin) {
       // Check level requirement (only for cosmetics)
       if (userProfile.level < item.level_required) {
         toast({
@@ -257,7 +257,7 @@ export default function ShopPage() {
         return;
       }
 
-      // Check if user has enough coins (skip for admin)
+      // Check if user has enough coins
       if (userProfile.coins < item.price) {
         toast({
           title: "Not enough coins!",
@@ -267,6 +267,7 @@ export default function ShopPage() {
         return;
       }
     }
+    // Admins bypass UI checks, but server-side spend_coins RPC validates actual admin status from database
 
     setPurchasing(prev => new Set(prev).add(item.id));
 
@@ -305,10 +306,10 @@ export default function ShopPage() {
         title: "Purchase successful! 🎉",
         description: `You purchased ${item.name} for ${item.price} coins!`,
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Purchase failed",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       });
     } finally {
@@ -343,14 +344,17 @@ export default function ShopPage() {
         await refreshTheme();
       }
 
+      // Dispatch global profile update event so UserAvatar and other components refresh
+      window.dispatchEvent(new CustomEvent('profile-updated', { detail: { userId } }));
+
       toast({
         title: "Item equipped! ✨",
         description: `You're now using ${item.name}`,
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Failed to equip",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       });
     } finally {
@@ -369,43 +373,6 @@ export default function ShopPage() {
     return userProfile?.equipped_avatar === item.id;
   };
 
-  const handlePreviewTheme = (item: ShopItem) => {
-    if (item.type !== 'theme') return;
-
-    const colors = {
-      primary: item.metadata.primary || '#3b82f6',
-      secondary: item.metadata.secondary || '#1e40af',
-      background: item.metadata.background || '#0f172a',
-      text: item.metadata.text || '#f1f5f9',
-      accent: item.metadata.accent || '#60a5fa',
-      gradientColors: item.metadata.gradientColors,
-    };
-
-    const root = document.documentElement;
-    root.style.setProperty('--theme-primary', colors.primary);
-    root.style.setProperty('--theme-secondary', colors.secondary);
-    root.style.setProperty('--theme-background', colors.background);
-    root.style.setProperty('--theme-text', colors.text);
-    root.style.setProperty('--theme-accent', colors.accent);
-
-    if (colors.gradientColors && colors.gradientColors.length > 0) {
-      root.style.setProperty(
-        '--theme-gradient',
-        `linear-gradient(135deg, ${colors.gradientColors.join(', ')})`
-      );
-    } else {
-      root.style.setProperty('--theme-gradient', colors.background);
-    }
-
-    toast({
-      title: "Theme Preview Active",
-      description: `Previewing ${item.name}. Equip to keep it permanently!`,
-    });
-  };
-
-  const handleResetPreview = () => {
-    refreshTheme();
-  };
 
   // Group items by rarity and type
   const themesByRarity = shopItems.filter(item => item.type === 'theme').reduce((acc, item) => {
@@ -671,18 +638,6 @@ export default function ShopPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Preview button for themes */}
-                {item.type === 'theme' && isOwned && !equipped && (
-                  <Button
-                    onClick={() => handlePreviewTheme(item)}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                  >
-                    👁️ Preview
-                  </Button>
-                )}
-
                 {isConsumable ? (
                   <Button
                     onClick={() => handlePurchase(item)}

@@ -241,7 +241,7 @@ function getDecorationPreset(
  * Parse theme from database shop_item
  * Converts legacy metadata to new ThemeConfig format
  */
-export function parseThemeConfig(shopItem: any): ThemeConfig {
+export function parseThemeConfig(shopItem: Record<string, unknown>): ThemeConfig {
   // Legacy format support
   const primary = shopItem.metadata?.primary || '#3b82f6';
   const secondary = shopItem.metadata?.secondary || '#1e40af';

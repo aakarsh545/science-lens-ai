@@ -18,6 +18,13 @@ interface Topic {
   difficulty_level: string;
 }
 
+interface TopicProgress {
+  topic_id: string;
+  completion_percentage: number;
+  correct_answers: number;
+  questions_answered: number;
+}
+
 interface UserProfile {
   level: number;
   xp_points: number;
@@ -33,7 +40,7 @@ export default function LearnSciencePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [progress, setProgress] = useState<any>({});
+  const [progress, setProgress] = useState<Record<string, TopicProgress>>({});
   const [userProfile, setUserProfile] = useState<UserProfile>({
     level: 1,
     xp_points: 0,
@@ -86,7 +93,7 @@ export default function LearnSciencePage() {
       .eq("user_id", userId);
 
     if (data) {
-      const progressMap: any = {};
+      const progressMap: Record<string, TopicProgress> = {};
       data.forEach(p => {
         progressMap[p.topic_id] = p;
       });

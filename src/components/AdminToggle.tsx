@@ -5,26 +5,29 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
-const SUPER_ADMIN_EMAIL = 'aakarsh545@gmail.com';
-
 export function AdminToggle() {
   const [loading, setLoading] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<{ level: number; coins: number; is_admin: boolean } | null>(null);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    checkSuperAdmin();
+    checkAdminStatus();
     loadCurrentStatus();
   }, []);
 
-  const checkSuperAdmin = async () => {
+  const checkAdminStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const userEmail = user.email;
-    if (userEmail === SUPER_ADMIN_EMAIL) {
-      setIsSuperAdmin(true);
+    const { data } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('user_id', user.id)
+      .single();
+
+    if (data && data.is_admin) {
+      setIsAdmin(true);
     }
   };
 
@@ -118,11 +121,11 @@ export function AdminToggle() {
       setTimeout(() => {
         window.location.href = window.location.href;
       }, 1000);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error granting admin:', error);
       toast({
         title: "Error granting admin",
-        description: error.message || "Unknown error occurred",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
         variant: "destructive",
       });
       setLoading(false);
@@ -188,19 +191,19 @@ export function AdminToggle() {
       setTimeout(() => {
         window.location.href = window.location.href;
       }, 1000);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error revoking admin:', error);
       toast({
         title: "Error revoking admin",
-        description: error.message || "Unknown error occurred",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
         variant: "destructive",
       });
       setLoading(false);
     }
   };
 
-  // Don't render if not super admin
-  if (!isSuperAdmin) {
+  // Don't render if not admin
+  if (!isAdmin) {
     return null;
   }
 

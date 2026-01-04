@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -32,10 +32,29 @@ export function GamificationBar({ userId }: GamificationBarProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  // Track last update timestamp to prevent race conditions
+  const lastUpdateTimestampRef = useRef<number>(0);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLoadingRef = useRef(false);
+
   useEffect(() => {
     let mounted = true;
 
-    const loadStats = async () => {
+    const loadStats = async (updateTimestamp?: number) => {
+      // Check if this update is stale (older than last successful update)
+      if (updateTimestamp && updateTimestamp <= lastUpdateTimestampRef.current) {
+        console.log('[GamificationBar] Ignoring stale update');
+        return;
+      }
+
+      // If already loading, don't start another load
+      if (isLoadingRef.current) {
+        console.log('[GamificationBar] Already loading, skipping');
+        return;
+      }
+
+      isLoadingRef.current = true;
+
       try {
         setError(false);
 
@@ -43,7 +62,7 @@ export function GamificationBar({ userId }: GamificationBarProps) {
         const timeoutPromise = createTimeout(5000, "Stats loading timed out");
 
         const fetchPromise = (async () => {
-          // Load credits and xp_total from user_stats
+          // Load credits and xp_total from user_stats (authoritative source)
           const { data: userStats, error: userStatsError } = await supabase
             .from("user_stats")
             .select("credits, xp_total")
@@ -73,9 +92,19 @@ export function GamificationBar({ userId }: GamificationBarProps) {
           return { userStats, profile, count };
         })();
 
-        const { userStats, profile, count } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+        const { userStats, profile, count } = await Promise.race([fetchPromise, timeoutPromise]) as {
+          userStats: { credits: number; xp_total: number } | null;
+          profile: { xp_points: number; level: number; total_questions: number } | null;
+          count: number | null;
+        };
 
         if (mounted && (userStats || profile)) {
+          // Update timestamp before setting state to prevent race conditions
+          const newTimestamp = updateTimestamp || Date.now();
+          lastUpdateTimestampRef.current = newTimestamp;
+
+          // Always recompute level from authoritative xp_total (never increment locally)
+          // This ensures no double-application of XP
           setStats({
             credits: userStats?.credits || 0,
             xp_total: userStats?.xp_total || 0,
@@ -92,12 +121,27 @@ export function GamificationBar({ userId }: GamificationBarProps) {
           setError(true);
           setLoading(false);
         }
+      } finally {
+        isLoadingRef.current = false;
       }
     };
 
+    // Debounced wrapper to prevent rapid successive calls
+    const debouncedLoadStats = (timestamp?: number) => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      debounceTimerRef.current = setTimeout(() => {
+        loadStats(timestamp || Date.now());
+        debounceTimerRef.current = null;
+      }, 100); // 100ms debounce to batch rapid updates
+    };
+
+    // Initial load
     loadStats();
 
-    // Subscribe to real-time updates from both tables
+    // Subscribe to real-time updates with debouncing and timestamp checking
     const statsChannel = supabase
       .channel("stats-updates")
       .on(
@@ -108,7 +152,11 @@ export function GamificationBar({ userId }: GamificationBarProps) {
           table: "user_stats",
           filter: `user_id=eq.${userId}`,
         },
-        () => loadStats()
+        (payload) => {
+          const timestamp = Date.now();
+          console.log('[GamificationBar] Stats update received', timestamp);
+          debouncedLoadStats(timestamp);
+        }
       )
       .subscribe();
 
@@ -122,7 +170,11 @@ export function GamificationBar({ userId }: GamificationBarProps) {
           table: "profiles",
           filter: `user_id=eq.${userId}`,
         },
-        () => loadStats()
+        (payload) => {
+          const timestamp = Date.now();
+          console.log('[GamificationBar] Profile update received', timestamp);
+          debouncedLoadStats(timestamp);
+        }
       )
       .subscribe();
 
@@ -136,12 +188,19 @@ export function GamificationBar({ userId }: GamificationBarProps) {
           table: "achievements",
           filter: `user_id=eq.${userId}`,
         },
-        () => loadStats()
+        (payload) => {
+          const timestamp = Date.now();
+          console.log('[GamificationBar] Achievement update received', timestamp);
+          debouncedLoadStats(timestamp);
+        }
       )
       .subscribe();
 
     return () => {
       mounted = false;
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
       supabase.removeChannel(statsChannel);
       supabase.removeChannel(profileChannel);
       supabase.removeChannel(achievementChannel);

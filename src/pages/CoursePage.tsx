@@ -102,7 +102,7 @@ export default function CoursePage() {
     if (!error && coursesData) {
       // Get lesson count for each course
       const coursesWithCounts = await Promise.all(
-        coursesData.map(async (course: any) => {
+        coursesData.map(async (course) => {
           const { count } = await supabase
             .from('lessons')
             .select('*', { count: 'exact', head: true })
