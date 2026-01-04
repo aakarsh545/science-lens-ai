@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { generateThemeTokens, parseThemeConfig, ThemeConfig } from "@/utils/themeTokens";
 
@@ -127,13 +127,8 @@ export function ThemeProvider({ children, userId }: { children: ReactNode; userI
     loadTheme();
   }, [userId]);
 
-  const contextValue: ThemeContextType = useMemo(
-    () => ({ theme, loading, refreshTheme }),
-    [theme, loading, refreshTheme]
-  );
-
   return (
-    <ThemeContext.Provider value={contextValue}>
+    <ThemeContext.Provider value={{ theme, loading, refreshTheme }}>
       {children}
     </ThemeContext.Provider>
   );
