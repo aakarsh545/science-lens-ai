@@ -26,7 +26,6 @@ interface EditProfileDialogProps {
 interface AvatarItem {
   id: string;
   name: string;
-  icon_emoji: string;
   type: string;
 }
 
@@ -40,16 +39,43 @@ export function EditProfileDialog({
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState(currentProfile.full_name || "");
   const [bio, setBio] = useState(currentProfile.bio || "");
+  const [username, setUsername] = useState(currentProfile.username || "");
+  const [usernameError, setUsernameError] = useState<string>("");
   const [ownedAvatars, setOwnedAvatars] = useState<AvatarItem[]>([]);
   const [selectedAvatar, setSelectedAvatar] = useState(currentProfile.avatar_url || "");
   const { toast } = useToast();
+
+  // Derived validation states
+  const trimmedUsername = username.trim();
+  const hasChanges = trimmedUsername !== currentProfile.username;
+  const isLengthValid = trimmedUsername.length >= 3 && trimmedUsername.length <= 30;
+  const isUsernameUnchanged = trimmedUsername === currentProfile.username;
+  const hasUniquenessError = usernameError === "This username is already taken" || usernameError === "Username already taken";
+  const isSaveDisabled = loading || !isLengthValid || isUsernameUnchanged || hasUniquenessError;
+
+  // Validation function for username
+  const validateUsername = (value: string): string => {
+    if (!value || value.trim() === '') {
+      return 'Username is required';
+    }
+    const trimmed = value.trim();
+    if (trimmed.length < 3) {
+      return 'Username must be at least 3 characters';
+    }
+    if (trimmed.length > 30) {
+      return 'Username must be 30 characters or fewer';
+    }
+    return '';
+  };
 
   useEffect(() => {
     if (open) {
       loadOwnedAvatars();
       setFullName(currentProfile.full_name || "");
       setBio(currentProfile.bio || "");
+      setUsername(currentProfile.username || "");
       setSelectedAvatar(currentProfile.avatar_url || "");
+      setUsernameError(""); // Clear any previous validation errors
     }
   }, [open, currentProfile]);
 
@@ -62,12 +88,11 @@ export function EditProfileDialog({
 
     if (!error && data) {
       const avatars: AvatarItem[] = data
-        .map((item: any) => item.shop_items)
-        .filter((shop: any) => shop)
-        .map((shop: any) => ({
+        .map((item) => item.shop_items)
+        .filter(Boolean)
+        .map((shop) => ({
           id: shop.id,
           name: shop.name,
-          icon_emoji: shop.icon_emoji,
           type: shop.type
         }));
 
@@ -81,6 +106,49 @@ export function EditProfileDialog({
       // Convert empty string back to null for database
       const avatarValue = selectedAvatar === "" ? null : selectedAvatar;
 
+      // Client-side validation (double-check)
+      const validationError = validateUsername(username);
+      if (validationError) {
+        setUsernameError(validationError);
+        setLoading(false);
+        return;
+      }
+
+      const trimmedUsername = username.trim();
+
+      // Update username using RPC (with validation)
+      // Only call RPC if username actually changed
+      if (trimmedUsername !== currentProfile.username) {
+        console.log('[EditProfileDialog] Calling update_username RPC with:', trimmedUsername);
+        const { data: usernameResult, error: usernameError } = await supabase.rpc('update_username', {
+          p_user_id: userId,
+          p_new_username: trimmedUsername
+        });
+
+        console.log('[EditProfileDialog] RPC response:', { usernameResult, usernameError });
+
+        if (usernameError) {
+          throw new Error(usernameError.message);
+        }
+
+        // Check if username update failed validation
+        if (usernameResult?.success === false) {
+          const errorMessage = usernameResult.error || "Invalid username";
+          setUsernameError(errorMessage);
+          toast({
+            title: "Username update failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        console.log('[EditProfileDialog] Username updated successfully to:', usernameResult?.username);
+      }
+
+      // Update other profile fields (avatar, full_name, bio)
+      // Note: username is handled by the RPC above, not here
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -92,6 +160,7 @@ export function EditProfileDialog({
 
       if (error) throw error;
 
+      // Only show success toast if we actually got here
       toast({
         title: "Profile updated!",
         description: "Your changes have been saved.",
@@ -160,11 +229,15 @@ export function EditProfileDialog({
                     key={avatar.id}
                     type="button"
                     onClick={() => setSelectedAvatar(avatar.id)}
-                    className={`relative aspect-square rounded-lg border-2 flex items-center justify-center text-3xl transition-all hover:border-primary/50 ${
+                    className={`relative aspect-square rounded-lg border-2 overflow-hidden transition-all hover:border-primary/50 ${
                       selectedAvatar === avatar.id ? "border-primary bg-primary/10" : "border-border"
                     }`}
                   >
-                    {avatar.icon_emoji || "👤"}
+                    <img
+                      src={`/icons/avatars/avatar-${avatar.name.toLowerCase().replace(/\s+/g, '-')}.png`}
+                      alt={avatar.name}
+                      className="w-full h-full object-cover"
+                    />
                     {selectedAvatar === avatar.id && (
                       <Badge className="absolute -top-2 -right-2 text-xs">Current</Badge>
                     )}
@@ -174,6 +247,31 @@ export function EditProfileDialog({
               {ownedAvatars.length === 0 && (
                 <p className="text-sm text-muted-foreground">
                   No avatars owned. Visit the shop to purchase avatars!
+                </p>
+              )}
+            </div>
+
+            {/* Username */}
+            <div className="space-y-2">
+              <Label htmlFor="username">Username <span className="text-destructive">*</span></Label>
+              <Input
+                id="username"
+                value={username}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setUsername(value);
+                  setUsernameError(validateUsername(value));
+                }}
+                placeholder="Enter your username"
+                maxLength={30}
+                className={usernameError ? "border-destructive" : ""}
+              />
+              {usernameError && (
+                <p className="text-sm text-destructive font-medium">{usernameError}</p>
+              )}
+              {!usernameError && (
+                <p className="text-xs text-muted-foreground">
+                  3-30 characters
                 </p>
               )}
             </div>
@@ -208,31 +306,50 @@ export function EditProfileDialog({
           </div>
         </ScrollArea>
 
-        <div className="flex gap-2 pt-4 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={loading}
-            className="flex-1"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </Button>
+        <div className="flex flex-col gap-2 pt-4 border-t">
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaveDisabled}
+              className="flex-1"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </div>
+
+          {/* Validation message below the button */}
+          {!loading && isSaveDisabled && (
+            <p className="text-sm text-muted-foreground text-center">
+              {!isLengthValid && trimmedUsername.length === 0
+                ? "Username is required"
+                : !isLengthValid && trimmedUsername.length < 3
+                ? "Username must be at least 3 characters"
+                : !isLengthValid && trimmedUsername.length > 30
+                ? "Username must be 30 characters or fewer"
+                : isUsernameUnchanged
+                ? "Username has not changed"
+                : hasUniquenessError
+                ? "This username is already taken"
+                : ""}
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>

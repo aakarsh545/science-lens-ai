@@ -148,12 +148,12 @@ export default function TestPage() {
 
       setResult({ correct, aiAnswer });
 
-    } catch (error: any) {
+    } catch (error) {
       console.error("Test error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to run test",
+        description: error instanceof Error ? error.message : "Failed to run test",
       });
     } finally {
       setTesting(false);

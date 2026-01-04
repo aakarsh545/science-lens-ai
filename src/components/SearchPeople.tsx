@@ -7,8 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
-const SUPER_ADMIN_EMAIL = 'aakarsh545@gmail.com';
-
 interface UserProfile {
   id: string;
   email: string;
@@ -23,19 +21,25 @@ export function SearchPeople() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    checkSuperAdmin();
+    checkAdminStatus();
   }, []);
 
-  const checkSuperAdmin = async () => {
+  const checkAdminStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    if (user.email === SUPER_ADMIN_EMAIL) {
-      setIsSuperAdmin(true);
+    const { data } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('user_id', user.id)
+      .single();
+
+    if (data && data.is_admin) {
+      setIsAdmin(true);
     }
   };
 
@@ -127,10 +131,10 @@ export function SearchPeople() {
 
       // Refresh search
       searchUsers(searchQuery);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error granting admin",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       });
     } finally {
@@ -177,10 +181,10 @@ export function SearchPeople() {
       });
 
       searchUsers(searchQuery);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error revoking admin",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       });
     } finally {
@@ -188,8 +192,8 @@ export function SearchPeople() {
     }
   };
 
-  // Don't render if not super admin
-  if (!isSuperAdmin) {
+  // Don't render if not admin
+  if (!isAdmin) {
     return null;
   }
 

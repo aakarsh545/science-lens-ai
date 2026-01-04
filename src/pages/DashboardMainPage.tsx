@@ -100,14 +100,14 @@ export default function DashboardMainPage() {
         .eq("user_id", userId)
         .single();
 
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as { data: Profile | null; error: unknown };
 
       if (error) throw error;
 
       if (data) {
         setProfile(data);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error loading profile:", err);
       throw err;
     }

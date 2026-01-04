@@ -64,7 +64,7 @@ export default function TopicSelector({ onSelectTopic, selectedTopicId }: TopicS
           return { topicsData, progressData };
         })();
 
-        const { topicsData, progressData } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+        const { topicsData, progressData } = await Promise.race([fetchPromise, timeoutPromise]) as { topicsData: Topic[] | null; progressData: TopicProgress[] | null };
 
         if (mounted) {
           if (topicsData) setTopics(topicsData);
@@ -79,7 +79,7 @@ export default function TopicSelector({ onSelectTopic, selectedTopicId }: TopicS
 
           setLoading(false);
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error loading topics:", err);
         if (mounted) {
           setError(err?.message || "Failed to load topics");

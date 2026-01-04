@@ -48,7 +48,7 @@ export default function LearningStreakHeatMap({ userId }: LearningStreakHeatMapP
 
       // Aggregate by date
       const activityByDate: { [key: string]: number } = {};
-      activities?.forEach((activity: any) => {
+      activities?.forEach((activity) => {
         const date = new Date(activity.created_at).toISOString().split("T")[0];
         if (!activityByDate[date]) {
           activityByDate[date] = 0;

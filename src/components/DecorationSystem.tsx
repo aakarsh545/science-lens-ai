@@ -114,7 +114,7 @@ const DECORATION_PRESETS: Record<string, DecorationPreset> = {
 /**
  * Extract color from theme
  */
-function getThemeColors(theme: any) {
+function getThemeColors(theme: { config?: { palette?: { primary?: string; secondary?: string; accent?: string; background?: string } } }) {
   return {
     primary: theme?.config?.palette?.primary || '#3b82f6',
     secondary: theme?.config?.palette?.secondary || '#1e40af',
@@ -127,7 +127,7 @@ function getThemeColors(theme: any) {
  * CORNER DECORATIONS
  * Renders themed elements in corners using SVG
  */
-function CornerDecorations({ preset, colors }: { preset: DecorationPreset; colors: any }) {
+function CornerDecorations({ preset, colors }: { preset: DecorationPreset; colors: Record<string, string> }) {
   if (preset.corners.type === 'none') return null;
 
   const corners = [
@@ -237,7 +237,7 @@ function CornerDecorations({ preset, colors }: { preset: DecorationPreset; color
  * EDGE EFFECTS
  * Creates themed borders, glows, frosts on screen edges
  */
-function EdgeEffects({ preset, colors }: { preset: DecorationPreset; colors: any }) {
+function EdgeEffects({ preset, colors }: { preset: DecorationPreset; colors: Record<string, string> }) {
   if (preset.edges.type === 'none') return null;
 
   const edgeStyle: React.CSSProperties = {
@@ -290,7 +290,7 @@ function EdgeEffects({ preset, colors }: { preset: DecorationPreset; colors: any
  * BACKGROUND PATTERNS
  * SVG-based patterns using theme colors
  */
-function BackgroundPattern({ preset, colors }: { preset: DecorationPreset; colors: any }) {
+function BackgroundPattern({ preset, colors }: { preset: DecorationPreset; colors: Record<string, string> }) {
   if (preset.background.type === 'none') return null;
 
   const patternId = `bg-pattern-${preset.background.type}`;
@@ -367,7 +367,7 @@ function BackgroundPattern({ preset, colors }: { preset: DecorationPreset; color
  * FLOATING PARTICLES
  * Animated decorative elements using theme colors
  */
-function FloatingParticles({ preset, colors }: { preset: DecorationPreset; colors: any }) {
+function FloatingParticles({ preset, colors }: { preset: DecorationPreset; colors: Record<string, string> }) {
   const [particles] = useState(() =>
     Array.from({ length: preset.particles.count }, (_, i) => ({
       id: i,

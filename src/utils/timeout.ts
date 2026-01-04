@@ -42,7 +42,7 @@ export function createTimeout(
  * @param timeoutMs Timeout in milliseconds
  * @returns A wrapped function that will timeout if execution takes too long
  */
-export function withTimeoutFn<T extends (...args: any[]) => Promise<any>>(
+export function withTimeoutFn<T extends (...args: never[]) => Promise<unknown>>(
   fn: T,
   timeoutMs: number
 ): T {

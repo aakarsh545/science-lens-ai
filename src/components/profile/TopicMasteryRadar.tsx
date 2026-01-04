@@ -43,7 +43,7 @@ export default function TopicMasteryRadar({ userId }: TopicMasteryRadarProps) {
       // Group by category and calculate mastery
       const masteryByCategory: { [key: string]: { total: number; count: number } } = {};
 
-      topicProgress?.forEach((item: any) => {
+      topicProgress?.forEach((item) => {
         const category = item.learning_topics?.category || "General";
         const completion = item.completion_percentage || 0;
 

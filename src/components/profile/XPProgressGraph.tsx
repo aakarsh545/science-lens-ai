@@ -51,7 +51,7 @@ export default function XPProgressGraph({ userId }: XPProgressGraphProps) {
       const xpByDate: { [key: string]: number } = {};
       const levelUpDates: Set<string> = new Set();
 
-      activityData?.forEach((activity: any) => {
+      activityData?.forEach((activity) => {
         const date = new Date(activity.created_at).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
@@ -97,7 +97,7 @@ export default function XPProgressGraph({ userId }: XPProgressGraphProps) {
             </CardTitle>
             <CardDescription>Your learning activity over time</CardDescription>
           </div>
-          <Select value={timeRange} onValueChange={(value: any) => setTimeRange(value)}>
+          <Select value={timeRange} onValueChange={(value) => setTimeRange(value as "7d" | "30d" | "all")}>
             <SelectTrigger className="w-[120px]">
               <Calendar className="h-4 w-4 mr-2" />
               <SelectValue />

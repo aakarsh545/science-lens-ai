@@ -4,19 +4,29 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Award } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ProfileHeaderProps {
   user: User;
-  profile: any;
+  profile: {
+    username?: string | null;
+    full_name?: string | null;
+    display_name?: string | null;
+    level?: number;
+    xp_points?: number;
+    streak_count?: number;
+    equipped_avatar?: string | null;
+  };
   onEdit?: () => void;
 }
 
 export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderProps) {
-  const [avatarEmoji, setAvatarEmoji] = useState<string | null>(null);
+  const [avatarImagePath, setAvatarImagePath] = useState<string | null>(null);
 
-  const displayName = profile?.username || profile?.display_name || profile?.full_name || user?.email?.split("@")[0] || "Explorer";
+  // Priority: username > full_name > display_name > "Unnamed User"
+  // NEVER fall back to email or user_id - this was causing "aakarsh545" to appear
+  const displayName = profile?.username || profile?.full_name || profile?.display_name || "Unnamed User";
   const initials = displayName
     .split(" ")
     .map((n: string) => n[0])
@@ -29,35 +39,41 @@ export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderPr
     month: "long",
   });
 
-  // Load avatar emoji from equipped_avatar
-  useEffect(() => {
-    const loadAvatar = async () => {
-      if (profile?.equipped_avatar) {
-        const { data } = await supabase
-          .from('shop_items')
-          .select('icon_emoji')
-          .eq('id', profile.equipped_avatar)
-          .eq('type', 'avatar')
-          .single();
+  // Load avatar image path from equipped_avatar
+  const loadAvatar = useCallback(async () => {
+    if (profile?.equipped_avatar) {
+      const { data } = await supabase
+        .from('shop_items')
+        .select('name')
+        .eq('id', profile.equipped_avatar)
+        .eq('type', 'avatar')
+        .single();
 
-        if (data?.icon_emoji) {
-          setAvatarEmoji(data.icon_emoji);
-        }
+      if (data?.name) {
+        // Construct the image path exactly like ShopPage does
+        const imagePath = `/icons/avatars/avatar-${data.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+        setAvatarImagePath(imagePath);
+      } else {
+        setAvatarImagePath(null);
       }
-    };
-    loadAvatar();
+    } else {
+      setAvatarImagePath(null);
+    }
   }, [profile?.equipped_avatar]);
+
+  // Load avatar on mount or when equipped_avatar changes
+  useEffect(() => {
+    loadAvatar();
+  }, [loadAvatar]);
 
   // Listen for profile updates to refresh avatar
   useEffect(() => {
     const handleProfileUpdate = (event: Event) => {
       const customEvent = event as CustomEvent;
       if (customEvent.detail?.userId === user.id) {
-        console.log('[ProfileHeader] Profile update detected, refreshing');
-        // Force a reload by triggering parent's onProfileUpdate callback
-        if (onEdit) {
-          window.location.reload(); // Hard refresh to ensure all data is up-to-date
-        }
+        console.log('[ProfileHeader] Profile update detected, refreshing avatar');
+        // Reload avatar from database
+        loadAvatar();
       }
     };
 
@@ -66,7 +82,7 @@ export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderPr
     return () => {
       window.removeEventListener('profile-updated', handleProfileUpdate);
     };
-  }, [user.id, onEdit]);
+  }, [user.id, loadAvatar]);
 
   return (
     <>
@@ -75,14 +91,23 @@ export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderPr
           <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Avatar */}
             <Avatar className="h-24 w-24 border-4 border-primary/20">
-              {avatarEmoji ? (
-                <AvatarFallback className="text-5xl bg-gradient-to-br from-primary/20 to-purple-500/20">
-                  {avatarEmoji}
-                </AvatarFallback>
+              {avatarImagePath ? (
+                <>
+                  <AvatarImage
+                    src={avatarImagePath}
+                    alt="Avatar"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                  <AvatarFallback className="text-5xl bg-gradient-to-br from-primary/20 to-purple-500/20">
+                    {initials}
+                  </AvatarFallback>
+                </>
               ) : (
                 <>
-                  <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="text-2xl bg-gradient-to-br from-primary to-primary/60 text-white">
+                  <AvatarFallback className="text-5xl bg-gradient-to-br from-primary to-primary/60 text-white">
                     {initials}
                   </AvatarFallback>
                 </>
