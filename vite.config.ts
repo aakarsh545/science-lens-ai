@@ -5,7 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/science-lens/',
+  base: process.env.VITE_BASEPATH || '/',
   server: {
     host: "::",
     port: 8080,

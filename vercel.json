@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/science-lens/:match*",
-      "destination": "/index.html"
+      "destination": "/"
     }
   ]
 }
