@@ -22,20 +22,6 @@ export class AIService {
     return data?.credits || 0;
   }
 
-  static async deductCredits(userId: string, amount: number = 1): Promise<boolean> {
-    const { data, error } = await supabase.rpc("deduct_credits", {
-      p_user_id: userId,
-      p_amount: amount
-    });
-
-    if (error) {
-      console.error("Failed to deduct credits:", error);
-      throw new Error(`Failed to deduct credits: ${error.message}`);
-    }
-
-    return data;
-  }
-
   static async sendMessage(options: AIRequestOptions): Promise<void> {
     const { userId, message, conversationId, panelContext, onStream, onComplete, onError } = options;
 
@@ -74,13 +60,8 @@ export class AIService {
         return;
       }
 
-      try {
-        await this.deductCredits(userId, 1);
-      } catch (creditError) {
-        console.error("Credit deduction failed:", creditError);
-        onError?.(creditError instanceof Error ? creditError.message : "Failed to deduct credits");
-        return;
-      }
+      // Credit deduction is handled server-side in the edge function
+      // Client never mutates credits - only reads for UX
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();

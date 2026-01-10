@@ -223,7 +223,7 @@ export default function DashboardMainPage() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="hover:shadow-cosmic transition-all duration-300 cursor-pointer group" onClick={() => navigate("/science-lens/learning")}>
+        <Card className="hover:shadow-cosmic transition-all duration-300 cursor-pointer group" onClick={() => navigate("/learning")}>
           <CardHeader>
             <div className="flex items-center gap-3">
               <BookOpen className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
@@ -238,7 +238,7 @@ export default function DashboardMainPage() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-cosmic transition-all duration-300 cursor-pointer group" onClick={() => navigate("/science-lens/ask")}>
+        <Card className="hover:shadow-cosmic transition-all duration-300 cursor-pointer group" onClick={() => navigate("/ask")}>
           <CardHeader>
             <div className="flex items-center gap-3">
               <MessageSquare className="w-8 h-8 text-secondary group-hover:scale-110 transition-transform" />

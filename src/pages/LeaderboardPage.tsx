@@ -113,10 +113,20 @@ export default function LeaderboardPage() {
 
     if (tab === "weekly" || tab === "monthly") {
       // For time-based leaderboards, only show current period
-      query = query.gte(
-        tab === "weekly" ? "week_start_date" : "month_start_date",
-        new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
-      );
+      const now = new Date();
+
+      if (tab === "weekly") {
+        // Calculate start of current week (Sunday)
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        weekStart.setHours(0, 0, 0, 0);
+
+        query = query.gte("week_start_date", weekStart.toISOString());
+      } else {
+        // For monthly, use start of current month
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        query = query.gte("month_start_date", monthStart.toISOString());
+      }
     }
 
     const { data, error } = await query;

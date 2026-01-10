@@ -86,8 +86,29 @@ const Dashboard = ({ user }: DashboardProps) => {
 
     loadData();
 
+    // Subscribe to profile changes for real-time username updates
+    const channel = supabase
+      .channel('dashboard-profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${user.id}`
+        },
+        async (payload) => {
+          console.log('[Dashboard] Profile updated, refreshing:', payload.new);
+          if (mounted && payload.new) {
+            setProfile(payload.new as Profile);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       mounted = false;
+      channel.unsubscribe();
     };
   }, [user, loadProfile, loadAchievements]);
 

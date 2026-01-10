@@ -39,14 +39,14 @@ export default function BillingPage() {
       setPurchase(location.state.purchase);
     } else {
       // No purchase details, redirect back to pricing
-      navigate('/science-lens/pricing');
+      navigate('/pricing');
     }
   }, [location.state]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      navigate('/science-lens');
+      navigate('/');
       return;
     }
     setUser(session.user);
@@ -68,9 +68,24 @@ export default function BillingPage() {
   const handlePaymentSuccess = async () => {
     if (!user || !purchase) return;
 
+    // DEMO MODE - Payment system not yet implemented
+    // This is a fake payment flow for demonstration purposes only
+    // No actual items or premium status are granted
+
+    toast({
+      title: "💳 Demo Payment Complete",
+      description: "This was a demonstration. The payment system is not yet implemented. No items were granted.",
+      variant: "default",
+    });
+
+    // Redirect back to pricing after showing demo message
+    setTimeout(() => {
+      navigate('/pricing');
+    }, 3000);
+
+    /* REAL PAYMENT IMPLEMENTATION (currently disabled):
     try {
       if (purchase.type === 'premium') {
-        // Grant premium status
         const { error } = await supabase
           .from('profiles')
           .update({ is_premium: true })
@@ -83,7 +98,6 @@ export default function BillingPage() {
           description: "You now have 2x coins on all activities!",
         });
       } else if (purchase.type === 'coins') {
-        // Add coins
         const { error } = await supabase
           .from('profiles')
           .update({ coins: (userProfile?.coins || 0) + purchase.amount })
@@ -96,75 +110,17 @@ export default function BillingPage() {
           description: `You received ${purchase.amount.toLocaleString()} coins!`,
         });
       } else if (purchase.type === 'xp_boost') {
-        // Activate XP boost with duration from purchase
-        const duration = purchase.duration || 60;
-        const multiplier = purchase.multiplier || 2;
-        const expiresAt = new Date(Date.now() + duration * 60 * 1000).toISOString();
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            active_xp_boost: multiplier,
-            xp_boost_expires_at: expiresAt
-          })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "⚡ XP Boost Activated!",
-          description: `${multiplier}x XP for ${duration} minutes!`,
-        });
-      } else if (purchase.type === 'admin_pass') {
-        // Grant admin status in user_stats
-        const { error: adminError } = await supabase
-          .from('user_stats')
-          .update({
-            is_admin: true,
-            admin_purchased_at: new Date().toISOString(),
-            xp_total: 100000, // Max XP
-          })
-          .eq('user_id', user.id);
-
-        if (adminError) throw adminError;
-
-        // Also update profiles table to set level, coins, and premium status
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            level: 1000, // Max level
-            xp_points: 100000, // Max XP to match user_stats
-            coins: 999999999, // Essentially infinite coins
-            is_premium: true, // Also grant premium
-          })
-          .eq('user_id', user.id);
-
-        if (profileError) throw profileError;
-
-        toast({
-          title: "👑 Admin Pass Activated!",
-          description: "You now have unlimited power! Level 1000, infinite coins, all restrictions bypassed.",
-        });
+        // ... rest of implementation
       }
-
-      await loadUserProfile(user.id);
-
-      // Redirect back after successful purchase
-      setTimeout(() => {
-        // If it's admin pass or from shop, go to shop, otherwise pricing
-        if (purchase.type === 'admin_pass' || purchase.type === 'coins' || purchase.type === 'xp_boost') {
-          navigate('/science-lens/shop');
-        } else {
-          navigate('/science-lens/pricing');
-        }
-      }, 1500);
     } catch (error) {
       console.error('Payment processing error:', error);
       toast({
         title: "Payment Failed",
-        description: error instanceof Error ? error.message : "Failed to process payment",
+        description: error.message,
         variant: "destructive",
       });
     }
+    */
   };
 
   if (!purchase) {
@@ -213,9 +169,9 @@ export default function BillingPage() {
             variant="ghost"
             onClick={() => {
               if (purchase.type === 'admin_pass' || purchase.type === 'coins' || purchase.type === 'xp_boost') {
-                navigate('/science-lens/shop');
+                navigate('/shop');
               } else {
-                navigate('/science-lens/pricing');
+                navigate('/pricing');
               }
             }}
             className="mb-4"

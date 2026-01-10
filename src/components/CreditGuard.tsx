@@ -21,22 +21,29 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
 
   const loadCredits = useCallback(async () => {
     try {
-      // Load user stats including admin status
+      // SERVER-SIDE admin verification - cannot be spoofed by client
+      const { data: adminCheck } = await supabase.rpc('verify_admin_for_credits', {
+        p_user_id: userId
+      });
+
+      const isUserAdmin = adminCheck || false;
+      setIsAdmin(isUserAdmin);
+
+      // Skip credit check for admin users (verified server-side)
+      if (isUserAdmin) {
+        setLoading(false);
+        return;
+      }
+
+      // Load user stats for non-admin users
       const { data } = await supabase
         .from("user_stats")
-        .select("credits, is_admin")
+        .select("credits")
         .eq("user_id", userId)
         .single();
 
       if (data) {
         setCredits(data.credits);
-        setIsAdmin(data.is_admin || false);
-
-        // Skip credit check for admin users
-        if (data.is_admin) {
-          setLoading(false);
-          return;
-        }
 
         // Refresh daily credits for non-admin users
         await supabase.rpc('refresh_daily_credits', { p_user_id: userId });
@@ -51,10 +58,8 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
         if (refreshedData) {
           setCredits(refreshedData.credits);
 
-          // Redirect immediately if no credits
-          if (refreshedData.credits === 0) {
-            navigate('/science-lens/pricing');
-          } else if (refreshedData.credits <= 5 && onCreditsLow) {
+          // Don't auto-redirect - let user choose via blocking UI
+          if (refreshedData.credits <= 5 && onCreditsLow) {
             onCreditsLow();
           }
         }
@@ -80,20 +85,24 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
           table: 'user_stats',
           filter: `user_id=eq.${userId}`
         },
-        (payload) => {
+        async (payload) => {
           const newCredits = payload.new.credits;
-          const newIsAdmin = payload.new.is_admin;
+
+          // SERVER-SIDE admin verification on every change
+          const { data: adminCheck } = await supabase.rpc('verify_admin_for_credits', {
+            p_user_id: userId
+          });
+
+          const isUserAdmin = adminCheck || false;
 
           setCredits(newCredits);
-          setIsAdmin(newIsAdmin || false);
+          setIsAdmin(isUserAdmin);
 
-          // Skip credit checks for admin users
-          if (newIsAdmin) return;
+          // Skip credit checks for admin users (verified server-side)
+          if (isUserAdmin) return;
 
-          // Auto-redirect to pricing if credits hit 0
-          if (newCredits === 0) {
-            navigate('/science-lens/pricing');
-          } else if (newCredits <= 5 && onCreditsLow) {
+          // Don't auto-redirect - let user choose via blocking UI or warning
+          if (newCredits <= 5 && onCreditsLow) {
             onCreditsLow();
           }
         }
@@ -146,7 +155,7 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                 <Button
-                  onClick={() => navigate("/science-lens/pricing")}
+                  onClick={() => navigate("/pricing")}
                   className="flex items-center gap-2"
                 >
                   <Zap className="w-4 h-4" />
@@ -154,7 +163,7 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => navigate("/science-lens")}
+                  onClick={() => navigate("/")}
                 >
                   Go to Dashboard
                 </Button>
@@ -178,7 +187,7 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate("/science-lens/pricing")}
+              onClick={() => navigate("/pricing")}
             >
               Get More
             </Button>

@@ -113,45 +113,39 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
   };
 
   const checkForAchievements = async (questionCount: number) => {
-    const achievements = [
-      { type: "first_question", title: "First Steps", description: "Asked your first question", threshold: 1, icon: "🎯", category: "milestone", points: 10, credits: 1 },
-      { type: "curious_mind", title: "Curious Mind", description: "Asked 10 questions", threshold: 10, icon: "🤔", category: "milestone", points: 50, credits: 5 },
-      { type: "knowledge_seeker", title: "Knowledge Seeker", description: "Asked 50 questions", threshold: 50, icon: "🎓", category: "milestone", points: 100, credits: 10 },
+    // Client-side threshold checking only - no achievement data here
+    // Server owns all achievement definitions, credits, titles, etc.
+    const eventTriggers = [
+      { event: "first_question", threshold: 1 },
+      { event: "curious_mind", threshold: 10 },
+      { event: "knowledge_seeker", threshold: 50 },
     ];
 
-    for (const achievement of achievements) {
-      if (questionCount === achievement.threshold) {
-        const { error } = await supabase.from("achievements").insert({
-          user_id: user.id,
-          achievement_type: achievement.type,
-          title: achievement.title,
-          description: achievement.description,
-          icon: achievement.icon,
-          category: achievement.category,
-          points: achievement.points,
+    for (const trigger of eventTriggers) {
+      if (questionCount === trigger.threshold) {
+        // Call edge function with ONLY the event type
+        // Server validates, checks eligibility, and awards achievement
+        const { data: achievementData, error: awardError } = await supabase.functions.invoke('award-achievement', {
+          body: {
+            event: trigger.event,
+          }
         });
 
-        if (!error) {
-          // Award credits - update user_stats directly
-          const { data: stats } = await supabase
-            .from("user_stats")
-            .select("credits")
-            .eq("user_id", user.id)
-            .single();
-
-          if (stats) {
-            await supabase
-              .from("user_stats")
-              .update({ credits: (stats.credits || 0) + achievement.credits })
-              .eq("user_id", user.id);
+        if (awardError) {
+          // 409 = already earned (not an error, just ignore)
+          if (awardError.message?.includes('Achievement already earned')) {
+            return;
           }
-
-          triggerConfetti();
-          toast({
-            title: "🏆 Achievement Unlocked!",
-            description: `${achievement.title}: ${achievement.description} (+${achievement.credits} credits)`,
-          });
+          console.error('Failed to award achievement:', awardError);
+          return;
         }
+
+        // Server approved - display server-provided data
+        triggerConfetti();
+        toast({
+          title: "🏆 Achievement Unlocked!",
+          description: `${achievementData.achievement.title}: ${achievementData.achievement.description} (+${achievementData.achievement.credits} credits)`,
+        });
       }
     }
   };

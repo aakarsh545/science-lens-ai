@@ -36,20 +36,20 @@ export function DummyPaymentCard({ onSuccess, amount, description }: DummyPaymen
   };
 
   return (
-    <Card className="border-2 border-dashed border-primary/50 bg-gradient-to-br from-primary/5 to-purple-500/5">
+    <Card className="border-2 border-dashed border-yellow-500/50 bg-gradient-to-br from-yellow-500/5 to-orange-500/5">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CreditCard className="w-6 h-6 text-primary" />
-            <CardTitle>Test Payment Card</CardTitle>
+            <CreditCard className="w-6 h-6 text-yellow-600" />
+            <CardTitle>Payment Demo Mode</CardTitle>
           </div>
-          <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/50">
+          <Badge variant="secondary" className="bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/50 animate-pulse">
             <AlertTriangle className="w-3 h-3 mr-1" />
-            Demo Mode
+            NOT FUNCTIONAL
           </Badge>
         </div>
-        <CardDescription>
-          Use this test card to simulate payments. No real money will be charged.
+        <CardDescription className="text-base">
+          <strong>⚠️ This is a demonstration only.</strong> No actual payment will be processed. No items will be granted. The payment system has not been implemented yet.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -152,17 +152,18 @@ export function DummyPaymentCard({ onSuccess, amount, description }: DummyPaymen
           onClick={handlePayment}
           disabled={processing}
           size="lg"
-          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+          variant="outline"
+          className="w-full border-yellow-500/50 text-yellow-700 hover:bg-yellow-500/10"
         >
           {processing ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-              Processing...
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600 mr-2" />
+              Processing Demo...
             </>
           ) : (
             <>
-              <Lock className="w-4 h-4 mr-2" />
-              Pay ${amount !== undefined ? amount.toLocaleString() : "Now"}
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Run Demo (No Payment)
             </>
           )}
         </Button>

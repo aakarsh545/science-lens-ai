@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Accessibility</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 850px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    .header p {
+      opacity: 0.9;
+      font-size: 16px;
+    }
+    .content {
+      padding: 30px;
+    }
+    .section {
+      margin-bottom: 30px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .section-title {
+      flex: 1;
+    }
+    .section-title h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+    .section-title p {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+    .setting-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .setting-icon {
+      font-size: 24px;
+      width: 36px;
+      text-align: center;
+    }
+    .setting-text h3 {
+      font-size: 15px;
+      font-weight: 500;
+      color: #1f2937;
+      margin-bottom: 2px;
+    }
+    .setting-text p {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .toggle {
+      width: 52px;
+      height: 28px;
+      background: #d1d5db;
+      border-radius: 14px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .toggle.active {
+      background: #4facfe;
+    }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.3s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .toggle.active::after {
+      transform: translateX(24px);
+    }
+    .size-selector {
+      display: flex;
+      gap: 8px;
+    }
+    .size-btn {
+      width: 44px;
+      height: 44px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+    }
+    .size-btn:hover {
+      border-color: #4facfe;
+    }
+    .size-btn.selected {
+      border-color: #4facfe;
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+    .size-btn.small {
+      font-size: 11px;
+    }
+    .size-btn.medium {
+      font-size: 14px;
+    }
+    .size-btn.large {
+      font-size: 18px;
+    }
+    .preview-text {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 16px;
+      border: 2px dashed #e5e7eb;
+    }
+    .preview-text p {
+      color: #374151;
+      line-height: 1.6;
+    }
+    .contrast-options {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .contrast-card {
+      flex: 1;
+      min-width: 120px;
+      border-radius: 10px;
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 3px solid transparent;
+    }
+    .contrast-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .contrast-card.selected {
+      border-color: #4facfe;
+      box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2);
+    }
+    .contrast-card.light {
+      background: white;
+      color: #1f2937;
+    }
+    .contrast-card.dark {
+      background: #1f2937;
+      color: white;
+    }
+    .contrast-card.high-contrast {
+      background: #000;
+      color: #fff;
+    }
+    .contrast-card h4 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .contrast-card .preview {
+      font-size: 11px;
+      text-align: center;
+      opacity: 0.8;
+    }
+    .reset-btn {
+      width: 100%;
+      padding: 14px;
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .reset-btn:hover {
+      border-color: #4facfe;
+      color: #4facfe;
+    }
+    .info-box {
+      background: #eff6ff;
+      border-left: 4px solid #4facfe;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    .info-box h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e40af;
+      margin-bottom: 6px;
+    }
+    .info-box p {
+      font-size: 13px;
+      color: #1e40af;
+      opacity: 0.9;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>♿ Accessibility Settings</h1>
+      <p>Customize your experience to match your needs</p>
+    </div>
+
+    <div class="content">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">Aa</div>
+          <div class="section-title">
+            <h2>Text & Display</h2>
+            <p>Adjust text size and readability options</p>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-left">
+            <div class="setting-icon">📝</div>
+            <div class="setting-text">
+              <h3>Text Size</h3>
+              <p>Make text larger or smaller</p>
+            </div>
+          </div>
+          <div class="size-selector">
+            <div class="size-btn small" onclick="selectSize(this)">Aa</div>
+            <div class="size-btn medium selected" onclick="selectSize(this)">Aa</div>
+            <div class="size-btn large" onclick="selectSize(this)">Aa</div>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-left">
+            <div class="setting-icon">🔍</div>
+            <div class="setting-text">
+              <h3>Line Spacing</h3>
+              <p>Increase space between lines</p>
+            </div>
+          </div>
+          <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-left">
+            <div class="setting-icon">📖</div>
+            <div class="setting-text">
+              <h3>Font Style</h3>
+              <p>Use dyslexia-friendly font</p>
+            </div>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('active')"></div>
+        </div>
+        <div class="preview-text">
+          <p style="font-size: 16px;">
+            The quick brown fox jumps over the lazy dog. This is a preview of how your text will appear with the selected settings.
+          </p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">🎨</div>
+          <div class="section-title">
+            <h2>Visual Appearance</h2>
+            <p>Choose colors and contrast that work for you</p>
+          </div>
+        </div>
+        <div class="contrast-options">
+          <div class="contrast-card light selected" onclick="selectContrast(this)">
+            <h4>Light</h4>
+            <div class="preview">Preview</div>
+          </div>
+          <div class="contrast-card dark" onclick="selectContrast(this)">
+            <h4>Dark</h4>
+            <div class="preview">Preview</div>
+          </div>
+          <div class="contrast-card high-contrast" onclick="selectContrast(this)">
+            <h4>High Contrast</h4>
+            <div class="preview">Preview</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">🎬</div>
+          <div class="section-title">
+            <h2>Motion & Animation</h2>
+            <p>Control animations and transitions</p>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-left">
+            <div class="setting-icon">🔄</div>
+            <div class="setting-text">
+              <h3>Reduce Motion</h3>
+              <p>Minimize animations throughout the app</p>
+            </div>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('active')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-left">
+            <div class="setting-icon">⚡</div>
+            <div class="setting-text">
+              <h3>Parallax Effects</h3>
+              <p>Disable scroll-based animations</p>
+            </div>
+          </div>
+          <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-left">
+            <div class="setting-icon">✨</div>
+            <div class="setting-text">
+              <h3>Auto-play Animations</h3>
+              <p>Automatically play educational animations</p>
+            </div>
+          </div>
+          <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">⌨️</div>
+          <div class="section-title">
+            <h2>Keyboard & Navigation</h2>
+            <p>Customize how you navigate the interface</p>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-left">
+            <div class="setting-icon">🔘</div>
+            <div class="setting-text">
+              <h3>Focus Indicators</h3>
+              <p>Show clear keyboard focus on all elements</p>
+            </div>
+          </div>
+          <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-left">
+            <div class="setting-icon">⏭️</div>
+            <div class="setting-text">
+              <h3>Skip Links</h3>
+              <p>Show skip navigation links</p>
+            </div>
+          </div>
+          <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-left">
+            <div class="setting-icon">🔢</div>
+            <div class="setting-text">
+              <h3>Number Shortcuts</h3>
+              <p>Use number keys for quick navigation</p>
+            </div>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('active')"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">🔊</div>
+          <div class="section-title">
+            <h2>Audio & Screen Reader</h2>
+            <p>Options for audio feedback and assistive technology</p>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-left">
+            <div class="setting-icon">📢</div>
+            <div class="setting-text">
+              <h3>Screen Reader Support</h3>
+              <p>Optimized for screen reader usage</p>
+            </div>
+          </div>
+          <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-left">
+            <div class="setting-icon">🔔</div>
+            <div class="setting-text">
+              <h3>Sound Effects</h3>
+              <p>Play sounds for interactions</p>
+            </div>
+          </div>
+          <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+        </div>
+      </div>
+
+      <button class="reset-btn">Reset All Accessibility Settings</button>
+
+      <div class="info-box">
+        <h4>Need more help?</h4>
+        <p>These settings are designed to make Science Lens more accessible. If you need assistance or have suggestions, please contact our support team.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectSize(btn) {
+      document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    function selectContrast(card) {
+      document.querySelectorAll('.contrast-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    }
+  </script>
+</body>
+</html>

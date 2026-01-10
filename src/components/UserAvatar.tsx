@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User } from "lucide-react";
 
 interface UserAvatarProps {
   userId: string;
@@ -8,7 +9,7 @@ interface UserAvatarProps {
 }
 
 export function UserAvatar({ userId, className = "" }: UserAvatarProps) {
-  const [avatarEmoji, setAvatarEmoji] = useState<string | null>(null);
+  const [avatarImagePath, setAvatarImagePath] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadEquippedAvatar = async () => {
@@ -23,27 +24,29 @@ export function UserAvatar({ userId, className = "" }: UserAvatarProps) {
       if (error) throw error;
 
       if (data?.equipped_avatar) {
-        // Fetch the avatar item from shop
+        // Fetch the avatar item from shop to get the name
         const { data: avatarData, error: avatarError } = await supabase
           .from('shop_items')
-          .select('icon_emoji')
+          .select('name')
           .eq('id', data.equipped_avatar)
           .eq('type', 'avatar')
           .single();
 
-        if (!avatarError && avatarData?.icon_emoji) {
-          setAvatarEmoji(avatarData.icon_emoji);
+        if (!avatarError && avatarData?.name) {
+          // Construct the image path exactly like ShopPage does
+          const imagePath = `/icons/avatars/avatar-${avatarData.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+          setAvatarImagePath(imagePath);
         } else {
-          // Default avatar if none equipped or error
-          setAvatarEmoji('👤');
+          // No avatar equipped or error
+          setAvatarImagePath(null);
         }
       } else {
-        // No avatar equipped, use default
-        setAvatarEmoji('👤');
+        // No avatar equipped
+        setAvatarImagePath(null);
       }
     } catch (error) {
       console.error('[UserAvatar] Error loading avatar:', error);
-      setAvatarEmoji('👤');
+      setAvatarImagePath(null);
     } finally {
       setLoading(false);
     }
@@ -55,18 +58,18 @@ export function UserAvatar({ userId, className = "" }: UserAvatarProps) {
 
   // Listen for profile update events and refresh avatar
   useEffect(() => {
-    const handleProfileUpdate = (event: CustomEvent) => {
-      if (event.detail?.userId === userId) {
+    const handleProfileUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail?.userId === userId) {
         console.log('[UserAvatar] Profile update detected, refreshing avatar');
         loadEquippedAvatar();
       }
     };
 
-    // Type the event properly
-    window.addEventListener('profile-updated', handleProfileUpdate as EventListener);
+    window.addEventListener('profile-updated', handleProfileUpdate);
 
     return () => {
-      window.removeEventListener('profile-updated', handleProfileUpdate as EventListener);
+      window.removeEventListener('profile-updated', handleProfileUpdate);
     };
   }, [userId]);
 
@@ -80,9 +83,26 @@ export function UserAvatar({ userId, className = "" }: UserAvatarProps) {
 
   return (
     <Avatar className={className}>
-      <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/20 to-purple-500/20">
-        {avatarEmoji || '👤'}
-      </AvatarFallback>
+      {avatarImagePath ? (
+        <>
+          <AvatarImage
+            src={avatarImagePath}
+            alt="Avatar"
+            onError={(e) => {
+              // Fallback if image doesn't load
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+            }}
+          />
+          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-purple-500/20">
+            <User className="h-4 w-4" />
+          </AvatarFallback>
+        </>
+      ) : (
+        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-purple-500/20">
+          <User className="h-4 w-4" />
+        </AvatarFallback>
+      )}
     </Avatar>
   );
 }

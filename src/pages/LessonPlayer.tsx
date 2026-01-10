@@ -155,7 +155,7 @@ export default function LessonPlayer() {
                   `🔒 Lesson Locked! Please complete "${previousLesson.title || 'the previous lesson'}" first to unlock this lesson.`,
                   { duration: 5000 }
                 );
-                navigate(`/science-lens/learning/${courseSlug}`);
+                navigate(`/learning/${courseSlug}`);
                 return;
               }
             }
@@ -478,13 +478,13 @@ export default function LessonPlayer() {
       if (nextLesson) {
         setTimeout(() => {
           toast.info(`Moving to next lesson: "${nextLesson.title}"...`);
-          navigate(`/science-lens/learning/${courseSlug}/lesson/${nextLesson.slug}`);
+          navigate(`/learning/${courseSlug}/${nextLesson.slug}`);
         }, 2000);
       } else {
         // This was the last lesson
         setTimeout(() => {
           toast.success('🎉 Congratulations! You have completed all lessons in this course!');
-          navigate(`/science-lens/learning/${courseSlug}`);
+          navigate(`/learning/${courseSlug}`);
         }, 2000);
       }
     } catch (error) {
@@ -498,10 +498,10 @@ export default function LessonPlayer() {
   const handleNextLesson = () => {
     const nextLesson = getNextLesson();
     if (nextLesson) {
-      navigate(`/science-lens/learning/${courseSlug}/lesson/${nextLesson.slug}`);
+      navigate(`/learning/${courseSlug}/${nextLesson.slug}`);
     } else {
       toast.success('🎉 This is the last lesson! Course complete!');
-      navigate(`/science-lens/learning/${courseSlug}`);
+      navigate(`/learning/${courseSlug}`);
     }
   };
 
@@ -550,7 +550,7 @@ export default function LessonPlayer() {
           <div className="text-center space-y-2">
             <BookOpen className="w-12 h-12 mx-auto text-muted-foreground" />
             <h3 className="text-xl font-semibold">Lesson Not Found</h3>
-            <Button onClick={() => navigate(`/science-lens/learning/${courseSlug}`)} className="mt-4">
+            <Button onClick={() => navigate(`/learning/${courseSlug}`)} className="mt-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Course
             </Button>
@@ -573,7 +573,7 @@ export default function LessonPlayer() {
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate('/science-lens/learning')}
+          onClick={() => navigate('/learning')}
         >
           Courses
         </Button>
@@ -581,7 +581,7 @@ export default function LessonPlayer() {
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate(`/science-lens/learning/${courseSlug}`)}
+          onClick={() => navigate(`/learning/${courseSlug}`)}
         >
           {courseSlug?.replace(/-/g, ' ')}
         </Button>
@@ -865,7 +865,7 @@ export default function LessonPlayer() {
               <div className="flex items-center justify-between gap-4">
                 <Button
                   variant="outline"
-                  onClick={() => navigate(`/science-lens/learning/${courseSlug}`)}
+                  onClick={() => navigate(`/learning/${courseSlug}`)}
                   className="flex-1 sm:flex-none"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />

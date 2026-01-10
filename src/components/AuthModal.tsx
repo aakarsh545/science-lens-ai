@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +21,6 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [usernameError, setUsernameError] = useState("");
   const [checkingUsername, setCheckingUsername] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const checkUsernameAvailability = async (name: string): Promise<boolean> => {
     if (!name || name.length < 3) return false;
@@ -139,7 +137,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
         description: "Your account has been created successfully.",
       });
       onOpenChange(false);
-      navigate("/science-lens");
+      // Don't force navigation - let parent component decide
     } catch (error: unknown) {
       toast({
         variant: "destructive",
@@ -168,7 +166,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
         description: "You've successfully signed in.",
       });
       onOpenChange(false);
-      navigate("/science-lens");
+      // Don't force navigation - let parent component decide
     } catch (error: unknown) {
       toast({
         variant: "destructive",
