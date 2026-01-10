@@ -1,5 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  getCorsHeaders,
+  handleOptions,
+  validateOrigin,
+  checkRateLimit,
+  rateLimitResponse,
+  logAuthFailure,
+  logRateLimitViolation,
+  logSuspiciousActivity,
+  handleDatabaseError,
+  handleAuthError,
+  extractUserId,
+} from "../_shared/security.ts";
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,10 +27,73 @@ interface QuizQuestion {
   explanation: string;
 }
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+// Rate limit configuration
+const RATE_LIMITS = {
+  START_CHALLENGE: { max: 10, window: 3600 }, // 10 per hour
+  SUBMIT_ANSWER: { max: 100, window: 60 }, // 100 per minute
+};
+
+// Abuse detection configuration
+const ABUSE_THRESHOLDS = {
+  MAX_DAILY_CHALLENGES: 10,
+  COOLDOWN_SECONDS: 3600, // 1 hour
+  MAX_PERFECT_SCORES_DAILY: 5,
+  MAX_ACCURACY_FOR_ADVANCED: 95,
+  MIN_TIME_FOR_ADVANCED_SEC: 300, // 5 minutes
+};
+
+// Using shared checkRateLimit from _shared/security.ts
+
+// Helper function to check challenge limits and detect farming
+async function checkChallengeLimits(
+  supabase: any,
+  userId: string
+): Promise<{
+  allowed: boolean;
+  reason?: string;
+  retryAfter?: number;
+  flaggedForFraud: boolean;
+  penaltyMultiplier: number;
+}> {
+  const { data, error } = await supabase.rpc('check_challenge_limits', {
+    p_user_id: userId,
+  });
+
+  if (error) {
+    console.error('Challenge limit check error:', error);
+    // Allow request if check fails (fail open)
+    return { allowed: true, flaggedForFraud: false, penaltyMultiplier: 1 };
   }
+
+  if (!data.allowed) {
+    return {
+      allowed: false,
+      reason: data.reason,
+      retryAfter: data.retry_after,
+      flaggedForFraud: data.flagged_for_fraud || false,
+      penaltyMultiplier: data.penalty_multiplier || 1,
+    };
+  }
+
+  return {
+    allowed: true,
+    flaggedForFraud: data.flagged_for_fraud || false,
+    penaltyMultiplier: data.penalty_multiplier || 1,
+  };
+}
+
+serve(async (req) => {
+  // Handle CORS preflight
+  const optionsResponse = handleOptions(req);
+  if (optionsResponse) return optionsResponse;
+
+  // Validate origin
+  const originValidation = validateOrigin(req);
+  if (originValidation) return originValidation;
+
+  // Get CORS headers for this origin
+  const origin = req.headers.get("Origin");
+  const corsHeaders = getCorsHeaders(origin);
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -31,13 +108,57 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
-    if (userError || !user) throw new Error('Unauthorized');
+    if (userError || !user) {
+      await logAuthFailure(supabase, undefined, "challenge-sessions", "Invalid token");
+      return handleAuthError(corsHeaders, "Authentication required");
+    }
 
     const url = new URL(req.url);
     const path = url.pathname.split('/').filter(Boolean);
 
     // POST /challenge-sessions/start - Start a new challenge session
     if (req.method === 'POST' && path[0] === 'start') {
+      // Check rate limit
+      const rateLimitCheck = await checkRateLimit(
+        supabase,
+        user.id,
+        'challenge-sessions/start',
+        RATE_LIMITS.START_CHALLENGE.max,
+        RATE_LIMITS.START_CHALLENGE.window
+      );
+
+      if (!rateLimitCheck.allowed) {
+        return new Response(JSON.stringify({
+          error: rateLimitCheck.message,
+          retryAfter: rateLimitCheck.retryAfter,
+        }), {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Retry-After': rateLimitCheck.retryAfter?.toString() || '3600',
+          },
+        });
+      }
+
+      // Check challenge limits and fraud detection
+      const challengeLimitCheck = await checkChallengeLimits(supabase, user.id);
+
+      if (!challengeLimitCheck.allowed) {
+        return new Response(JSON.stringify({
+          error: challengeLimitCheck.reason || 'Challenge limit exceeded',
+          retryAfter: challengeLimitCheck.retryAfter,
+          flaggedForFraud: challengeLimitCheck.flaggedForFraud,
+        }), {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Retry-After': challengeLimitCheck.retryAfter?.toString() || '3600',
+          },
+        });
+      }
+
       const { topicId, topicName, difficulty = 'beginner' } = await req.json();
 
       // Determine question count and XP reward based on difficulty
@@ -125,6 +246,29 @@ serve(async (req) => {
 
     // POST /challenge-sessions/:sessionId/answer - Submit an answer
     if (req.method === 'POST' && path[1] === 'answer') {
+      // Check rate limit for answer submissions
+      const rateLimitCheck = await checkRateLimit(
+        supabase,
+        user.id,
+        'challenge-sessions/answer',
+        RATE_LIMITS.SUBMIT_ANSWER.max,
+        RATE_LIMITS.SUBMIT_ANSWER.window
+      );
+
+      if (!rateLimitCheck.allowed) {
+        return new Response(JSON.stringify({
+          error: rateLimitCheck.message,
+          retryAfter: rateLimitCheck.retryAfter,
+        }), {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Retry-After': rateLimitCheck.retryAfter?.toString() || '60',
+          },
+        });
+      }
+
       const sessionId = path[0];
       const { answerIndex } = await req.json();
 
@@ -212,56 +356,138 @@ serve(async (req) => {
 
       // Award XP if session is complete
       if (newStatus !== 'active' && xpEarned > 0) {
-        const { data: stats } = await supabase
-          .from('user_stats')
-          .select('xp_total')
-          .eq('user_id', user.id)
+        // IDEMPOTENCY CHECK: Verify rewards haven't been awarded yet
+        const { data: existingSession } = await supabase
+          .from('challenge_sessions')
+          .select('rewards_awarded')
+          .eq('id', sessionId)
           .single();
 
-        const newXpTotal = (stats?.xp_total || 0) + xpEarned;
+        if (existingSession?.rewards_awarded) {
+          // Rewards already awarded - skip but return success
+          console.log(`Rewards already awarded for session ${sessionId} - idempotency check`);
+        } else {
+          // Check for fraud and get penalty multiplier
+          const fraudCheck = await checkChallengeLimits(supabase, user.id);
+          let finalXpEarned = xpEarned;
+          let penaltyApplied = false;
 
-        await supabase
-          .from('user_stats')
-          .upsert({
-            user_id: user.id,
-            xp_total: newXpTotal,
-            updated_at: new Date().toISOString(),
-          });
+          // Apply penalty multiplier if flagged for fraud
+          if (fraudCheck.flaggedForFraud && fraudCheck.penaltyMultiplier < 1.0) {
+            finalXpEarned = Math.round(xpEarned * fraudCheck.penaltyMultiplier);
+            penaltyApplied = true;
+            console.log(`Fraud detected for user ${user.id}: applying ${fraudCheck.penaltyMultiplier}x penalty to XP`);
+          }
 
-        // Award coins for challenge completion
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('is_premium')
-          .eq('user_id', user.id)
-          .single();
+          // Server-side validation: Detect suspicious patterns
+          const timeTaken = new Date().getTime() - new Date(session.started_at).getTime();
+          const timeTakenSeconds = Math.floor(timeTaken / 1000);
 
-        const isPremium = profile?.is_premium || false;
+          // Flag advanced challenges completed too quickly with perfect scores
+          if (session.challenge_difficulty === 'advanced' &&
+              completionPercentage === 100 &&
+              timeTakenSeconds < ABUSE_THRESHOLDS.MIN_TIME_FOR_ADVANCED_SEC) {
+            console.warn(`Suspicious activity: User ${user.id} completed advanced challenge in ${timeTakenSeconds}s with 100% accuracy`);
 
-        // Calculate coin reward based on difficulty and completion
-        // Beginner: 25 coins (50 for premium)
-        // Intermediate: 50 coins (100 for premium)
-        // Advanced: 100 coins (200 for premium)
-        let baseCoinReward = 25;
-        if (session.challenge_difficulty === 'intermediate') {
-          baseCoinReward = 50;
-        } else if (session.challenge_difficulty === 'advanced') {
-          baseCoinReward = 100;
-        }
+            // Log suspicious activity
+            await supabase
+              .from('abuse_detection')
+              .insert({
+                user_id: user.id,
+                detection_type: 'suspicious_pattern',
+                severity: 'high',
+                description: `Advanced challenge completed too quickly with perfect score (${timeTakenSeconds}s)`,
+                metadata: {
+                  session_id: sessionId,
+                  time_taken_seconds: timeTakenSeconds,
+                  accuracy: completionPercentage,
+                  difficulty: session.challenge_difficulty
+                },
+                status: 'flagged'
+              }).then(() => console.log('Suspicious activity logged'))
+                .catch(err => console.error('Failed to log suspicious activity:', err));
+          }
 
-        const coinReward = isPremium ? baseCoinReward * 2 : baseCoinReward;
+          // Award XP (with penalty if applicable)
+          const { data: stats } = await supabase
+            .from('user_stats')
+            .select('xp_total')
+            .eq('user_id', user.id)
+            .single();
 
-        // Only award coins if challenge was completed (not failed)
-        if (newStatus === 'completed') {
-          await supabase.rpc('award_coins', {
-            user_id: user.id,
-            amount: coinReward,
-            source: 'challenge',
-            metadata: {
-              session_id: sessionId,
-              difficulty: session.challenge_difficulty,
-              topic_name: session.topic_name
-            }
-          });
+          const newXpTotal = (stats?.xp_total || 0) + finalXpEarned;
+
+          await supabase
+            .from('user_stats')
+            .upsert({
+              user_id: user.id,
+              xp_total: newXpTotal,
+              updated_at: new Date().toISOString(),
+            });
+
+          // Award coins for challenge completion
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_premium')
+            .eq('user_id', user.id)
+            .single();
+
+          const isPremium = profile?.is_premium || false;
+
+          // Calculate coin reward based on difficulty and completion
+          // Beginner: 25 coins (50 for premium)
+          // Intermediate: 50 coins (100 for premium)
+          // Advanced: 100 coins (200 for premium)
+          let baseCoinReward = 25;
+          if (session.challenge_difficulty === 'intermediate') {
+            baseCoinReward = 50;
+          } else if (session.challenge_difficulty === 'advanced') {
+            baseCoinReward = 100;
+          }
+
+          let coinReward = isPremium ? baseCoinReward * 2 : baseCoinReward;
+
+          // Apply penalty to coins if flagged for fraud
+          if (fraudCheck.flaggedForFraud && fraudCheck.penaltyMultiplier < 1.0) {
+            coinReward = Math.round(coinReward * fraudCheck.penaltyMultiplier);
+          }
+
+          // Only award coins if challenge was completed (not failed)
+          if (newStatus === 'completed') {
+            await supabase.rpc('award_coins', {
+              user_id: user.id,
+              amount: coinReward,
+              source: 'challenge',
+              metadata: {
+                session_id: sessionId,
+                difficulty: session.challenge_difficulty,
+                topic_name: session.topic_name,
+                penalty_applied: penaltyApplied ? fraudCheck.penaltyMultiplier : 1,
+              }
+            });
+          }
+
+          // Log completion for farming metrics (async, don't await)
+          supabase.rpc('log_challenge_completion', {
+            p_user_id: user.id,
+            p_session_id: sessionId,
+            p_correct_answers: newCorrectAnswers,
+            p_total_questions: session.total_questions,
+            p_time_taken_seconds: timeTakenSeconds,
+            p_difficulty: session.challenge_difficulty
+          }).then(() => console.log('Challenge completion logged'))
+            .catch(err => console.error('Failed to log challenge completion:', err));
+
+          // Mark rewards as awarded (idempotency protection)
+          await supabase
+            .from('challenge_sessions')
+            .update({ rewards_awarded: true })
+            .eq('id', sessionId);
+
+          // Include penalty info in response if applicable
+          if (penaltyApplied) {
+            xpEarned = finalXpEarned;
+          }
         }
       }
 
@@ -315,12 +541,14 @@ serve(async (req) => {
     });
 
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Error in challenge-sessions:', error);
+    return new Response(
+      JSON.stringify({ error: "An error occurred while processing your request" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
 
@@ -386,33 +614,10 @@ Return as a JSON array with this structure:
     return questions;
   } catch (error) {
     console.error('Error generating AI questions:', error);
-    return getFallbackQuestions(topic, count);
+    // Throw error instead of returning placeholder questions
+    // This prevents deceptive UX with fake questions
+    throw new Error('Failed to generate challenge questions. The AI service is currently unavailable. Please try again later.');
   }
-}
-
-// Fallback questions when AI generation fails
-function getFallbackQuestions(topic: string, count: number): QuizQuestion[] {
-  const fallbackQuestions: QuizQuestion[] = [
-    {
-      question: `What is the primary focus of ${topic}?`,
-      options: ['Option A', 'Option B', 'Option C', 'Option D'],
-      correct: 0,
-      explanation: 'This is a placeholder question.',
-    },
-    {
-      question: `Which of the following is related to ${topic}?`,
-      options: ['Option A', 'Option B', 'Option C', 'Option D'],
-      correct: 0,
-      explanation: 'This is a placeholder question.',
-    },
-  ];
-
-  // Repeat to fill count
-  const result: QuizQuestion[] = [];
-  for (let i = 0; i < count; i++) {
-    result.push({ ...fallbackQuestions[i % fallbackQuestions.length] });
-  }
-  return result;
 }
 
 // Fisher-Yates shuffle

@@ -1,15 +1,75 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  getCorsHeaders,
+  handleOptions,
+  validateOrigin,
+  checkRateLimit,
+  rateLimitResponse,
+  logAuthFailure,
+  logRateLimitViolation,
+  logSuspiciousActivity,
+  logPrivilegeEscalationAttempt,
+  handleDatabaseError,
+  handleAuthError,
+  extractUserId,
+} from "../_shared/security.ts";
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+// Rate limit configuration
+const RATE_LIMITS = {
+  SEARCH_USERS: { max: 30, window: 60 }, // 30 requests per minute (admin only)
+};
+
+// Helper function to check rate limit
+async function checkRateLimit(
+  supabase: any,
+  userId: string,
+  endpoint: string,
+  maxRequests: number,
+  windowSeconds: number
+): Promise<{ allowed: boolean; retryAfter?: number; message?: string }> {
+  const { data, error } = await supabase.rpc('check_rate_limit', {
+    p_user_id: userId,
+    p_endpoint: endpoint,
+    p_max_requests: maxRequests,
+    p_window_seconds: windowSeconds,
+  });
+
+  if (error) {
+    console.error('Rate limit check error:', error);
+    // Allow request if rate limit check fails (fail open)
+    return { allowed: true };
   }
+
+  if (!data.allowed) {
+    return {
+      allowed: false,
+      retryAfter: data.retry_after,
+      message: data.message || 'Rate limit exceeded',
+    };
+  }
+
+  return { allowed: true };
+}
+
+serve(async (req) => {
+  // Handle CORS preflight
+  const optionsResponse = handleOptions(req);
+  if (optionsResponse) return optionsResponse;
+
+  // Validate origin
+  const originValidation = validateOrigin(req);
+  if (originValidation) return originValidation;
+
+  // Get CORS headers for this origin
+  const origin = req.headers.get("Origin");
+  const corsHeaders = getCorsHeaders(origin);
 
   try {
     const supabaseClient = createClient(
@@ -19,8 +79,59 @@ serve(async (req) => {
     );
 
     const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user || user.email !== 'aakarsh545@gmail.com') {
+    if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Check rate limit
+    const rateLimitCheck = await checkRateLimit(
+      supabaseClient,
+      user.id,
+      'search-users',
+      RATE_LIMITS.SEARCH_USERS.max,
+      RATE_LIMITS.SEARCH_USERS.window
+    );
+
+    if (!rateLimitCheck.allowed) {
+      return new Response(JSON.stringify({
+        error: rateLimitCheck.message || "Rate limit exceeded",
+        retryAfter: rateLimitCheck.retryAfter,
+      }), {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Retry-After': rateLimitCheck.retryAfter?.toString() || "60",
+        },
+      });
+    }
+
+    // Check if user is admin
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('is_admin')
+      .eq('user_id', user.id)
+      .single();
+
+    // RATE LIMITING: 30 requests per minute
+    const rateLimitResult = await checkRateLimit(
+      supabaseClient,
+      user.id,
+      "search-users",
+      30,
+      60
+    );
+
+    if (!rateLimitResult.allowed) {
+      await logRateLimitViolation(supabaseClient, user.id, "search-users", 30, 60);
+      return rateLimitResponse(rateLimitResult.resetAt, corsHeaders);
+    }
+
+    if (!profile || !profile.is_admin) {
+      return new Response(JSON.stringify({ error: 'Forbidden: Admin access required' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -69,10 +180,13 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    console.error('Error in search-users:', error);
+    return new Response(
+      JSON.stringify({ error: "An error occurred while processing your request" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
 });

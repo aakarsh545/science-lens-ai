@@ -34,6 +34,7 @@ export default function ChallengesPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [completedLessonsCount, setCompletedLessonsCount] = useState(0);
+  const [userLevel, setUserLevel] = useState(1);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -51,7 +52,8 @@ export default function ChallengesPage() {
         await Promise.all([
           loadTopics(),
           loadCourses(),
-          loadUserProgress(session.user.id)
+          loadUserProgress(session.user.id),
+          loadUserProfile(session.user.id)
         ]);
       } catch (error) {
         console.error("Error initializing page:", error);
@@ -114,6 +116,23 @@ export default function ChallengesPage() {
     setCompletedLessonsCount(data?.length || 0);
   };
 
+  const loadUserProfile = async (userId: string) => {
+    const { data: profileData, error } = await supabase
+      .from('profiles')
+      .select('level')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      console.error("Error loading user profile:", error);
+      return;
+    }
+
+    if (profileData) {
+      setUserLevel(profileData.level || 1);
+    }
+  };
+
   const startChallenge = (topic: Topic, difficulty: 'beginner' | 'intermediate' | 'advanced' = 'beginner', courseId?: string) => {
     const questionCount = difficulty === 'beginner' ? 15 : difficulty === 'intermediate' ? 30 : 45;
     const xpReward = difficulty === 'beginner' ? 100 : difficulty === 'intermediate' ? 200 : 500;
@@ -124,7 +143,7 @@ export default function ChallengesPage() {
     });
 
     // Navigate to challenge session - will create a new session
-    navigate(`/science-lens/challenges/session/new`, {
+    navigate(`/challenges/session/new`, {
       state: {
         topicId: courseId || topic.id,
         topicName: topic.name,
@@ -139,7 +158,7 @@ export default function ChallengesPage() {
       description: `Get ready for a 15-question challenge on ${course.title}`,
     });
 
-    navigate(`/science-lens/challenges/session/new`, {
+    navigate(`/challenges/session/new`, {
       state: {
         topicId: course.id,
         topicName: course.title,
@@ -318,7 +337,7 @@ export default function ChallengesPage() {
             <CardContent className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
-                  onClick={() => navigate("/science-lens/learning")}
+                  onClick={() => navigate("/learning")}
                   size="lg"
                   className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold"
                 >
@@ -326,7 +345,7 @@ export default function ChallengesPage() {
                   Start Learning
                 </Button>
                 <Button
-                  onClick={() => navigate("/science-lens")}
+                  onClick={() => navigate("/")}
                   size="lg"
                   variant="outline"
                 >

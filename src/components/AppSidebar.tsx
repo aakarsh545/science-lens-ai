@@ -29,15 +29,15 @@ import { Separator } from "@/components/ui/separator";
 import { clearUserDataById } from "@/utils/userStorage";
 
 const menuItems = [
-  { title: "Home", icon: Compass, path: "/science-lens" },
-  { title: "Learning", icon: GraduationCap, path: "/science-lens/learning" },
-  { title: "Challenges", icon: Target, path: "/science-lens/challenges" },
-  { title: "Leaderboard", icon: Award, path: "/science-lens/leaderboard" },
-  { title: "Shop", icon: ShoppingBag, path: "/science-lens/shop" },
-  { title: "Ask Questions", icon: MessageSquare, path: "/science-lens/ask" },
-  { title: "Profile", icon: User, path: "/science-lens/profile" },
-  { title: "Achievements", icon: Trophy, path: "/science-lens/achievements" },
-  { title: "Settings", icon: SettingsIcon, path: "/science-lens/settings" },
+  { title: "Home", icon: Compass, path: "/" },
+  { title: "Learning", icon: GraduationCap, path: "/learning" },
+  { title: "Challenges", icon: Target, path: "/challenges" },
+  { title: "Leaderboard", icon: Award, path: "/leaderboard" },
+  { title: "Shop", icon: ShoppingBag, path: "/shop" },
+  { title: "Ask Questions", icon: MessageSquare, path: "/ask" },
+  { title: "Profile", icon: User, path: "/profile" },
+  { title: "Achievements", icon: Trophy, path: "/achievements" },
+  { title: "Settings", icon: SettingsIcon, path: "/settings" },
 ];
 
 interface AppSidebarProps {

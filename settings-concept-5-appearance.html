@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Appearance & Personalization</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+      color: white;
+      padding: 35px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 34px;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .header p {
+      opacity: 0.95;
+      font-size: 16px;
+    }
+    .content {
+      padding: 35px;
+    }
+    .section {
+      margin-bottom: 35px;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .section-icon {
+      width: 45px;
+      height: 45px;
+      background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .section-title h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .theme-card {
+      border-radius: 16px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 3px solid transparent;
+      position: relative;
+    }
+    .theme-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .theme-card.selected {
+      border-color: #a18cd1;
+      box-shadow: 0 0 0 4px rgba(161, 140, 209, 0.2);
+    }
+    .theme-card.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #a18cd1;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .theme-card.cosmic {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .theme-card.ocean {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .theme-card.sunset {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    .theme-card.forest {
+      background: linear-gradient(135deg, #38f9d7 0%, #43e97b 100%);
+    }
+    .theme-card.dark {
+      background: linear-gradient(135deg, #232526 0%, #414345 100%);
+    }
+    .theme-card.light {
+      background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+      border: 2px solid #e5e7eb;
+    }
+    .theme-card.minimal {
+      background: linear-gradient(135deg, #fff 0%, #f3f4f6 100%);
+      border: 2px solid #d1d5db;
+    }
+    .theme-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 12px;
+      color: inherit;
+    }
+    .theme-card.light h3,
+    .theme-card.minimal h3 {
+      color: #1f2937;
+    }
+    .theme-card.dark h3 {
+      color: white;
+    }
+    .color-picker-section {
+      background: #f9fafb;
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 20px;
+    }
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .color-option {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 3px solid transparent;
+    }
+    .color-option:hover {
+      transform: scale(1.15);
+    }
+    .color-option.selected {
+      border-color: #1f2937;
+      box-shadow: 0 0 0 3px white, 0 0 0 5px #a18cd1;
+    }
+    .avatar-section {
+      background: #fdf4ff;
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .avatar-option {
+      aspect-ratio: 1;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 3px solid transparent;
+      background: white;
+    }
+    .avatar-option:hover {
+      transform: scale(1.08);
+    }
+    .avatar-option.selected {
+      border-color: #a18cd1;
+      box-shadow: 0 0 0 4px rgba(161, 140, 209, 0.3);
+    }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .slider-row:last-child {
+      border-bottom: none;
+    }
+    .slider-label {
+      flex: 1;
+    }
+    .slider-label h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+    .slider-label p {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .slider {
+      width: 200px;
+      height: 8px;
+      border-radius: 4px;
+      background: #e5e7eb;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .slider-value {
+      min-width: 50px;
+      text-align: right;
+      font-size: 14px;
+      font-weight: 600;
+      color: #a18cd1;
+    }
+    .layout-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .layout-card {
+      border: 3px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .layout-card:hover {
+      border-color: #d1d5db;
+    }
+    .layout-card.selected {
+      border-color: #a18cd1;
+      background: #fdf4ff;
+    }
+    .layout-card .icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    .layout-card h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+    .layout-card p {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .btn-save {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(161, 140, 209, 0.4);
+    }
+    .btn-save:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(161, 140, 209, 0.5);
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 0;
+    }
+    .checkbox {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #d1d5db;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .checkbox.checked {
+      background: #a18cd1;
+      border-color: #a18cd1;
+    }
+    .checkbox.checked::after {
+      content: '✓';
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .checkbox-label h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+    .checkbox-label p {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✨ Appearance & Personalization</h1>
+      <p>Make Science Lens truly yours</p>
+    </div>
+
+    <div class="content">
+      <div class="section">
+        <div class="section-title">
+          <div class="section-icon">🎨</div>
+          <h2>Theme Selection</h2>
+        </div>
+        <div class="theme-grid">
+          <div class="theme-card cosmic selected" onclick="selectTheme(this)">
+            <h3>Cosmic</h3>
+          </div>
+          <div class="theme-card ocean" onclick="selectTheme(this)">
+            <h3>Ocean</h3>
+          </div>
+          <div class="theme-card sunset" onclick="selectTheme(this)">
+            <h3>Sunset</h3>
+          </div>
+          <div class="theme-card forest" onclick="selectTheme(this)">
+            <h3>Forest</h3>
+          </div>
+          <div class="theme-card dark" onclick="selectTheme(this)">
+            <h3>Dark</h3>
+          </div>
+          <div class="theme-card light" onclick="selectTheme(this)">
+            <h3>Light</h3>
+          </div>
+          <div class="theme-card minimal" onclick="selectTheme(this)">
+            <h3>Minimal</h3>
+          </div>
+          <div class="theme-card" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);" onclick="selectTheme(this)">
+            <h3>Peach</h3>
+          </div>
+        </div>
+
+        <div class="color-picker-section">
+          <h3 style="font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 8px;">Accent Color</h3>
+          <p style="font-size: 13px; color: #6b7280;">Customize buttons, links, and highlights</p>
+          <div class="color-grid">
+            <div class="color-option selected" style="background: #a18cd1;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #667eea;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #f093fb;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #4facfe;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #43e97b;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #fa709a;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #fee140;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #ff6b6b;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #f093fb;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #30cfd0;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #a8edea;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #ff9a9e;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #fecfef;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #ffecd2;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #fcb69f;" onclick="selectColor(this)"></div>
+            <div class="color-option" style="background: #1f2937;" onclick="selectColor(this)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">
+          <div class="section-icon">👤</div>
+          <h2>Your Avatar</h2>
+        </div>
+        <div class="avatar-section">
+          <div class="avatar-grid">
+            <div class="avatar-option selected" onclick="selectAvatar(this)">👤</div>
+            <div class="avatar-option" onclick="selectAvatar(this)">🧑‍🚀</div>
+            <div class="avatar-option" onclick="selectAvatar(this)">🔬</div>
+            <div class="avatar-option" onclick="selectAvatar(this)">⚗️</div>
+            <div class="avatar-option" onclick="selectAvatar(this)">🧬</div>
+            <div class="avatar-option" onclick="selectAvatar(this)">🌟</div>
+            <div class="avatar-option" onclick="selectAvatar(this)">🚀</div>
+            <div class="avatar-option" onclick="selectAvatar(this)">🪐</div>
+            <div class="avatar-option" onclick="selectAvatar(this)">🔭</div>
+            <div class="avatar-option" onclick="selectAvatar(this)">⚡</div>
+            <div class="avatar-option" onclick="selectAvatar(this)">🌈</div>
+            <div class="avatar-option" onclick="selectAvatar(this)">💎</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">
+          <div class="section-icon">📐</div>
+          <h2>Layout & Display</h2>
+        </div>
+        <div class="layout-options">
+          <div class="layout-card selected" onclick="selectLayout(this)">
+            <div class="icon">📱</div>
+            <h4>Compact</h4>
+            <p>Dense information</p>
+          </div>
+          <div class="layout-card" onclick="selectLayout(this)">
+            <div class="icon">📲</div>
+            <h4>Comfortable</h4>
+            <p>Balanced spacing</p>
+          </div>
+          <div class="layout-card" onclick="selectLayout(this)">
+            <div class="icon">💻</div>
+            <h4>Spacious</h4>
+            <p>Roomy layout</p>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <div class="slider-row">
+            <div class="slider-label">
+              <h4>Content Width</h4>
+              <p>Adjust maximum width of content</p>
+            </div>
+            <input type="range" class="slider" min="800" max="1400" value="1000" oninput="updateSlider(this)">
+            <div class="slider-value">1000px</div>
+          </div>
+          <div class="slider-row">
+            <div class="slider-label">
+              <h4>Border Radius</h4>
+              <p>Roundness of cards and buttons</p>
+            </div>
+            <input type="range" class="slider" min="0" max="20" value="12" oninput="updateSlider(this)">
+            <div class="slider-value">12px</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">
+          <div class="section-icon">🎭</div>
+          <h2>Visual Effects</h2>
+        </div>
+        <div class="checkbox-row" onclick="toggleCheckbox(this)">
+          <div class="checkbox checked"></div>
+          <div class="checkbox-label">
+            <h4>Glassmorphism Effects</h4>
+            <p>Frosted glass blur effects on cards</p>
+          </div>
+        </div>
+        <div class="checkbox-row" onclick="toggleCheckbox(this)">
+          <div class="checkbox checked"></div>
+          <div class="checkbox-label">
+            <h4>Gradient Backgrounds</h4>
+            <p>Colorful gradient backgrounds</p>
+          </div>
+        </div>
+        <div class="checkbox-row" onclick="toggleCheckbox(this)">
+          <div class="checkbox checked"></div>
+          <div class="checkbox-label">
+            <h4>Subtle Shadows</h4>
+            <p>Soft shadows for depth</p>
+          </div>
+        </div>
+        <div class="checkbox-row" onclick="toggleCheckbox(this)">
+          <div class="checkbox"></div>
+          <div class="checkbox-label">
+            <h4>Particle Effects</h4>
+            <p>Animated background particles</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">
+          <div class="section-icon">🖼️</div>
+          <h2>Background Wallpaper</h2>
+        </div>
+        <div class="layout-options">
+          <div class="layout-card selected" onclick="selectLayout(this)">
+            <div class="icon">🌌</div>
+            <h4>Galaxy</h4>
+            <p>Cosmic nebula</p>
+          </div>
+          <div class="layout-card" onclick="selectLayout(this)">
+            <div class="icon">🌊</div>
+            <h4>Waves</h4>
+            <p>Calming ocean</p>
+          </div>
+          <div class="layout-card" onclick="selectLayout(this)">
+            <div class="icon">🍃</div>
+            <h4>Nature</h4>
+            <p>Forest leaves</p>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-save">Apply Changes</button>
+    </div>
+  </div>
+
+  <script>
+    function selectTheme(card) {
+      document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    }
+
+    function selectColor(color) {
+      document.querySelectorAll('.color-option').forEach(c => c.classList.remove('selected'));
+      color.classList.add('selected');
+    }
+
+    function selectAvatar(avatar) {
+      document.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
+      avatar.classList.add('selected');
+    }
+
+    function selectLayout(card) {
+      const parent = card.parentElement;
+      parent.querySelectorAll('.layout-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    }
+
+    function updateSlider(slider) {
+      const valueDisplay = slider.parentElement.querySelector('.slider-value');
+      valueDisplay.textContent = slider.value + 'px';
+    }
+
+    function toggleCheckbox(row) {
+      const checkbox = row.querySelector('.checkbox');
+      checkbox.classList.toggle('checked');
+    }
+  </script>
+</body>
+</html>

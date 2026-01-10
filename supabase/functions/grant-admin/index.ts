@@ -1,18 +1,38 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  getCorsHeaders,
+  handleOptions,
+  validateOrigin,
+  checkRateLimit,
+  rateLimitResponse,
+  logAuthFailure,
+  logRateLimitViolation,
+  logSuspiciousActivity,
+  logPrivilegeEscalationAttempt,
+  handleDatabaseError,
+  handleAuthError,
+  extractUserId,
+} from "../_shared/security.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+
+// Rate limit configuration
+const RATE_LIMITS = {
+  GRANT_ADMIN: { max: 5, window: 3600 }, // 5 requests per hour (admin only)
 };
 
-const SUPER_ADMIN_EMAIL = 'aakarsh545@gmail.com';
-
 serve(async (req) => {
-  // Handle CORS
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  // Handle CORS preflight using shared security
+  const optionsResponse = handleOptions(req);
+  if (optionsResponse) return optionsResponse;
+
+  // Validate origin
+  const originValidation = validateOrigin(req);
+  if (originValidation) return originValidation;
+
+  // Get CORS headers for this origin
+  const origin = req.headers.get("Origin");
+  const corsHeaders = getCorsHeaders(origin);
 
   try {
     const supabaseClient = createClient(
@@ -30,6 +50,26 @@ serve(async (req) => {
       });
     }
 
+    // Check rate limit using shared fail-closed function
+    const rateLimitCheck = await checkRateLimit(
+      supabaseClient,
+      requestingUser.id,
+      'grant-admin',
+      RATE_LIMITS.GRANT_ADMIN.max,
+      RATE_LIMITS.GRANT_ADMIN.window
+    );
+
+    if (!rateLimitCheck.allowed) {
+      await logRateLimitViolation(
+        supabaseClient,
+        requestingUser.id,
+        "grant-admin",
+        RATE_LIMITS.GRANT_ADMIN.max,
+        RATE_LIMITS.GRANT_ADMIN.window
+      );
+      return rateLimitResponse(rateLimitCheck.resetAt, corsHeaders);
+    }
+
     // SERVER-SIDE AUTHORIZATION: Check if requesting user is super admin
     const { data: requestingProfile, error: profileError } = await supabaseClient
       .from('profiles')
@@ -44,13 +84,11 @@ serve(async (req) => {
       });
     }
 
-    // Get requesting user's email from auth
-    const requestingUserEmail = requestingUser.email;
-
-    // ONLY super admin can grant admin privileges
-    if (requestingUserEmail !== SUPER_ADMIN_EMAIL) {
-      console.error(`Unauthorized admin grant attempt by user ${requestingUser.id} (${requestingUserEmail})`);
-      return new Response(JSON.stringify({ error: 'Forbidden: Only super admin can grant admin privileges' }), {
+    // SERVER-SIDE AUTHORIZATION: Check if requesting user is an admin
+    // Uses is_admin field from database, not hardcoded email
+    if (!requestingProfile.is_admin) {
+      console.error(`Unauthorized admin grant attempt by user ${requestingUser.id} (${requestingUser.email})`);
+      return new Response(JSON.stringify({ error: 'Forbidden: Only admins can grant admin privileges' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -66,7 +104,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Super admin ${requestingUserEmail} granting admin to user ${userId}`);
+    console.log(`Admin ${requestingUser.email} granting admin to user ${userId}`);
 
     // Grant admin privileges to target user
     // 1. Set max level and coins in profiles
@@ -116,6 +154,15 @@ serve(async (req) => {
       }
     }
 
+    // Log successful privilege escalation
+    await logPrivilegeEscalationAttempt(
+      supabaseClient,
+      requestingUser.id,
+      "grant-admin",
+      userId,
+      true
+    );
+
     return new Response(JSON.stringify({
       success: true,
       message: 'Admin privileges granted successfully!',
@@ -131,9 +178,12 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error granting admin:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({ error: "An error occurred while processing your request" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
 });

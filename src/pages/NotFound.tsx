@@ -38,7 +38,7 @@ const NotFound = () => {
             Go to Home
           </Button>
           <Button
-            onClick={() => navigate("/science-lens")}
+            onClick={() => navigate("/")}
             size="lg"
             variant="outline"
           >

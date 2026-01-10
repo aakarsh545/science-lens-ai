@@ -34,6 +34,7 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isSendingRef = useRef(false); // Ref to prevent concurrent sends
   const { toast } = useToast();
 
   const scrollToBottom = () => {
@@ -162,8 +163,20 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
       let assistantSoFar = "";
       let lastChunkTime = Date.now();
       let noDataTimeoutId: NodeJS.Timeout;
+      let firstChunkReceived = false;
 
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+      // Add both user and assistant placeholder when stream successfully starts
+      // Only after we confirm the connection is working
+      const addMessagesWhenStreamStarts = () => {
+        if (!firstChunkReceived) {
+          firstChunkReceived = true;
+          setMessages((prev) => [
+            ...prev,
+            { role: "user", content: userMessage },
+            { role: "assistant", content: "" }
+          ]);
+        }
+      };
 
       const resetNoDataTimeout = () => {
         if (noDataTimeoutId) clearTimeout(noDataTimeoutId);
@@ -175,7 +188,8 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
               description: "The AI response took too long. Please try again.",
               variant: "destructive",
             });
-            setMessages((prev) => prev.slice(0, -1));
+            // Remove both user and assistant messages if timeout
+            setMessages((prev) => prev.slice(0, -2));
             streamDone = true;
           }
         }, TIMEOUT_VALUES.NO_DATA_RECEIVED);
@@ -211,6 +225,9 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
+              // Add user and assistant messages on first chunk
+              addMessagesWhenStreamStarts();
+
               assistantSoFar += content;
               setMessages((prev) => {
                 const newMessages = [...prev];
@@ -272,20 +289,47 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
         });
       }
 
-      setMessages((prev) => prev.slice(0, -1));
+      // Remove both user and assistant messages if error occurred
+      // If firstChunkReceived is true, both messages were added, so remove both
+      // If firstChunkReceived is false, no messages were added, so nothing to remove
+      setMessages((prev) => {
+        // Check if we added the messages by seeing if we have at least 2 new messages
+        // This is a simple check - in production we'd track this more carefully
+        const hasNewMessages = prev.length >= 2 &&
+          prev[prev.length - 2].role === "user" &&
+          prev[prev.length - 2].content === userMessage &&
+          prev[prev.length - 1].role === "assistant";
+        return hasNewMessages ? prev.slice(0, -2) : prev;
+      });
     }
   };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
+    // Prevent concurrent sends using ref (immediate check, not affected by React batching)
+    if (isSendingRef.current) {
+      console.warn('Already sending a message, please wait...');
+      return;
+    }
+
     const userMessage = input.trim();
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
+    isSendingRef.current = true; // Set flag immediately
 
-    await streamChat(userMessage);
-    setIsLoading(false);
+    try {
+      // Don't add messages optimistically - wait for backend response
+      // This prevents showing messages that fail to send
+      await streamChat(userMessage);
+    } catch (error) {
+      // If streamChat fails entirely, user message was never added
+      // Just show error, no rollback needed
+      console.error('Failed to send message:', error);
+    } finally {
+      setIsLoading(false);
+      isSendingRef.current = false; // Clear flag after completion
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

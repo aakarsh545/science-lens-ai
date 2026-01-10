@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
 import { triggerLevelUpConfetti, triggerSuccessConfetti } from "@/utils/confettiEffects";
 import { logChallengeCompleted, logLevelUp } from "@/utils/activityLogging";
 import { checkChallengeAchievements, checkLevelAchievements } from "@/utils/achievements";
+import { TIMEOUT_VALUES } from "@/utils/constants";
 
 interface QuizQuestion {
   question: string;
@@ -84,6 +85,18 @@ export default function ChallengeSession() {
   const [answers, setAnswers] = useState<ChallengeAnswer[]>([]);
   const [sessionStartTime] = useState(Date.now());
 
+  // Store timeout ID for cleanup
+  const nextQuestionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (nextQuestionTimeoutRef.current) {
+        clearTimeout(nextQuestionTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Start session on mount
   useEffect(() => {
     if (sessionId === 'new' || !sessionId) {
@@ -95,9 +108,15 @@ export default function ChallengeSession() {
 
   const startNewSession = async () => {
     setLoading(true);
+    let timeoutId: NodeJS.Timeout;
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
+
+      // Add timeout for fetch
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), TIMEOUT_VALUES.INITIAL_REQUEST);
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/challenge-sessions/start`,
@@ -112,15 +131,18 @@ export default function ChallengeSession() {
             topicName: state?.topicName || 'General Science',
             difficulty: state?.difficulty || 'beginner',
           }),
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) throw new Error("Failed to start challenge");
 
       const data = await response.json();
 
       // Update URL to actual session ID
-      navigate(`/science-lens/challenges/session/${data.session.id}`, { replace: true });
+      navigate(`/challenges/session/${data.session.id}`, { replace: true });
 
       setCurrentQuestion(data.session.currentQuestion);
       setTotalQuestions(data.session.totalQuestions);
@@ -131,22 +153,37 @@ export default function ChallengeSession() {
       setSessionActive(true);
       setSessionEnded(false);
     } catch (error: unknown) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to start challenge",
-        variant: "destructive",
-      });
-      navigate("/science-lens/learning");
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast({
+          title: "Request Timeout",
+          description: "Starting the challenge took too long. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to start challenge",
+          variant: "destructive",
+        });
+      }
+      navigate("/learning");
     } finally {
+      if (timeoutId) clearTimeout(timeoutId);
       setLoading(false);
     }
   };
 
   const loadExistingSession = async () => {
     setLoading(true);
+    let timeoutId: NodeJS.Timeout;
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
+
+      // Add timeout for fetch
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), TIMEOUT_VALUES.INITIAL_REQUEST);
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/challenge-sessions/${sessionId}`,
@@ -154,8 +191,11 @@ export default function ChallengeSession() {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) throw new Error("Failed to load session");
 
@@ -184,13 +224,22 @@ export default function ChallengeSession() {
       setQuestion(questions[sessionData.current_question - 1]);
       setSessionActive(true);
     } catch (error: unknown) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to load session",
-        variant: "destructive",
-      });
-      navigate("/science-lens/learning");
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast({
+          title: "Request Timeout",
+          description: "Loading the challenge took too long. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to load session",
+          variant: "destructive",
+        });
+      }
+      navigate("/learning");
     } finally {
+      if (timeoutId) clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -204,9 +253,15 @@ export default function ChallengeSession() {
     if (selectedAnswer === null || !question) return;
 
     setSubmitting(true);
+    let timeoutId: NodeJS.Timeout;
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
+
+      // Add timeout for fetch
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), TIMEOUT_VALUES.INITIAL_REQUEST);
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/challenge-sessions/${sessionId}/answer`,
@@ -219,8 +274,11 @@ export default function ChallengeSession() {
           body: JSON.stringify({
             answerIndex: selectedAnswer,
           }),
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) throw new Error("Failed to submit answer");
 
@@ -366,27 +424,48 @@ export default function ChallengeSession() {
           }
         }
       } else {
+        // Clear any existing timeout before setting a new one
+        if (nextQuestionTimeoutRef.current) {
+          clearTimeout(nextQuestionTimeoutRef.current);
+        }
+
         // Load next question after delay
-        setTimeout(() => {
+        nextQuestionTimeoutRef.current = setTimeout(() => {
           setCurrentQuestion(data.currentQuestion);
           setQuestion(data.nextQuestion);
           setSelectedAnswer(null);
           setShowFeedback(false);
           setExplanation("");
+          nextQuestionTimeoutRef.current = null; // Clear ref after timeout executes
         }, 2000);
       }
     } catch (error: unknown) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to submit answer",
-        variant: "destructive",
-      });
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast({
+          title: "Request Timeout",
+          description: "Submitting your answer took too long. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to submit answer",
+          variant: "destructive",
+        });
+      }
     } finally {
+      if (timeoutId) clearTimeout(timeoutId);
       setSubmitting(false);
     }
   };
 
   const handleRetry = () => {
+    // Clear any pending timeout
+    if (nextQuestionTimeoutRef.current) {
+      clearTimeout(nextQuestionTimeoutRef.current);
+      nextQuestionTimeoutRef.current = null;
+    }
+
     setSessionEnded(false);
     setFinalResults(null);
     setDetailedResults(null);
@@ -400,7 +479,7 @@ export default function ChallengeSession() {
   };
 
   const handleReturnToChallenges = () => {
-    navigate("/science-lens/learning");
+    navigate("/learning");
   };
 
   if (loading) {

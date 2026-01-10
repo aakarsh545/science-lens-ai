@@ -8,11 +8,13 @@ import { User } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import LandingPage from "@/components/LandingPage";
+import { OnboardingCutscene } from "@/components/OnboardingCutscene";
 
 export default function AuthenticatedLayout() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -22,6 +24,13 @@ export default function AuthenticatedLayout() {
         return;
       }
       setUser(session.user);
+
+      // Check if user has seen onboarding
+      const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+      if (!hasSeenOnboarding) {
+        setShowOnboarding(true);
+      }
+
       setLoading(false);
     });
 
@@ -32,11 +41,28 @@ export default function AuthenticatedLayout() {
         return;
       }
       setUser(session.user);
+
+      // Check if user has seen onboarding
+      const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+      if (!hasSeenOnboarding) {
+        setShowOnboarding(true);
+      }
+
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('hasSeenOnboarding', 'true');
+    setShowOnboarding(false);
+  };
+
+  const handleOnboardingClose = () => {
+    localStorage.setItem('hasSeenOnboarding', 'true');
+    setShowOnboarding(false);
+  };
 
   if (loading) {
     return (
@@ -48,6 +74,18 @@ export default function AuthenticatedLayout() {
 
   if (!user) {
     return <LandingPage />;
+  }
+
+  // Show onboarding for logged-in users who haven't seen it
+  if (showOnboarding) {
+    return (
+      <ThemeProvider userId={user.id}>
+        <OnboardingCutscene
+          onComplete={handleOnboardingComplete}
+          onClose={handleOnboardingClose}
+        />
+      </ThemeProvider>
+    );
   }
 
   return (

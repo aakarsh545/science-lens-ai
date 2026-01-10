@@ -132,7 +132,7 @@ export default function LearnSciencePage() {
     if (userProfile.level < requirement.level) {
       return; // Don't navigate if locked
     }
-    navigate("/science-lens/learning", { state: { topic } });
+    navigate("/learning", { state: { topic } });
   };
 
   const isTopicLocked = (topic: Topic): boolean => {

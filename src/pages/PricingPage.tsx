@@ -28,7 +28,7 @@ export default function PricingPage() {
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      navigate('/science-lens');
+      navigate('/');
       return;
     }
     setUser(session.user);
@@ -49,7 +49,7 @@ export default function PricingPage() {
 
   const handlePurchase = (type: 'premium' | 'coins' | 'xp_boost', amount: number, description: string) => {
     // Navigate to billing page with purchase details
-    navigate('/science-lens/billing', {
+    navigate('/billing', {
       state: {
         purchase: { type, amount, description }
       }
@@ -62,7 +62,7 @@ export default function PricingPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <Button variant="ghost" onClick={() => navigate('/science-lens')} className="mb-4">
+            <Button variant="ghost" onClick={() => navigate('/')} className="mb-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Dashboard
             </Button>

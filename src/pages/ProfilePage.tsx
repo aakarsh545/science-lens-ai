@@ -32,15 +32,45 @@ interface UserProfile {
   updated_at: string;
 }
 
+interface TopicProgress {
+  id: string;
+  user_id: string;
+  topic_id: string;
+  mastery_level: number;
+  questions_correct: number;
+  questions_total: number;
+  last_practiced: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Achievement {
+  id: string;
+  user_id: string;
+  achievement_type: string;
+  achieved_at: string;
+  created_at: string;
+}
+
+interface ActivityLog {
+  id: string;
+  user_id: string;
+  activity_type: string;
+  description: string;
+  created_at: string;
+}
+
 interface UserStats {
-  total_xp: number;
+  lessonsCompleted: number;
+  quizzesTaken: number;
+  challengesCompleted: number;
+  topicProgress: TopicProgress[];
+  achievements: Achievement[];
+  activityLogs: ActivityLog[];
+  streakCount: number;
+  totalQuestions: number;
+  xpPoints: number;
   level: number;
-  lessons_completed: number;
-  challenges_completed: number;
-  current_streak: number;
-  longest_streak: number;
-  accuracy_percentage: number;
-  total_questions_answered: number;
 }
 
 export default function ProfilePage() {
@@ -54,7 +84,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
-        navigate("/science-lens");
+        navigate("/");
         return;
       }
       setUser(session.user);
@@ -63,7 +93,7 @@ export default function ProfilePage() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        navigate("/science-lens");
+        navigate("/");
         return;
       }
       setUser(session.user);
@@ -88,15 +118,13 @@ export default function ProfilePage() {
       // Load stats (we'll aggregate from various tables)
       const [
         lessonsCompleted,
-        quizzesTaken,
         challengesCompleted,
         topicProgress,
         achievements,
         activityLogs
       ] = await Promise.all([
         supabase.from("user_progress").select("*").eq("user_id", userId).eq("status", "completed"),
-        supabase.from("questions").select("*").eq("user_id", userId),
-        supabase.from("study_sessions").select("*").eq("user_id", userId).not("ended_at", "null"),
+        supabase.from("challenges").select("*").eq("user_id", userId).eq("status", "completed"),
         supabase.from("user_topic_progress").select("*").eq("user_id", userId),
         supabase.from("achievements").select("*").eq("user_id", userId),
         supabase.from("activity_log").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(50)
@@ -104,7 +132,7 @@ export default function ProfilePage() {
 
       setStats({
         lessonsCompleted: lessonsCompleted.data?.length || 0,
-        quizzesTaken: quizzesTaken.data?.length || 0,
+        quizzesTaken: 0, // Will be calculated from other data
         challengesCompleted: challengesCompleted.data?.length || 0,
         topicProgress: topicProgress.data || [],
         achievements: achievements.data || [],
@@ -139,7 +167,7 @@ export default function ProfilePage() {
         {/* Back Button */}
         <Button
           variant="ghost"
-          onClick={() => navigate("/science-lens")}
+          onClick={() => navigate("/")}
           className="mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />

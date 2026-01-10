@@ -6,96 +6,101 @@
     - list
   - region "Notifications alt+T"
   - generic [ref=e3]:
-    - navigation [ref=e9]:
-      - generic [ref=e10]:
-        - img [ref=e11]
-        - generic [ref=e19]: Science Lens
-      - generic [ref=e20]:
-        - button "Sign In" [ref=e21] [cursor=pointer]
-        - button "Get Started" [ref=e22] [cursor=pointer]
-    - generic [ref=e24]:
-      - generic [ref=e25]:
-        - img [ref=e26]
-        - generic [ref=e28]: AI-Powered Science Learning
-      - heading "Explore Science Like Never Before" [level=1] [ref=e29]:
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - heading "🔬 Science Lens" [level=1] [ref=e7]
+        - paragraph [ref=e8]: Your journey through science starts now
+      - button "Skip Intro →" [ref=e9] [cursor=pointer]
+    - navigation [ref=e15]:
+      - generic [ref=e16]:
+        - img [ref=e17]
+        - generic [ref=e25]: Science Lens
+      - generic [ref=e26]:
+        - button "Sign In" [ref=e27] [cursor=pointer]
+        - button "Get Started" [ref=e28] [cursor=pointer]
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - img [ref=e32]
+        - generic [ref=e34]: AI-Powered Science Learning
+      - heading "Explore Science Like Never Before" [level=1] [ref=e35]:
         - text: Explore Science
         - text: Like Never Before
-      - paragraph [ref=e30]: Unlock the mysteries of science with AI-powered learning. Ask questions, track progress, and achieve mastery through our revolutionary platform.
-      - generic [ref=e31]:
-        - button "Start Learning" [ref=e32] [cursor=pointer]:
+      - paragraph [ref=e36]: Unlock the mysteries of science with AI-powered learning. Ask questions, track progress, and achieve mastery through our revolutionary platform.
+      - generic [ref=e37]:
+        - button "Start Learning" [ref=e38] [cursor=pointer]:
           - img
           - text: Start Learning
-        - button "How It Works" [ref=e33] [cursor=pointer]:
+        - button "How It Works" [ref=e39] [cursor=pointer]:
           - text: How It Works
           - img
-    - generic [ref=e36]:
-      - generic [ref=e39]:
-        - generic [ref=e40]: 10K+
-        - generic [ref=e41]: Questions Answered
-      - generic [ref=e44]:
-        - generic [ref=e45]: 500+
-        - generic [ref=e46]: Active Learners
-      - generic [ref=e49]:
-        - generic [ref=e50]: 95%
-        - generic [ref=e51]: Success Rate
-      - generic [ref=e54]:
-        - generic [ref=e55]: 24/7
-        - generic [ref=e56]: AI Availability
-    - generic [ref=e58]:
-      - generic [ref=e59]:
-        - heading "How It Works" [level=2] [ref=e60]
-        - paragraph [ref=e61]: Your journey to mastering science in three simple steps
-      - generic [ref=e62]:
-        - generic [ref=e64]:
-          - generic [ref=e65]: "1"
-          - img [ref=e66]
-          - heading "Choose Your Path" [level=3] [ref=e68]
-          - paragraph [ref=e69]: Browse 18+ science courses from physics to biology
-        - generic [ref=e71]:
-          - generic [ref=e72]: "2"
-          - img [ref=e73]
-          - heading "Learn & Practice" [level=3] [ref=e83]
-          - paragraph [ref=e84]: Interactive lessons with quizzes and AI hints
-        - generic [ref=e86]:
-          - generic [ref=e87]: "3"
-          - img [ref=e88]
-          - heading "Track Progress" [level=3] [ref=e94]
-          - paragraph [ref=e95]: Earn XP, level up, and unlock achievements
-    - generic [ref=e97]:
-      - generic [ref=e98]:
-        - heading "Powerful Features" [level=2] [ref=e99]
-        - paragraph [ref=e100]: Everything you need to accelerate your science learning journey
-      - generic [ref=e101]:
-        - generic [ref=e104]:
-          - img [ref=e106]
-          - heading "AI-Powered Q&A" [level=3] [ref=e116]
-          - paragraph [ref=e117]: Get instant answers to complex science questions powered by advanced AI
-        - generic [ref=e120]:
-          - img [ref=e122]
-          - heading "Achievement System" [level=3] [ref=e128]
-          - paragraph [ref=e129]: Unlock badges and celebrate milestones in your learning journey
-        - generic [ref=e132]:
-          - img [ref=e134]
-          - heading "Daily Streaks" [level=3] [ref=e138]
-          - paragraph [ref=e139]: Build consistent learning habits with our streak tracking system
-        - generic [ref=e142]:
-          - img [ref=e144]
-          - heading "Progressive Learning" [level=3] [ref=e149]
-          - paragraph [ref=e150]: Unlock new topics as you master the fundamentals
-    - generic [ref=e154]:
-      - img [ref=e157]
-      - heading "Ready to Begin Your Scientific Journey?" [level=2] [ref=e160]:
+    - generic [ref=e42]:
+      - generic [ref=e45]:
+        - generic [ref=e46]: 10K+
+        - generic [ref=e47]: Questions Answered
+      - generic [ref=e50]:
+        - generic [ref=e51]: 500+
+        - generic [ref=e52]: Active Learners
+      - generic [ref=e55]:
+        - generic [ref=e56]: 95%
+        - generic [ref=e57]: Success Rate
+      - generic [ref=e60]:
+        - generic [ref=e61]: 24/7
+        - generic [ref=e62]: AI Availability
+    - generic [ref=e64]:
+      - generic [ref=e65]:
+        - heading "How It Works" [level=2] [ref=e66]
+        - paragraph [ref=e67]: Your journey to mastering science in three simple steps
+      - generic [ref=e68]:
+        - generic [ref=e70]:
+          - generic [ref=e71]: "1"
+          - img [ref=e72]
+          - heading "Choose Your Path" [level=3] [ref=e74]
+          - paragraph [ref=e75]: Browse 18+ science courses from physics to biology
+        - generic [ref=e77]:
+          - generic [ref=e78]: "2"
+          - img [ref=e79]
+          - heading "Learn & Practice" [level=3] [ref=e89]
+          - paragraph [ref=e90]: Interactive lessons with quizzes and AI hints
+        - generic [ref=e92]:
+          - generic [ref=e93]: "3"
+          - img [ref=e94]
+          - heading "Track Progress" [level=3] [ref=e100]
+          - paragraph [ref=e101]: Earn XP, level up, and unlock achievements
+    - generic [ref=e103]:
+      - generic [ref=e104]:
+        - heading "Powerful Features" [level=2] [ref=e105]
+        - paragraph [ref=e106]: Everything you need to accelerate your science learning journey
+      - generic [ref=e107]:
+        - generic [ref=e110]:
+          - img [ref=e112]
+          - heading "AI-Powered Q&A" [level=3] [ref=e122]
+          - paragraph [ref=e123]: Get instant answers to complex science questions powered by advanced AI
+        - generic [ref=e126]:
+          - img [ref=e128]
+          - heading "Achievement System" [level=3] [ref=e134]
+          - paragraph [ref=e135]: Unlock badges and celebrate milestones in your learning journey
+        - generic [ref=e138]:
+          - img [ref=e140]
+          - heading "Daily Streaks" [level=3] [ref=e144]
+          - paragraph [ref=e145]: Build consistent learning habits with our streak tracking system
+        - generic [ref=e148]:
+          - img [ref=e150]
+          - heading "Progressive Learning" [level=3] [ref=e155]
+          - paragraph [ref=e156]: Unlock new topics as you master the fundamentals
+    - generic [ref=e160]:
+      - img [ref=e163]
+      - heading "Ready to Begin Your Scientific Journey?" [level=2] [ref=e166]:
         - text: Ready to Begin Your
         - text: Scientific Journey?
-      - paragraph [ref=e161]: Join thousands of learners who have already discovered the power of AI-assisted science education.
-      - button "Start Learning Now" [ref=e162] [cursor=pointer]:
+      - paragraph [ref=e167]: Join thousands of learners who have already discovered the power of AI-assisted science education.
+      - button "Start Learning Now" [ref=e168] [cursor=pointer]:
         - img
         - text: Start Learning Now
         - img
-    - contentinfo [ref=e163]:
-      - generic [ref=e164]:
-        - generic [ref=e165]:
-          - img [ref=e166]
-          - generic [ref=e174]: Science Lens
-        - generic [ref=e175]: © 2024 Science Lens. Powered by AI and curiosity.
+    - contentinfo [ref=e169]:
+      - generic [ref=e170]:
+        - generic [ref=e171]:
+          - img [ref=e172]
+          - generic [ref=e180]: Science Lens
+        - generic [ref=e181]: © 2024 Science Lens. Powered by AI and curiosity.
 ```

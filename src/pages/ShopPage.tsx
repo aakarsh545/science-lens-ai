@@ -187,7 +187,7 @@ export default function ShopPage() {
     if (item.type === 'coin_pack') {
       // Navigate to billing page with purchase details
       const amount = item.metadata.usd_price || item.price;
-      navigate('/science-lens/billing', {
+      navigate('/billing', {
         state: {
           purchase: {
             type: 'coins' as const,
@@ -203,7 +203,7 @@ export default function ShopPage() {
     if (item.type === 'xp_boost') {
       // Navigate to billing page with purchase details
       const amount = item.metadata.usd_price || item.price;
-      navigate('/science-lens/billing', {
+      navigate('/billing', {
         state: {
           purchase: {
             type: 'xp_boost' as const,
@@ -220,7 +220,7 @@ export default function ShopPage() {
 
     if (item.type === 'admin_pass') {
       // Navigate to billing page with purchase details
-      navigate('/science-lens/billing', {
+      navigate('/billing', {
         state: {
           purchase: {
             type: 'admin_pass' as const,

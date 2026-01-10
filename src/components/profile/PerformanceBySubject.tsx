@@ -180,7 +180,7 @@ export default function PerformanceBySubject({ userId }: PerformanceBySubjectPro
                       variant="ghost"
                       size="sm"
                       className="h-6 text-xs"
-                      onClick={() => navigate("/science-lens/learning")}
+                      onClick={() => navigate("/learning")}
                     >
                       View
                     </Button>

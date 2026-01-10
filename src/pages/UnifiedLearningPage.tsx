@@ -337,7 +337,7 @@ export default function UnifiedLearningPage() {
                 <Card
                   key={course.id}
                   className="bg-card hover:border-primary/50 transition-all cursor-pointer group overflow-hidden"
-                  onClick={() => navigate(`/science-lens/learning/${course.slug}`)}
+                  onClick={() => navigate(`/learning/${course.slug}`)}
                 >
                   <CardContent className="p-4">
                     <div className="flex gap-3">
@@ -384,7 +384,7 @@ export default function UnifiedLearningPage() {
                           variant={isStarted ? "outline" : "default"}
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/science-lens/learning/${course.slug}`);
+                            navigate(`/learning/${course.slug}`);
                           }}
                         >
                           {isStarted ? "Continue Learning" : "Start Course"}

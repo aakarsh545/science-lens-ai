@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Account & Privacy</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+    }
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    .header p {
+      opacity: 0.9;
+      font-size: 16px;
+    }
+    .section {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 24px 30px;
+    }
+    .section:last-child {
+      border-bottom: none;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title .icon {
+      font-size: 24px;
+    }
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+    .setting-info h3 {
+      font-size: 15px;
+      font-weight: 500;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+    .setting-info p {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #5a67d8;
+    }
+    .btn-danger {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    .btn-danger:hover {
+      background: #fecaca;
+    }
+    .btn-outline {
+      background: white;
+      border: 2px solid #e5e7eb;
+      color: #374151;
+    }
+    .btn-outline:hover {
+      border-color: #d1d5db;
+    }
+    .toggle {
+      width: 48px;
+      height: 26px;
+      background: #d1d5db;
+      border-radius: 13px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle.active {
+      background: #667eea;
+    }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .toggle.active::after {
+      transform: translateX(22px);
+    }
+    .input-field {
+      padding: 10px 14px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      width: 250px;
+      transition: border-color 0.2s;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #d1fae5;
+      color: #065f46;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Settings</h1>
+      <p>Manage your account and privacy settings</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">👤</span>
+        Account Information
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Email Address</h3>
+          <p>Your primary email for account notifications</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input type="email" class="input-field" value="user@example.com" readonly>
+          <button class="btn btn-outline">Change</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Password</h3>
+          <p>Last changed 3 months ago</p>
+        </div>
+        <button class="btn btn-outline">Update Password</button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Two-Factor Authentication</h3>
+          <p>Add an extra layer of security</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span class="badge">Not Enabled</span>
+          <button class="btn btn-primary">Enable</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">🔒</span>
+        Privacy Controls
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Profile Visibility</h3>
+          <p>Control who can see your profile and progress</p>
+        </div>
+        <select class="input-field">
+          <option>Everyone</option>
+          <option>Only Friends</option>
+          <option>Private</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Show Learning Activity</h3>
+          <p>Display your courses and achievements to others</p>
+        </div>
+        <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Analytics Tracking</h3>
+          <p>Help us improve by sharing usage data</p>
+        </div>
+        <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">📦</span>
+        Data Management
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Export My Data</h3>
+          <p>Download all your data in a portable format</p>
+        </div>
+        <button class="btn btn-outline">Export Data</button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Learning History</h3>
+          <p>View and manage your learning activity log</p>
+        </div>
+        <button class="btn btn-outline">View History</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">⚠️</span>
+        Danger Zone
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Deactivate Account</h3>
+          <p>Temporarily disable your account and data</p>
+        </div>
+        <button class="btn btn-outline">Deactivate</button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Delete Account</h3>
+          <p>Permanently delete your account and all data</p>
+        </div>
+        <button class="btn btn-danger">Delete Account</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Toggle functionality
+    document.querySelectorAll('.toggle').forEach(toggle => {
+      toggle.addEventListener('click', function() {
+        this.classList.toggle('active');
+      });
+    });
+  </script>
+</body>
+</html>
