@@ -55,18 +55,25 @@ const stats = [
 
 export default function LandingPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(() => {
-    // Check if user has already seen the onboarding
-    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-    return !hasSeenOnboarding;
-  });
-  const [showIntro, setShowIntro] = useState(() => {
-    // Check if user has already seen the intro animation
-    const hasSeenIntro = localStorage.getItem('hasSeenIntro');
-    return !hasSeenIntro;
-  });
+  // Initialize with default values, then read from localStorage in useEffect
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showIntro, setShowIntro] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
+
+  // Safely read localStorage after component mounts
+  useEffect(() => {
+    try {
+      const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+      setShowOnboarding(!hasSeenOnboarding);
+
+      const hasSeenIntro = localStorage.getItem('hasSeenIntro');
+      setShowIntro(!hasSeenIntro);
+    } catch (error) {
+      console.warn('localStorage not available:', error);
+      // Keep default values (true) if localStorage fails
+    }
+  }, []);
 
   // Listen for authentication state changes and navigate to dashboard
   useEffect(() => {
