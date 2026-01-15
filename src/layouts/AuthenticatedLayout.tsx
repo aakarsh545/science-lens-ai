@@ -25,9 +25,14 @@ export default function AuthenticatedLayout() {
       }
       setUser(session.user);
 
-      // Check if user has seen onboarding
-      const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-      if (!hasSeenOnboarding) {
+      // Safely check if user has seen onboarding
+      try {
+        const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+        if (!hasSeenOnboarding) {
+          setShowOnboarding(true);
+        }
+      } catch (error) {
+        console.warn('localStorage not available:', error);
         setShowOnboarding(true);
       }
 
@@ -42,9 +47,14 @@ export default function AuthenticatedLayout() {
       }
       setUser(session.user);
 
-      // Check if user has seen onboarding
-      const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-      if (!hasSeenOnboarding) {
+      // Safely check if user has seen onboarding
+      try {
+        const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+        if (!hasSeenOnboarding) {
+          setShowOnboarding(true);
+        }
+      } catch (error) {
+        console.warn('localStorage not available:', error);
         setShowOnboarding(true);
       }
 
@@ -55,12 +65,20 @@ export default function AuthenticatedLayout() {
   }, []);
 
   const handleOnboardingComplete = () => {
-    localStorage.setItem('hasSeenOnboarding', 'true');
+    try {
+      localStorage.setItem('hasSeenOnboarding', 'true');
+    } catch (error) {
+      console.warn('localStorage not available:', error);
+    }
     setShowOnboarding(false);
   };
 
   const handleOnboardingClose = () => {
-    localStorage.setItem('hasSeenOnboarding', 'true');
+    try {
+      localStorage.setItem('hasSeenOnboarding', 'true');
+    } catch (error) {
+      console.warn('localStorage not available:', error);
+    }
     setShowOnboarding(false);
   };
 
