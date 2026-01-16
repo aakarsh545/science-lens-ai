@@ -27,21 +27,32 @@ export default function ThemeToggle({ user }: ThemeToggleProps) {
 
   useEffect(() => {
     // Load theme for current user and force apply to DOM
-    const themeKey = getThemeKey();
-    const savedTheme = localStorage.getItem(themeKey) as "dark" | "light" | null;
+    try {
+      const themeKey = getThemeKey();
+      const savedTheme = localStorage.getItem(themeKey) as "dark" | "light" | null;
 
-    // Default to dark if no saved theme
-    const themeToApply = savedTheme || "dark";
+      // Default to dark if no saved theme
+      const themeToApply = savedTheme || "dark";
 
-    setTheme(themeToApply);
-    applyThemeToDOM(themeToApply);
+      setTheme(themeToApply);
+      applyThemeToDOM(themeToApply);
+    } catch (error) {
+      console.warn('localStorage not available:', error);
+      // Default to dark theme if localStorage fails
+      setTheme("dark");
+      applyThemeToDOM("dark");
+    }
   }, [user]); // Re-run whenever user changes
 
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
     const themeKey = getThemeKey();
-    localStorage.setItem(themeKey, newTheme);
+    try {
+      localStorage.setItem(themeKey, newTheme);
+    } catch (error) {
+      console.warn('localStorage not available, theme will not persist:', error);
+    }
     applyThemeToDOM(newTheme);
   };
 
