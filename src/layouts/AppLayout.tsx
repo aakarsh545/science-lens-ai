@@ -19,17 +19,23 @@ export default function AppLayout() {
 
   // Apply user's theme to DOM (called immediately when user loads)
   const applyUserTheme = (userId: string) => {
-    const themeKey = `theme_${userId}`;
-    const savedTheme = localStorage.getItem(themeKey) as "dark" | "light" | null;
-    const themeToApply = savedTheme || "dark";
+    try {
+      const themeKey = `theme_${userId}`;
+      const savedTheme = localStorage.getItem(themeKey) as "dark" | "light" | null;
+      const themeToApply = savedTheme || "dark";
 
-    // Clear and apply theme
-    document.documentElement.classList.remove("light");
-    if (themeToApply === "light") {
-      document.documentElement.classList.add("light");
+      // Clear and apply theme
+      document.documentElement.classList.remove("light");
+      if (themeToApply === "light") {
+        document.documentElement.classList.add("light");
+      }
+
+      console.log(`[AppLayout] Applied theme ${themeToApply} for user ${userId}`);
+    } catch (error) {
+      console.warn('localStorage not available:', error);
+      // Default to dark theme if localStorage fails
+      document.documentElement.classList.remove("light");
     }
-
-    console.log(`[AppLayout] Applied theme ${themeToApply} for user ${userId}`);
   };
 
   useEffect(() => {

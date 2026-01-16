@@ -6,15 +6,11 @@
   "framework": null,
   "rewrites": [
     {
-      "source": "/science-lens/assets/:path*",
-      "destination": "/assets/:path*"
-    },
-    {
       "source": "/science-lens/:match*",
       "destination": "/index.html"
     },
     {
-      "source": "/",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]

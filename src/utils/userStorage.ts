@@ -23,24 +23,37 @@ export function getUserKeyById(key: string, userId: string): string {
  * Get item from user-scoped localStorage
  */
 export function getUserItem(key: string, user: User | null): string | null {
-  const userKey = getUserKey(key, user);
-  return localStorage.getItem(userKey);
+  try {
+    const userKey = getUserKey(key, user);
+    return localStorage.getItem(userKey);
+  } catch (error) {
+    console.warn('localStorage not available:', error);
+    return null;
+  }
 }
 
 /**
  * Set item in user-scoped localStorage
  */
 export function setUserItem(key: string, value: string, user: User | null): void {
-  const userKey = getUserKey(key, user);
-  localStorage.setItem(userKey, value);
+  try {
+    const userKey = getUserKey(key, user);
+    localStorage.setItem(userKey, value);
+  } catch (error) {
+    console.warn('localStorage not available, item will not be saved:', error);
+  }
 }
 
 /**
  * Remove item from user-scoped localStorage
  */
 export function removeUserItem(key: string, user: User | null): void {
-  const userKey = getUserKey(key, user);
-  localStorage.removeItem(userKey);
+  try {
+    const userKey = getUserKey(key, user);
+    localStorage.removeItem(userKey);
+  } catch (error) {
+    console.warn('localStorage not available:', error);
+  }
 }
 
 /**
@@ -50,20 +63,24 @@ export function removeUserItem(key: string, user: User | null): void {
 export function clearUserData(user: User | null): void {
   if (!user) return;
 
-  // List of user-scoped localStorage keys to clear
-  const userKeys = [
-    'theme',           // Light/dark mode preference
-    // Add more keys here as needed
-  ];
+  try {
+    // List of user-scoped localStorage keys to clear
+    const userKeys = [
+      'theme',           // Light/dark mode preference
+      // Add more keys here as needed
+    ];
 
-  userKeys.forEach(key => {
-    removeUserItem(key, user);
-  });
+    userKeys.forEach(key => {
+      removeUserItem(key, user);
+    });
 
-  // Also clear any old-format generic keys (migration)
-  localStorage.removeItem('theme');
+    // Also clear any old-format generic keys (migration)
+    localStorage.removeItem('theme');
 
-  console.log(`[userStorage] Cleared data for user ${user.id}`);
+    console.log(`[userStorage] Cleared data for user ${user.id}`);
+  } catch (error) {
+    console.warn('localStorage not available:', error);
+  }
 }
 
 /**
@@ -73,21 +90,25 @@ export function clearUserData(user: User | null): void {
 export function clearUserDataById(userId: string): void {
   if (!userId) return;
 
-  // List of user-scoped localStorage keys to clear
-  const userKeys = [
-    'theme',           // Light/dark mode preference
-    // Add more keys here as needed
-  ];
+  try {
+    // List of user-scoped localStorage keys to clear
+    const userKeys = [
+      'theme',           // Light/dark mode preference
+      // Add more keys here as needed
+    ];
 
-  userKeys.forEach(key => {
-    const userKey = getUserKeyById(key, userId);
-    localStorage.removeItem(userKey);
-  });
+    userKeys.forEach(key => {
+      const userKey = getUserKeyById(key, userId);
+      localStorage.removeItem(userKey);
+    });
 
-  // Also clear any old-format generic keys (migration)
-  localStorage.removeItem('theme');
+    // Also clear any old-format generic keys (migration)
+    localStorage.removeItem('theme');
 
-  console.log(`[userStorage] Cleared data for user ${userId}`);
+    console.log(`[userStorage] Cleared data for user ${userId}`);
+  } catch (error) {
+    console.warn('localStorage not available:', error);
+  }
 }
 
 /**
@@ -97,16 +118,20 @@ export function clearUserDataById(userId: string): void {
 export function migrateUserData(user: User | null): void {
   if (!user) return;
 
-  const keysToMigrate = ['theme'];
+  try {
+    const keysToMigrate = ['theme'];
 
-  keysToMigrate.forEach(key => {
-    const genericValue = localStorage.getItem(key);
-    if (genericValue) {
-      // Migrate to user-scoped key
-      setUserItem(key, genericValue, user);
-      // Remove generic key
-      localStorage.removeItem(key);
-      console.log(`[userStorage] Migrated ${key} to user-scoped for user ${user.id}`);
-    }
-  });
+    keysToMigrate.forEach(key => {
+      const genericValue = localStorage.getItem(key);
+      if (genericValue) {
+        // Migrate to user-scoped key
+        setUserItem(key, genericValue, user);
+        // Remove generic key
+        localStorage.removeItem(key);
+        console.log(`[userStorage] Migrated ${key} to user-scoped for user ${user.id}`);
+      }
+    });
+  } catch (error) {
+    console.warn('localStorage not available, migration skipped:', error);
+  }
 }
