@@ -242,15 +242,14 @@ function getDecorationPreset(
  * Converts legacy metadata to new ThemeConfig format
  */
 export function parseThemeConfig(shopItem: Record<string, unknown>): ThemeConfig {
-  // Legacy format support
-  const primary = shopItem.metadata?.primary || '#3b82f6';
-  const secondary = shopItem.metadata?.secondary || '#1e40af';
-  const background = shopItem.metadata?.background || '#0f172a';
-  const text = shopItem.metadata?.text || '#f1f5f9';
-  const accent = shopItem.metadata?.accent || '#60a5fa';
+  const metadata = (shopItem.metadata || {}) as Record<string, unknown>;
+  const primary = (metadata.primary as string) || '#3b82f6';
+  const secondary = (metadata.secondary as string) || '#1e40af';
+  const background = (metadata.background as string) || '#0f172a';
+  const text = (metadata.text as string) || '#f1f5f9';
+  const accent = (metadata.accent as string) || '#60a5fa';
 
-  // Detect theme type from name for decoration preset
-  const name = (shopItem.name || '').toLowerCase();
+  const name = ((shopItem.name as string) || '').toLowerCase();
   let decoration: ThemeConfig['effects']['decoration'] = 'geometric';
   let mode: ThemeConfig['appearance']['mode'] = 'dark';
   let glow: ThemeConfig['appearance']['glow'] = 'subtle';

@@ -10,9 +10,7 @@ import { Crown, Zap, Coins, Sparkles, Check, Star, ArrowLeft } from "lucide-reac
 import { useToast } from "@/hooks/use-toast";
 
 interface UserProfile {
-  coins: number;
-  is_premium: boolean;
-  active_xp_boost: number;
+  credits: number;
 }
 
 export default function PricingPage() {
@@ -38,7 +36,7 @@ export default function PricingPage() {
   const loadUserProfile = async (userId: string) => {
     const { data: profileData } = await supabase
       .from('profiles')
-      .select('coins, is_premium, active_xp_boost')
+      .select('credits')
       .eq('user_id', userId)
       .single();
 
@@ -48,7 +46,6 @@ export default function PricingPage() {
   };
 
   const handlePurchase = (type: 'premium' | 'coins' | 'xp_boost', amount: number, description: string) => {
-    // Navigate to billing page with purchase details
     navigate('/billing', {
       state: {
         purchase: { type, amount, description }
@@ -59,7 +56,6 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-primary/5 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <Button variant="ghost" onClick={() => navigate('/')} className="mb-4">
@@ -70,7 +66,7 @@ export default function PricingPage() {
               Pricing
             </h1>
             <p className="text-muted-foreground mt-2">
-              Get premium, buy coins, or boost your XP!
+              Get premium, buy credits, or boost your XP!
             </p>
           </div>
 
@@ -81,7 +77,7 @@ export default function PricingPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Your Balance</p>
                   <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                    {userProfile.coins.toLocaleString()} Coins
+                    {userProfile.credits.toLocaleString()} Credits
                   </p>
                 </div>
               </CardContent>
@@ -97,7 +93,7 @@ export default function PricingPage() {
             </TabsTrigger>
             <TabsTrigger value="coins" className="gap-2">
               <Coins className="w-4 h-4" />
-              Buy Coins
+              Buy Credits
             </TabsTrigger>
             <TabsTrigger value="boosts" className="gap-2">
               <Zap className="w-4 h-4" />
@@ -120,16 +116,13 @@ export default function PricingPage() {
                         <CardDescription>Unlock all premium features</CardDescription>
                       </div>
                     </div>
-                    {userProfile?.is_premium && (
-                      <Badge className="bg-green-500">Active</Badge>
-                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <Check className="w-5 h-5 text-green-500" />
-                      <span>2x coins on all activities</span>
+                      <span>2x credits on all activities</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-5 h-5 text-green-500" />
@@ -155,16 +148,14 @@ export default function PricingPage() {
                         size="lg"
                         className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
                         onClick={() => handlePurchase('premium', 9.99, 'Premium Membership - Monthly')}
-                        disabled={userProfile?.is_premium}
                       >
-                        {userProfile?.is_premium ? 'Already Premium' : 'Get Premium'}
+                        Get Premium
                       </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Premium Benefits Visual */}
               <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10">
                 <CardHeader>
                   <CardTitle>Premium Benefits</CardTitle>
@@ -175,9 +166,9 @@ export default function PricingPage() {
                     <div className="flex items-start gap-3">
                       <Star className="w-5 h-5 text-yellow-500 mt-1" />
                       <div>
-                        <p className="font-semibold">Earn 2x Coins</p>
+                        <p className="font-semibold">Earn 2x Credits</p>
                         <p className="text-sm text-muted-foreground">
-                          All activities give double coins
+                          All activities give double credits
                         </p>
                       </div>
                     </div>
@@ -205,7 +196,7 @@ export default function PricingPage() {
             </div>
           </TabsContent>
 
-          {/* Coins Tab */}
+          {/* Credits Tab */}
           <TabsContent value="coins" className="mt-8">
             <div className="grid md:grid-cols-3 gap-6">
               {[
@@ -222,9 +213,9 @@ export default function PricingPage() {
                     </Badge>
                   )}
                   <CardHeader>
-                    <CardTitle>Coins Pack</CardTitle>
+                    <CardTitle>Credits Pack</CardTitle>
                     <CardDescription>
-                      {pack.amount.toLocaleString()} Coins
+                      {pack.amount.toLocaleString()} Credits
                       {pack.bonus > 0 && (
                         <span className="text-green-600 dark:text-green-400"> +{pack.bonus.toLocaleString()} Bonus</span>
                       )}
@@ -235,7 +226,7 @@ export default function PricingPage() {
                       <Coins className="w-16 h-16 text-amber-500" />
                       <div className="ml-4">
                         <p className="text-4xl font-bold">{(pack.amount + pack.bonus).toLocaleString()}</p>
-                        <p className="text-sm text-muted-foreground">Total Coins</p>
+                        <p className="text-sm text-muted-foreground">Total Credits</p>
                       </div>
                     </div>
                     <div className="text-center">
@@ -243,7 +234,7 @@ export default function PricingPage() {
                     </div>
                     <Button
                       className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
-                      onClick={() => handlePurchase('coins', pack.price, `${(pack.amount + pack.bonus).toLocaleString()} Coins Pack`)}
+                      onClick={() => handlePurchase('coins', pack.price, `${(pack.amount + pack.bonus).toLocaleString()} Credits Pack`)}
                     >
                       Purchase
                     </Button>
