@@ -46,6 +46,27 @@ interface LocationState {
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
 }
 
+// QuizResultsData matching what QuizResults component expects
+interface QuizResultsData {
+  id: string;
+  quizType: "lesson" | "challenge";
+  totalQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  accuracyPercentage: number;
+  timeTakenSeconds: number;
+  averageTimePerQuestion: number;
+  xpEarned: number;
+  streakBonus: number;
+  answers: ChallengeAnswer[];
+  difficultyLevel: string;
+  completedAt: string;
+  questionsPerMinute: number;
+  perfectStreaks: number;
+  topicsToReview: string[];
+  challengeTitle?: string;
+}
+
 export default function ChallengeSession() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
@@ -81,14 +102,12 @@ export default function ChallengeSession() {
     xpEarned: number;
     completionPercentage: number;
   } | null>(null);
-  const [detailedResults, setDetailedResults] = useState<unknown>(null);
+  const [detailedResults, setDetailedResults] = useState<QuizResultsData | null>(null);
   const [answers, setAnswers] = useState<ChallengeAnswer[]>([]);
   const [sessionStartTime] = useState(Date.now());
 
-  // Store timeout ID for cleanup
   const nextQuestionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (nextQuestionTimeoutRef.current) {
@@ -97,7 +116,6 @@ export default function ChallengeSession() {
     };
   }, []);
 
-  // Start session on mount
   useEffect(() => {
     if (sessionId === 'new' || !sessionId) {
       startNewSession();
@@ -114,7 +132,6 @@ export default function ChallengeSession() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      // Add timeout for fetch
       const controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), TIMEOUT_VALUES.INITIAL_REQUEST);
 
@@ -141,7 +158,6 @@ export default function ChallengeSession() {
 
       const data = await response.json();
 
-      // Update URL to actual session ID
       navigate(`/challenges/session/${data.session.id}`, { replace: true });
 
       setCurrentQuestion(data.session.currentQuestion);
@@ -168,7 +184,7 @@ export default function ChallengeSession() {
       }
       navigate("/learning");
     } finally {
-      if (timeoutId) clearTimeout(timeoutId);
+      if (timeoutId!) clearTimeout(timeoutId!);
       setLoading(false);
     }
   };
@@ -181,7 +197,6 @@ export default function ChallengeSession() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      // Add timeout for fetch
       const controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), TIMEOUT_VALUES.INITIAL_REQUEST);
 
@@ -203,7 +218,6 @@ export default function ChallengeSession() {
       const sessionData = data.session;
 
       if (sessionData.status !== 'active') {
-        // Session already ended
         setSessionEnded(true);
         setFinalResults({
           status: sessionData.status,
@@ -239,7 +253,7 @@ export default function ChallengeSession() {
       }
       navigate("/learning");
     } finally {
-      if (timeoutId) clearTimeout(timeoutId);
+      if (timeoutId!) clearTimeout(timeoutId!);
       setLoading(false);
     }
   };
@@ -259,7 +273,6 @@ export default function ChallengeSession() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      // Add timeout for fetch
       const controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), TIMEOUT_VALUES.INITIAL_REQUEST);
 
@@ -285,7 +298,6 @@ export default function ChallengeSession() {
       const data = await response.json();
       const isCorrectAnswer = data.isCorrect;
 
-      // Track this answer
       setAnswers(prev => [...prev, {
         question: question.question,
         userAnswer: question.options[selectedAnswer],
@@ -302,8 +314,8 @@ export default function ChallengeSession() {
 
       if (data.sessionEnded) {
         const timeTaken = Math.floor((Date.now() - sessionStartTime) / 1000);
-        const totalQuestions = currentQuestion;
-        const accuracyPercentage = Math.round((data.correctAnswers / totalQuestions) * 100);
+        const qCount = currentQuestion;
+        const accuracyPercentage = Math.round((data.correctAnswers / qCount) * 100);
 
         setSessionEnded(true);
         setFinalResults({
@@ -313,16 +325,15 @@ export default function ChallengeSession() {
           completionPercentage: data.completionPercentage,
         });
 
-        // Prepare detailed results
-        const detailedResultsData = {
-          quizType: 'challenge' as const,
-          challengeSessionId: sessionId,
-          totalQuestions,
+        const detailedResultsData: QuizResultsData = {
+          id: sessionId || crypto.randomUUID(),
+          quizType: 'challenge',
+          totalQuestions: qCount,
           correctAnswers: data.correctAnswers,
-          incorrectAnswers: totalQuestions - data.correctAnswers,
+          incorrectAnswers: qCount - data.correctAnswers,
           accuracyPercentage,
           timeTakenSeconds: timeTaken,
-          averageTimePerQuestion: timeTaken / totalQuestions,
+          averageTimePerQuestion: timeTaken / qCount,
           xpEarned: data.xpEarned,
           streakBonus: 0,
           answers: answers.concat([{
@@ -334,7 +345,7 @@ export default function ChallengeSession() {
           }]),
           difficultyLevel: challengeDifficulty,
           completedAt: new Date().toISOString(),
-          questionsPerMinute: totalQuestions > 0 ? (totalQuestions / timeTaken) * 60 : 0,
+          questionsPerMinute: qCount > 0 ? (qCount / timeTaken) * 60 : 0,
           perfectStreaks: 0,
           topicsToReview: [],
           challengeTitle: state?.topicName || 'General Science Challenge',
@@ -342,101 +353,69 @@ export default function ChallengeSession() {
 
         setDetailedResults(detailedResultsData);
 
-        // Save to database
-        try {
-          const userId = (await supabase.auth.getUser()).data.user?.id;
-          if (userId) {
-            await supabase.from('quiz_results').insert({
-              user_id: userId,
-              challenge_session_id: sessionId,
-              quiz_type: 'challenge',
-              total_questions: totalQuestions,
-              correct_answers: data.correctAnswers,
-              incorrect_answers: totalQuestions - data.correctAnswers,
-              accuracy_percentage: accuracyPercentage,
-              time_taken_seconds: timeTaken,
-              average_time_per_question: timeTaken / totalQuestions,
-              xp_earned: data.xpEarned,
-              streak_bonus: 0,
-              answers: detailedResultsData.answers,
-              difficulty_level: challengeDifficulty,
-              questions_per_minute: detailedResultsData.questionsPerMinute,
-              perfect_streaks: 0,
-              topics_to_review: [],
-            });
-          }
-        } catch (error) {
-          console.error('Error saving quiz results:', error);
-        }
-
         // Award XP and check for level up
         if (data.xpEarned > 0) {
           const userId = (await supabase.auth.getUser()).data.user?.id;
-          const { data: currentStats } = await supabase
-            .from('user_stats')
-            .select('xp_total')
-            .eq('user_id', userId!)
-            .single();
+          if (userId) {
+            const { data: currentStats } = await supabase
+              .from('user_stats')
+              .select('xp_total')
+              .eq('user_id', userId)
+              .single();
 
-          const oldXp = currentStats?.xp_total || 0;
-          const newXp = oldXp + data.xpEarned;
+            const oldXp = currentStats?.xp_total || 0;
+            const newXp = oldXp + data.xpEarned;
 
-          // Log challenge completion
-          await logChallengeCompleted(
-            userId!,
-            sessionId!,
-            state?.topicName || 'General Science Challenge',
-            data.correctAnswers,
-            totalQuestions,
-            challengeDifficulty,
-            data.xpEarned
-          );
+            await logChallengeCompleted(
+              userId,
+              sessionId!,
+              state?.topicName || 'General Science Challenge',
+              data.correctAnswers,
+              qCount,
+              challengeDifficulty,
+              data.xpEarned
+            );
 
-          if (didLevelUp(oldXp, newXp)) {
-            const newLevel = calculateLevel(newXp);
-            setTimeout(() => triggerLevelUpConfetti(), 500);
-            toast({
-              title: `Level Up! You're now Level ${newLevel}!`,
-              description: `You earned ${data.xpEarned} XP from this challenge!`,
-            });
+            if (didLevelUp(oldXp, newXp)) {
+              const newLevel = calculateLevel(newXp);
+              setTimeout(() => triggerLevelUpConfetti(), 500);
+              toast({
+                title: `Level Up! You're now Level ${newLevel}!`,
+                description: `You earned ${data.xpEarned} XP from this challenge!`,
+              });
 
-            // Log level up activity
-            await logLevelUp(userId!, newLevel, newXp);
+              await logLevelUp(userId, newLevel, newXp);
+              await checkLevelAchievements(userId, newLevel);
+            } else if (data.status === 'completed') {
+              setTimeout(() => triggerSuccessConfetti(), 500);
+              toast({
+                title: "Challenge Complete! 🎉",
+                description: `You earned ${data.xpEarned} XP!`,
+              });
 
-            // Check level achievements
-            await checkLevelAchievements(userId!, newLevel);
-          } else if (data.status === 'completed') {
-            setTimeout(() => triggerSuccessConfetti(), 500);
-            toast({
-              title: "Challenge Complete! 🎉",
-              description: `You earned ${data.xpEarned} XP!`,
-            });
+              // Check challenge achievements using study_sessions as proxy
+              const { data: completedSessions } = await supabase
+                .from('study_sessions')
+                .select('id')
+                .eq('user_id', userId);
 
-            // Check challenge completion achievements
-            const { data: completedChallenges } = await supabase
-              .from('challenge_sessions')
-              .select('id')
-              .eq('user_id', userId!)
-              .eq('status', 'completed');
-
-            const challengeCount = completedChallenges?.length || 0;
-            await checkChallengeAchievements(userId!, challengeCount);
+              const challengeCount = completedSessions?.length || 0;
+              await checkChallengeAchievements(userId, challengeCount);
+            }
           }
         }
       } else {
-        // Clear any existing timeout before setting a new one
         if (nextQuestionTimeoutRef.current) {
           clearTimeout(nextQuestionTimeoutRef.current);
         }
 
-        // Load next question after delay
         nextQuestionTimeoutRef.current = setTimeout(() => {
           setCurrentQuestion(data.currentQuestion);
           setQuestion(data.nextQuestion);
           setSelectedAnswer(null);
           setShowFeedback(false);
           setExplanation("");
-          nextQuestionTimeoutRef.current = null; // Clear ref after timeout executes
+          nextQuestionTimeoutRef.current = null;
         }, 2000);
       }
     } catch (error: unknown) {
@@ -454,13 +433,12 @@ export default function ChallengeSession() {
         });
       }
     } finally {
-      if (timeoutId) clearTimeout(timeoutId);
+      if (timeoutId!) clearTimeout(timeoutId!);
       setSubmitting(false);
     }
   };
 
   const handleRetry = () => {
-    // Clear any pending timeout
     if (nextQuestionTimeoutRef.current) {
       clearTimeout(nextQuestionTimeoutRef.current);
       nextQuestionTimeoutRef.current = null;
@@ -504,9 +482,10 @@ export default function ChallengeSession() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
         <Card className="w-full max-w-2xl mx-4">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <p className="text-muted-foreground">Session not found</p>
-            <Button onClick={handleReturnToChallenges} className="mt-4">
-              Return to Challenges
+            <p className="text-muted-foreground">No active challenge session</p>
+            <Button onClick={() => navigate("/learning")} className="mt-4">
+              <Home className="w-4 h-4 mr-2" />
+              Return to Learning
             </Button>
           </CardContent>
         </Card>
@@ -514,117 +493,89 @@ export default function ChallengeSession() {
     );
   }
 
+  const progressPercentage = (currentQuestion / totalQuestions) * 100;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <div className="max-w-3xl mx-auto pt-8">
+      <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={handleReturnToChallenges}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Exit Challenge
+        <div className="flex items-center justify-between mb-6">
+          <Button variant="ghost" onClick={() => navigate("/learning")}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Exit
           </Button>
-
-          <Card className="border-primary/20">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-primary" />
-                    Challenge Session
-                  </CardTitle>
-                  <CardDescription>
-                    {challengeDifficulty === 'beginner' && 'Beginner: 15 questions, 100 XP'}
-                    {challengeDifficulty === 'intermediate' && 'Intermediate: 30 questions, 200 XP'}
-                    {challengeDifficulty === 'advanced' && 'Advanced: 45 questions, 500 XP'}
-                  </CardDescription>
-                </div>
-
-                {/* Hearts Display */}
-                <div className="flex items-center gap-1">
-                  {[0, 1, 2].map((i) => (
-                    <motion.div
-                      key={i}
-                      initial={false}
-                      animate={{
-                        scale: i < hearts ? 1 : 0.8,
-                        opacity: i < hearts ? 1 : 0.3,
-                      }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Heart
-                        className={`h-6 w-6 ${
-                          i < hearts ? 'fill-red-500 text-red-500' : 'text-muted-foreground'
-                        }`}
-                      />
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="space-y-2 mt-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Question {currentQuestion} of {totalQuestions}
-                  </span>
-                  <span className="font-medium">{correctAnswers} correct</span>
-                </div>
-                <Progress value={(currentQuestion / totalQuestions) * 100} />
-              </div>
-            </CardHeader>
-          </Card>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">{challengeDifficulty}</Badge>
+            <Badge variant="secondary">
+              <Trophy className="w-3 h-3 mr-1" />
+              {xpReward} XP
+            </Badge>
+          </div>
         </div>
 
-        {/* Question Card */}
+        {/* Progress */}
+        <div className="mb-6 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              Question {currentQuestion} of {totalQuestions}
+            </span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Heart
+                  key={i}
+                  className={`w-5 h-5 ${i < hearts ? "text-red-500 fill-red-500" : "text-muted"}`}
+                />
+              ))}
+            </div>
+          </div>
+          <Progress value={progressPercentage} className="h-2" />
+        </div>
+
+        {/* Question */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
           >
-            <Card className="border-primary/20">
+            <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="text-xl">{question.question}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {question.options.map((option, index) => {
-                  const isSelected = selectedAnswer === index;
-                  const showCorrect = showFeedback && index === question.correct;
-                  const showIncorrect = showFeedback && isSelected && !isCorrect;
+                {question.options.map((option, idx) => {
+                  const isSelected = selectedAnswer === idx;
+                  const isCorrectOption = idx === question.correct;
+                  const showCorrect = showFeedback && isCorrectOption;
+                  const showWrong = showFeedback && isSelected && !isCorrectOption;
 
                   return (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
+                    <Button
+                      key={idx}
+                      variant="outline"
+                      className={`w-full justify-start text-left h-auto py-4 px-4 ${
+                        isSelected && !showFeedback ? "border-primary bg-primary/10" : ""
+                      } ${showCorrect ? "border-green-500 bg-green-500/10" : ""} ${
+                        showWrong ? "border-red-500 bg-red-500/10" : ""
+                      }`}
+                      onClick={() => handleAnswerSelect(idx)}
+                      disabled={showFeedback}
                     >
-                      <Button
-                        variant={isSelected ? 'default' : 'outline'}
-                        className={`w-full justify-start text-left h-auto py-4 px-6 ${
-                          showCorrect ? 'bg-green-500 hover:bg-green-600 text-white border-green-500' : ''
-                        } ${
-                          showIncorrect ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' : ''
-                        }`}
-                        onClick={() => handleAnswerSelect(index)}
-                        disabled={showFeedback || submitting}
-                      >
-                        <span className="flex items-center gap-3 w-full">
-                          <span className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-semibold">
-                            {String.fromCharCode(65 + index)}
-                          </span>
-                          <span className="flex-1">{option}</span>
-                          {showCorrect && <CheckCircle2 className="h-5 w-5" />}
-                          {showIncorrect && <XCircle className="h-5 w-5" />}
-                        </span>
-                      </Button>
-                    </motion.div>
+                      <div className="flex items-center gap-3 w-full">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                          showCorrect ? "bg-green-500 text-white" :
+                          showWrong ? "bg-red-500 text-white" :
+                          isSelected ? "bg-primary text-primary-foreground" :
+                          "bg-muted"
+                        }`}>
+                          {showCorrect ? <CheckCircle2 className="w-4 h-4" /> :
+                           showWrong ? <XCircle className="w-4 h-4" /> :
+                           String.fromCharCode(65 + idx)}
+                        </div>
+                        <span className="flex-1">{option}</span>
+                      </div>
+                    </Button>
                   );
                 })}
               </CardContent>
@@ -632,60 +583,56 @@ export default function ChallengeSession() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Feedback Section */}
-        <AnimatePresence>
-          {showFeedback && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="mt-4"
-            >
-              <Card className={`border-2 ${isCorrect ? 'border-green-500' : 'border-red-500'}`}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    {isCorrect ? (
-                      <CheckCircle2 className="h-6 w-6 text-green-500 flex-shrink-0 mt-1" />
-                    ) : (
-                      <XCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-1" />
-                    )}
-                    <div>
-                      <p className={`font-semibold text-lg mb-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                        {isCorrect ? 'Correct!' : 'Incorrect!'}
-                      </p>
-                      <p className="text-muted-foreground">{explanation}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Submit Button */}
-        {!showFeedback && selectedAnswer !== null && (
+        {/* Feedback */}
+        {showFeedback && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6"
           >
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={submitAnswer}
-              disabled={submitting}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                'Submit Answer'
-              )}
-            </Button>
+            <Card className={`mb-6 ${isCorrect ? "border-green-500/50" : "border-red-500/50"}`}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  {isCorrect ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-500" />
+                  )}
+                  <span className={`font-semibold ${isCorrect ? "text-green-500" : "text-red-500"}`}>
+                    {isCorrect ? "Correct!" : "Incorrect"}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">{explanation}</p>
+              </CardContent>
+            </Card>
           </motion.div>
         )}
+
+        {/* Submit Button */}
+        {!showFeedback && (
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={submitAnswer}
+            disabled={selectedAnswer === null || submitting}
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Checking...
+              </>
+            ) : (
+              <>
+                <Target className="w-4 h-4 mr-2" />
+                Submit Answer
+              </>
+            )}
+          </Button>
+        )}
+
+        {/* Score */}
+        <div className="mt-4 text-center text-sm text-muted-foreground">
+          Score: {correctAnswers}/{currentQuestion - (showFeedback ? 0 : 1)} correct
+        </div>
       </div>
     </div>
   );

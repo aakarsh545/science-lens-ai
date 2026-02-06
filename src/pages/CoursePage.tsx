@@ -27,6 +27,7 @@ interface Course {
   description: string;
   category: string;
   lessons: Lesson[];
+  lesson_count?: number;
 }
 
 interface UserProgress {
