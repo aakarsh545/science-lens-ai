@@ -41,7 +41,7 @@ interface QuizAnswer {
 }
 
 interface LessonQuizResults {
-  id?: string;
+  id: string;
   quizType: 'lesson';
   lessonId?: string;
   totalQuestions: number;
@@ -187,52 +187,45 @@ export default function LessonPlayer() {
     }
   };
 
-  // Helper function to get next lesson
+  // Helper: get quiz questions array (quiz field IS the array)
+  const getQuizQuestions = (): QuizQuestion[] => {
+    if (!lesson?.quiz) return [];
+    return Array.isArray(lesson.quiz) ? lesson.quiz : [];
+  };
+
   const getNextLesson = () => {
     if (!lesson || courseLessons.length === 0) return null;
-
     const currentIndex = courseLessons.findIndex(l => l.id === lesson.id);
-    if (currentIndex === -1 || currentIndex === courseLessons.length - 1) {
-      return null; // This is the last lesson
-    }
-
+    if (currentIndex === -1 || currentIndex === courseLessons.length - 1) return null;
     return courseLessons[currentIndex + 1];
   };
 
-  // Helper function to check if all quizzes are answered
   const allQuizzesAnswered = () => {
-    const quiz = lesson?.quiz;
-    if (!quiz?.questions || quiz.questions.length === 0) return true;
-
-    // Require at least 2 quizzes, or all if less than 2
-    const requiredQuizzes = Math.min(2, quiz.questions.length);
+    const questions = getQuizQuestions();
+    if (questions.length === 0) return true;
+    const requiredQuizzes = Math.min(2, questions.length);
     const answeredQuizzes = Object.keys(showResults).length;
-
     return answeredQuizzes >= requiredQuizzes;
   };
 
-  // Helper function to get quiz progress text
   const getQuizProgress = () => {
-    const quiz = lesson?.quiz;
-    if (!quiz?.questions || quiz.questions.length === 0) return null;
-
+    const questions = getQuizQuestions();
+    if (questions.length === 0) return null;
     const answeredQuizzes = Object.keys(showResults).length;
-    const requiredQuizzes = Math.min(2, quiz.questions.length);
-
+    const requiredQuizzes = Math.min(2, questions.length);
     return `${answeredQuizzes}/${requiredQuizzes} quizzes completed`;
   };
 
   const handleQuizSubmit = (questionIndex: number) => {
-    // Start quiz timer on first answer
     if (!quizStartTime) {
       setQuizStartTime(Date.now());
     }
 
     setShowResults(prev => ({ ...prev, [questionIndex]: true }));
 
-    const quiz = lesson?.quiz;
-    if (quiz?.questions?.[questionIndex]) {
-      const q = quiz.questions[questionIndex];
+    const questions = getQuizQuestions();
+    if (questions[questionIndex]) {
+      const q = questions[questionIndex];
       const correctIdx = q.correct ?? q.correctAnswer ?? 0;
       const isCorrect = selectedAnswers[questionIndex] === correctIdx;
 
@@ -242,9 +235,8 @@ export default function LessonPlayer() {
         toast.error('Not quite right. Review the explanation below.');
       }
 
-      // Check if all required quizzes are now answered
       const answeredQuizzes = Object.keys({ ...showResults, [questionIndex]: true }).length;
-      const requiredQuizzes = Math.min(2, quiz.questions.length);
+      const requiredQuizzes = Math.min(2, questions.length);
 
       if (answeredQuizzes === requiredQuizzes) {
         toast.success(`Great! You've completed ${requiredQuizzes} quizzes. You can now mark this lesson complete! 🌟`);
@@ -255,15 +247,15 @@ export default function LessonPlayer() {
   const saveQuizResults = async () => {
     if (!userId || !lesson) return;
 
-    const quiz = lesson?.quiz;
-    if (!quiz?.questions) return;
+    const questions = getQuizQuestions();
+    if (questions.length === 0) return;
 
-    const totalQuestions = quiz.questions.length;
+    const totalQuestions = questions.length;
     let correctCount = 0;
     const answers: QuizAnswer[] = [];
     const topicsToReview: string[] = [];
 
-    quiz.questions.forEach((q: QuizQuestion, idx: number) => {
+    questions.forEach((q: QuizQuestion, idx: number) => {
       const correctIdx = q.correct ?? q.correctAnswer ?? 0;
       const isCorrect = selectedAnswers[idx] === correctIdx;
 
@@ -287,7 +279,6 @@ export default function LessonPlayer() {
     const averageTimePerQuestion = totalQuestions > 0 ? timeTaken / totalQuestions : 0;
     const questionsPerMinute = timeTaken > 0 ? (totalQuestions / timeTaken) * 60 : 0;
 
-    // Calculate perfect streaks
     let perfectStreaks = 0;
     let currentStreak = 0;
     answers.forEach((answer) => {
@@ -299,50 +290,6 @@ export default function LessonPlayer() {
       }
     });
 
-    // Fetch previous attempt for comparison
-    const { data: previousAttempt } = await supabase
-      .from('quiz_results')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('lesson_id', lesson.id)
-      .order('completed_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const improvementPercentage = previousAttempt
-      ? accuracyPercentage - previousAttempt.accuracy_percentage
-      : undefined;
-
-    // Save quiz results
-    const { data: quizResult, error } = await supabase
-      .from('quiz_results')
-      .insert({
-        user_id: userId,
-        lesson_id: lesson.id,
-        quiz_type: 'lesson',
-        total_questions: totalQuestions,
-        correct_answers: correctCount,
-        incorrect_answers: totalQuestions - correctCount,
-        accuracy_percentage: accuracyPercentage,
-        time_taken_seconds: timeTaken,
-        average_time_per_question: averageTimePerQuestion,
-        xp_earned: 0, // XP is awarded separately on lesson completion
-        streak_bonus: 0,
-        answers,
-        previous_attempt_id: previousAttempt?.id,
-        improvement_percentage: improvementPercentage,
-        difficulty_level: 'intermediate',
-        questions_per_minute: questionsPerMinute,
-        perfect_streaks: perfectStreaks,
-        topics_to_review: topicsToReview,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error saving quiz results:', error);
-    }
-
     // Log quiz activity
     await logQuizCompleted(
       userId,
@@ -350,7 +297,7 @@ export default function LessonPlayer() {
       lesson.title,
       correctCount,
       totalQuestions,
-      0 // XP is awarded separately on lesson completion
+      0
     );
 
     // Check quiz achievements
@@ -358,8 +305,8 @@ export default function LessonPlayer() {
 
     // Set quiz results data
     setQuizResultsData({
-      id: quizResult?.id,
-      quizType: 'lesson' as const,
+      id: crypto.randomUUID(),
+      quizType: 'lesson',
       lessonId: lesson.id,
       totalQuestions,
       correctAnswers: correctCount,
@@ -370,12 +317,6 @@ export default function LessonPlayer() {
       xpEarned: 0,
       streakBonus: 0,
       answers,
-      previousAttempt: previousAttempt ? {
-        id: previousAttempt.id,
-        accuracyPercentage: previousAttempt.accuracy_percentage,
-        completedAt: previousAttempt.completed_at,
-      } : undefined,
-      improvementPercentage,
       difficultyLevel: 'intermediate',
       completedAt: new Date().toISOString(),
       questionsPerMinute,
@@ -390,10 +331,9 @@ export default function LessonPlayer() {
   const handleMarkComplete = async () => {
     if (!userId || !lesson) return;
 
-    // Check if all required quizzes are answered
     if (!allQuizzesAnswered()) {
-      const quiz = lesson?.quiz;
-      const requiredQuizzes = Math.min(2, quiz?.questions?.length || 0);
+      const questions = getQuizQuestions();
+      const requiredQuizzes = Math.min(2, questions.length);
       toast.error(
         `Please complete at least ${requiredQuizzes} quiz questions before marking this lesson complete.`
       );
@@ -402,7 +342,6 @@ export default function LessonPlayer() {
 
     setCompletingLesson(true);
     try {
-      // Get current XP
       const { data: currentStats } = await supabase
         .from('user_stats')
         .select('xp_total')
@@ -411,7 +350,6 @@ export default function LessonPlayer() {
 
       const oldXp = currentStats?.xp_total || 0;
 
-      // Mark lesson complete
       const { data, error } = await supabase.functions.invoke('lessons', {
         body: {
           id: lesson.id,
@@ -429,22 +367,16 @@ export default function LessonPlayer() {
 
       const newXp = data?.stats?.xp_total || oldXp;
 
-      // Check for level up
       if (didLevelUp(oldXp, newXp)) {
         triggerLevelUpConfetti();
         const newLevel = calculateLevel(newXp);
         toast.success(`🎊 Level Up! You're now level ${newLevel}!`);
-
-        // Log level up activity
         await logLevelUp(userId, newLevel, newXp);
-
-        // Check level achievements
         await checkLevelAchievements(userId, newLevel);
       } else {
         triggerLessonCompleteConfetti();
       }
 
-      // Log lesson completion (only if not already completed)
       if (!data?.alreadyCompleted) {
         await logLessonCompleted(
           userId,
@@ -453,13 +385,11 @@ export default function LessonPlayer() {
           lesson.xp_reward || 10
         );
 
-        // Check lesson completion achievements
-        // Get total completed lessons count
         const { data: completedLessons } = await supabase
           .from('user_progress')
           .select('id')
           .eq('user_id', userId)
-          .eq('completed', true);
+          .eq('status', 'completed');
 
         const lessonCount = completedLessons?.length || 0;
         await checkLessonAchievements(userId, lessonCount);
@@ -473,7 +403,6 @@ export default function LessonPlayer() {
 
       setIsCompleted(true);
 
-      // Auto-navigate to next lesson after a short delay
       const nextLesson = getNextLesson();
       if (nextLesson) {
         setTimeout(() => {
@@ -481,7 +410,6 @@ export default function LessonPlayer() {
           navigate(`/learning/${courseSlug}/${nextLesson.slug}`);
         }, 2000);
       } else {
-        // This was the last lesson
         setTimeout(() => {
           toast.success('🎉 Congratulations! You have completed all lessons in this course!');
           navigate(`/learning/${courseSlug}`);
@@ -560,29 +488,19 @@ export default function LessonPlayer() {
     );
   }
 
-  const quiz = lesson.quiz;
+  const quizQuestions = getQuizQuestions();
   const examples = Array.isArray(lesson.examples) ? lesson.examples : [];
-  
-  // Fix escaped newlines in content
   const processedContent = (lesson.content || '').replace(/\\n/g, '\n');
 
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => navigate('/learning')}
-        >
+        <Button variant="ghost" size="sm" onClick={() => navigate('/learning')}>
           Courses
         </Button>
         <span>/</span>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => navigate(`/learning/${courseSlug}`)}
-        >
+        <Button variant="ghost" size="sm" onClick={() => navigate(`/learning/${courseSlug}`)}>
           {courseSlug?.replace(/-/g, ' ')}
         </Button>
         <span>/</span>
@@ -621,23 +539,20 @@ export default function LessonPlayer() {
         </CardContent>
       </Card>
 
-      {/* Related Concepts Dropdown */}
+      {/* Related Concepts */}
       <RelatedConceptsDropdown
         lessonTitle={lesson.title}
         courseSlug={courseSlug}
         chapter={lesson.chapter as string}
       />
 
-      {/* Visual Concepts - Topic-specific images */}
+      {/* Visual Concepts */}
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Visual Concepts</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <TopicVisual
-            topic={courseSlug || ''}
-            title={lesson.title}
-          />
+          <TopicVisual topic={courseSlug || ''} title={lesson.title} />
         </CardContent>
       </Card>
 
@@ -659,7 +574,7 @@ export default function LessonPlayer() {
       )}
 
       {/* Quiz */}
-      {quiz?.questions && quiz.questions.length > 0 && !showQuizResults && (
+      {quizQuestions.length > 0 && !showQuizResults && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -675,7 +590,7 @@ export default function LessonPlayer() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {quiz.questions.map((q: QuizQuestion, qIdx: number) => {
+            {quizQuestions.map((q: QuizQuestion, qIdx: number) => {
               const correctIdx = q.correct ?? q.correctAnswer ?? 0;
 
               return (
@@ -697,7 +612,7 @@ export default function LessonPlayer() {
                   >
                     {q.options.map((option, optIdx) => {
                       const isSelected = selectedAnswers[qIdx] === optIdx;
-                      const isCorrect = optIdx === correctIdx;
+                      const isCorrectOpt = optIdx === correctIdx;
                       const showFeedback = showResults[qIdx];
 
                       return (
@@ -705,8 +620,8 @@ export default function LessonPlayer() {
                           key={optIdx}
                           className={`
                             flex items-center space-x-2 p-3 rounded-lg border transition-colors
-                            ${showFeedback && isCorrect ? 'border-success bg-success/10' : ''}
-                            ${showFeedback && isSelected && !isCorrect ? 'border-destructive bg-destructive/10' : ''}
+                            ${showFeedback && isCorrectOpt ? 'border-success bg-success/10' : ''}
+                            ${showFeedback && isSelected && !isCorrectOpt ? 'border-destructive bg-destructive/10' : ''}
                             ${!showFeedback ? 'hover:bg-muted/50' : ''}
                           `}
                         >
@@ -714,7 +629,7 @@ export default function LessonPlayer() {
                           <Label htmlFor={`q${qIdx}-opt${optIdx}`} className="flex-1 cursor-pointer">
                             {option}
                           </Label>
-                          {showFeedback && isCorrect && (
+                          {showFeedback && isCorrectOpt && (
                             <CheckCircle2 className="w-5 h-5 text-success" />
                           )}
                         </div>
@@ -742,7 +657,7 @@ export default function LessonPlayer() {
             })}
 
             {/* Submit Quiz Button */}
-            {Object.keys(showResults).length === quiz.questions.length && (
+            {Object.keys(showResults).length === quizQuestions.length && (
               <div className="pt-4 border-t">
                 <Button
                   size="lg"
@@ -810,7 +725,7 @@ export default function LessonPlayer() {
         </CardContent>
       </Card>
 
-      {/* Quiz Results - Show after completing quiz */}
+      {/* Quiz Results */}
       {showQuizResults && quizResultsData && (
         <QuizResults
           results={quizResultsData}
@@ -833,13 +748,12 @@ export default function LessonPlayer() {
         />
       )}
 
-      {/* Action Buttons - Hide if showing quiz results */}
+      {/* Action Buttons */}
       {!showQuizResults && (
         <Card className="border-primary/20">
           <CardContent className="p-6">
             <div className="space-y-4">
-              {/* Quiz requirement notice */}
-              {quiz?.questions && quiz.questions.length > 0 && !allQuizzesAnswered() && (
+              {quizQuestions.length > 0 && !allQuizzesAnswered() && (
                 <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
                   <Lightbulb className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
@@ -847,13 +761,12 @@ export default function LessonPlayer() {
                       Complete the quizzes first
                     </p>
                     <p className="text-sm text-amber-600 dark:text-amber-500 mt-1">
-                      Answer at least {Math.min(2, quiz.questions.length)} quiz questions to unlock the Mark Complete button.
+                      Answer at least {Math.min(2, quizQuestions.length)} quiz questions to unlock the Mark Complete button.
                     </p>
                   </div>
                 </div>
               )}
 
-              {/* Completion status for already completed lessons */}
               {isCompleted && (
                 <div className="flex items-center gap-2 p-4 bg-success/10 border border-success/30 rounded-lg">
                   <CheckCircle2 className="w-5 h-5 text-success" />
@@ -861,7 +774,6 @@ export default function LessonPlayer() {
                 </div>
               )}
 
-              {/* Action buttons */}
               <div className="flex items-center justify-between gap-4">
                 <Button
                   variant="outline"
@@ -873,19 +785,13 @@ export default function LessonPlayer() {
                 </Button>
 
                 <div className="flex items-center gap-3">
-                  {/* Next Lesson Button - Only show after completing */}
                   {isCompleted && getNextLesson() && (
-                    <Button
-                      onClick={handleNextLesson}
-                      variant="default"
-                      className="btn-primary"
-                    >
+                    <Button onClick={handleNextLesson} variant="default" className="btn-primary">
                       Next Lesson
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   )}
 
-                  {/* Mark Complete Button */}
                   <Button
                     onClick={handleMarkComplete}
                     disabled={completingLesson || (!allQuizzesAnswered() && !isCompleted)}
@@ -912,7 +818,6 @@ export default function LessonPlayer() {
                 </div>
               </div>
 
-              {/* Last lesson notice */}
               {isCompleted && !getNextLesson() && (
                 <p className="text-center text-sm text-muted-foreground pt-2">
                   This is the final lesson in this course. Great work!
