@@ -10,9 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
 interface UserProfile {
-  coins: number;
-  is_premium: boolean;
-  active_xp_boost: number;
+  credits: number;
 }
 
 interface PurchaseState {
@@ -34,11 +32,9 @@ export default function BillingPage() {
 
   useEffect(() => {
     checkAuth();
-    // Get purchase details from navigation state
     if (location.state?.purchase) {
       setPurchase(location.state.purchase);
     } else {
-      // No purchase details, redirect back to pricing
       navigate('/pricing');
     }
   }, [location.state]);
@@ -56,7 +52,7 @@ export default function BillingPage() {
   const loadUserProfile = async (userId: string) => {
     const { data: profileData } = await supabase
       .from('profiles')
-      .select('coins, is_premium, active_xp_boost, level')
+      .select('credits')
       .eq('user_id', userId)
       .single();
 
@@ -68,59 +64,15 @@ export default function BillingPage() {
   const handlePaymentSuccess = async () => {
     if (!user || !purchase) return;
 
-    // DEMO MODE - Payment system not yet implemented
-    // This is a fake payment flow for demonstration purposes only
-    // No actual items or premium status are granted
-
     toast({
       title: "💳 Demo Payment Complete",
       description: "This was a demonstration. The payment system is not yet implemented. No items were granted.",
       variant: "default",
     });
 
-    // Redirect back to pricing after showing demo message
     setTimeout(() => {
       navigate('/pricing');
     }, 3000);
-
-    /* REAL PAYMENT IMPLEMENTATION (currently disabled):
-    try {
-      if (purchase.type === 'premium') {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ is_premium: true })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "🎉 Premium Activated!",
-          description: "You now have 2x coins on all activities!",
-        });
-      } else if (purchase.type === 'coins') {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ coins: (userProfile?.coins || 0) + purchase.amount })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "💰 Coins Purchased!",
-          description: `You received ${purchase.amount.toLocaleString()} coins!`,
-        });
-      } else if (purchase.type === 'xp_boost') {
-        // ... rest of implementation
-      }
-    } catch (error) {
-      console.error('Payment processing error:', error);
-      toast({
-        title: "Payment Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-    */
   };
 
   if (!purchase) {
@@ -163,7 +115,6 @@ export default function BillingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-primary/5 p-6">
       <div className="max-w-4xl mx-auto pt-6">
-        {/* Header */}
         <div className="mb-6">
           <Button
             variant="ghost"
@@ -197,7 +148,7 @@ export default function BillingPage() {
                   <div>
                     <p className="text-xs text-muted-foreground">Your Balance</p>
                     <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
-                      {userProfile.coins.toLocaleString()} Coins
+                      {userProfile.credits.toLocaleString()} Credits
                     </p>
                   </div>
                 </div>
@@ -207,7 +158,6 @@ export default function BillingPage() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Order Summary */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
 
@@ -220,7 +170,7 @@ export default function BillingPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <Badge className={getBadgeColor()}>
                       {purchase.type === 'premium' && 'Premium'}
-                      {purchase.type === 'coins' && 'Coins'}
+                      {purchase.type === 'coins' && 'Credits'}
                       {purchase.type === 'xp_boost' && 'XP Boost'}
                       {purchase.type === 'admin_pass' && 'Admin Pass'}
                     </Badge>
@@ -246,7 +196,6 @@ export default function BillingPage() {
             </div>
           </Card>
 
-          {/* Payment Form */}
           <div>
             <DummyPaymentCard
               amount={purchase.usdPrice || purchase.amount}

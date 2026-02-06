@@ -36,10 +36,10 @@ interface TopicProgress {
   id: string;
   user_id: string;
   topic_id: string;
-  mastery_level: number;
-  questions_correct: number;
-  questions_total: number;
-  last_practiced: string;
+  questions_answered: number | null;
+  correct_answers: number | null;
+  completion_percentage: number | null;
+  last_practiced_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -48,16 +48,20 @@ interface Achievement {
   id: string;
   user_id: string;
   achievement_type: string;
-  achieved_at: string;
-  created_at: string;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  category: string | null;
+  points: number | null;
+  earned_at: string;
 }
 
 interface ActivityLog {
   id: string;
-  user_id: string;
   activity_type: string;
-  description: string;
+  xp_earned: number;
   created_at: string;
+  metadata?: Record<string, unknown>;
 }
 
 interface UserStats {
@@ -118,25 +122,21 @@ export default function ProfilePage() {
       // Load stats (we'll aggregate from various tables)
       const [
         lessonsCompleted,
-        challengesCompleted,
         topicProgress,
-        achievements,
-        activityLogs
+        achievements
       ] = await Promise.all([
         supabase.from("user_progress").select("*").eq("user_id", userId).eq("status", "completed"),
-        supabase.from("challenges").select("*").eq("user_id", userId).eq("status", "completed"),
         supabase.from("user_topic_progress").select("*").eq("user_id", userId),
-        supabase.from("achievements").select("*").eq("user_id", userId),
-        supabase.from("activity_log").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(50)
+        supabase.from("achievements").select("*").eq("user_id", userId)
       ]);
 
       setStats({
         lessonsCompleted: lessonsCompleted.data?.length || 0,
-        quizzesTaken: 0, // Will be calculated from other data
-        challengesCompleted: challengesCompleted.data?.length || 0,
+        quizzesTaken: 0,
+        challengesCompleted: 0,
         topicProgress: topicProgress.data || [],
         achievements: achievements.data || [],
-        activityLogs: activityLogs.data || [],
+        activityLogs: [],
         streakCount: profileData?.streak_count || 0,
         totalQuestions: profileData?.total_questions || 0,
         xpPoints: profileData?.xp_points || 0,
@@ -236,7 +236,7 @@ export default function ProfilePage() {
             username: profile?.username,
             full_name: profile?.full_name,
             bio: profile?.bio,
-            avatar_url: profile?.equipped_avatar, // Use equipped_avatar for shop avatars
+            avatar_url: profile?.avatar_url,
           }}
           onProfileUpdate={() => loadProfileData(user.id)}
         />
