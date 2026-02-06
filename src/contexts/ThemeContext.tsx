@@ -72,43 +72,16 @@ export function ThemeProvider({ children, userId }: { children: ReactNode; userI
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('equipped_theme')
+        .select('avatar_url')
         .eq('user_id', userId)
         .single();
 
       if (error) throw error;
 
-      if (data?.equipped_theme) {
-        // Fetch the theme details from shop_items
-        const { data: themeData, error: themeError } = await supabase
-          .from('shop_items')
-          .select('*')
-          .eq('id', data.equipped_theme)
-          .eq('type', 'theme')
-          .single();
-
-        if (!themeError && themeData) {
-          // Parse theme config from database
-          const config = parseThemeConfig(themeData);
-
-          const newTheme: Theme = {
-            id: themeData.id,
-            name: themeData.name,
-            config
-          };
-
-          setTheme(newTheme);
-
-          // Generate and apply tokens
-          const tokens = generateThemeTokens(config);
-          applyThemeTokens(tokens);
-        }
-      } else {
-        // No theme equipped, use default
-        setTheme(DEFAULT_THEME);
-        const tokens = generateThemeTokens(DEFAULT_THEME.config);
-        applyThemeTokens(tokens);
-      }
+      // No equipped_theme/shop_items - use default theme
+      setTheme(DEFAULT_THEME);
+      const tokens = generateThemeTokens(DEFAULT_THEME.config);
+      applyThemeTokens(tokens);
     } catch (error) {
       console.error('[ThemeContext] Error loading theme:', error);
       setTheme(DEFAULT_THEME);

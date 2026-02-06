@@ -55,25 +55,13 @@ export default function AccountInformationPage() {
 
       if (profileError) throw profileError;
 
-      let avatarName: string | undefined;
-      if (profileData?.equipped_avatar) {
-        const { data: avatarData } = await supabase
-          .from('shop_items')
-          .select('name')
-          .eq('id', profileData.equipped_avatar)
-          .eq('type', 'avatar')
-          .single();
-
-        avatarName = avatarData?.name;
-      }
-
       setProfile({
-        username: profileData?.username,
-        full_name: profileData?.full_name,
+        username: profileData?.display_name,
+        full_name: profileData?.display_name,
         bio: profileData?.bio,
-        equipped_avatar: profileData?.equipped_avatar,
+        equipped_avatar: profileData?.avatar_url,
         created_at: profileData?.created_at,
-        avatar_name: avatarName
+        avatar_name: undefined
       });
     } catch (error) {
       console.error("Error loading profile data:", error);

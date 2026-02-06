@@ -80,24 +80,8 @@ export function EditProfileDialog({
   }, [open, currentProfile]);
 
   const loadOwnedAvatars = async () => {
-    const { data, error } = await supabase
-      .from('user_inventory')
-      .select('shop_items(*)')
-      .eq('user_id', userId)
-      .in('shop_items.type', 'avatar');
-
-    if (!error && data) {
-      const avatars: AvatarItem[] = data
-        .map((item) => item.shop_items)
-        .filter(Boolean)
-        .map((shop) => ({
-          id: shop.id,
-          name: shop.name,
-          type: shop.type
-        }));
-
-      setOwnedAvatars(avatars);
-    }
+    // No shop_items/user_inventory tables exist - skip avatar loading
+    setOwnedAvatars([]);
   };
 
   const handleSave = async () => {
@@ -119,32 +103,17 @@ export function EditProfileDialog({
       // Update username using RPC (with validation)
       // Only call RPC if username actually changed
       if (trimmedUsername !== currentProfile.username) {
-        console.log('[EditProfileDialog] Calling update_username RPC with:', trimmedUsername);
-        const { data: usernameResult, error: usernameError } = await supabase.rpc('update_username', {
-          p_user_id: userId,
-          p_new_username: trimmedUsername
-        });
-
-        console.log('[EditProfileDialog] RPC response:', { usernameResult, usernameError });
+        console.log('[EditProfileDialog] Updating display_name to:', trimmedUsername);
+        const { error: usernameError } = await supabase
+          .from('profiles')
+          .update({ display_name: trimmedUsername })
+          .eq('user_id', userId);
 
         if (usernameError) {
           throw new Error(usernameError.message);
         }
 
-        // Check if username update failed validation
-        if (usernameResult?.success === false) {
-          const errorMessage = usernameResult.error || "Invalid username";
-          setUsernameError(errorMessage);
-          toast({
-            title: "Username update failed",
-            description: errorMessage,
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-
-        console.log('[EditProfileDialog] Username updated successfully to:', usernameResult?.username);
+        console.log('[EditProfileDialog] Display name updated successfully');
       }
 
       // Update other profile fields (avatar, full_name, bio)

@@ -9,13 +9,13 @@ interface AnimeAvatarProps {
 
 export function AnimeAvatar({ avatarType, rarity, size = 120, className = "" }: AnimeAvatarProps) {
   const rarityColors = {
-    common: { primary: "#9ca3af", secondary: "#6b7280", glow: "rgba(156, 163, 175, 0.3)" },
-    uncommon: { primary: "#22c55e", secondary: "#16a34a", glow: "rgba(34, 197, 94, 0.3)" },
-    rare: { primary: "#3b82f6", secondary: "#2563eb", glow: "rgba(59, 130, 246, 0.3)" },
-    epic: { primary: "#a855f7", secondary: "#9333ea", glow: "rgba(168, 85, 247, 0.3)" },
-    legendary: { primary: "#f97316", secondary: "#ea580c", glow: "rgba(249, 115, 22, 0.3)" },
-    mythical: { primary: "#ec4899", secondary: "#db2777", glow: "rgba(236, 72, 153, 0.3)" },
-    godly: { primary: "#fbbf24", secondary: "#f59e0b", glow: "rgba(251, 191, 36, 0.3)" },
+    common: { primary: "#9ca3af", secondary: "#6b7280", glow: "rgba(156, 163, 175, 0.3)", accent: "#d1d5db", background: "#f3f4f6" },
+    uncommon: { primary: "#22c55e", secondary: "#16a34a", glow: "rgba(34, 197, 94, 0.3)", accent: "#4ade80", background: "#dcfce7" },
+    rare: { primary: "#3b82f6", secondary: "#2563eb", glow: "rgba(59, 130, 246, 0.3)", accent: "#60a5fa", background: "#dbeafe" },
+    epic: { primary: "#a855f7", secondary: "#9333ea", glow: "rgba(168, 85, 247, 0.3)", accent: "#c084fc", background: "#f3e8ff" },
+    legendary: { primary: "#f97316", secondary: "#ea580c", glow: "rgba(249, 115, 22, 0.3)", accent: "#fb923c", background: "#ffedd5" },
+    mythical: { primary: "#ec4899", secondary: "#db2777", glow: "rgba(236, 72, 153, 0.3)", accent: "#f472b6", background: "#fce7f3" },
+    godly: { primary: "#fbbf24", secondary: "#f59e0b", glow: "rgba(251, 191, 36, 0.3)", accent: "#fcd34d", background: "#fef9c3" },
   };
 
   const colors = rarityColors[rarity as keyof typeof rarityColors] || rarityColors.common;
