@@ -27,9 +27,9 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('username')
-      .eq('username', name)
-      .single();
+      .select('display_name')
+      .eq('display_name', name)
+      .maybeSingle();
 
     return !!error || !data;
   };

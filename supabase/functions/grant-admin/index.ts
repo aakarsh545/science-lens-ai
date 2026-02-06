@@ -145,9 +145,9 @@ serve(async (req) => {
           await supabaseClient
             .from('user_inventory')
             .insert({ user_id: userId, item_id: item.id });
-        } catch (err) {
+        } catch (err: unknown) {
           // Ignore duplicate errors
-          if (!err.message?.includes('duplicate')) {
+          if (err instanceof Error && !err.message?.includes('duplicate')) {
             console.warn('Failed to add item:', err);
           }
         }

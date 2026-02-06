@@ -513,16 +513,26 @@ CRITICAL SECURITY INSTRUCTIONS - MUST FOLLOW:
       );
     }
 
-    // CRITICAL: Deduct credit server-side after successful OpenAI response
-    const { error: deductError } = await supabase.rpc("deduct_credits", {
-      p_user_id: userId,
-      p_amount: 1
+    // Check if user is admin (skip credit deduction for admins)
+    const { data: isAdmin } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin"
     });
 
-    if (deductError) {
-      console.error("Failed to deduct credit after successful OpenAI response:", deductError);
+    if (!isAdmin) {
+      // CRITICAL: Deduct credit server-side after successful OpenAI response
+      const { error: deductError } = await supabase.rpc("deduct_credits", {
+        p_user_id: userId,
+        p_amount: 1
+      });
+
+      if (deductError) {
+        console.error("Failed to deduct credit after successful OpenAI response:", deductError);
+      } else {
+        console.log(`Deducted 1 credit from user ${userId} after OpenAI response`);
+      }
     } else {
-      console.log(`Deducted 1 credit from user ${userId} after OpenAI response`);
+      console.log(`Admin user ${userId} - skipping credit deduction`);
     }
 
     // Return the stream directly to client

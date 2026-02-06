@@ -4,7 +4,7 @@ import {
   getCorsHeaders,
   handleOptions,
   validateOrigin,
-  checkRateLimit,
+  checkRateLimit as sharedCheckRateLimit,
   rateLimitResponse,
   logAuthFailure,
   logRateLimitViolation,
@@ -156,7 +156,8 @@ serve(async (req) => {
 
     if (!rateLimitResult.allowed) {
       await logRateLimitViolation(supabaseClient, requestingUser.id, "revoke-admin", 5, 3600);
-      return rateLimitResponse(rateLimitResult.resetAt, corsHeaders);
+      const resetAt = new Date(Date.now() + (rateLimitResult.retryAfter || 3600) * 1000);
+      return rateLimitResponse(resetAt, corsHeaders);
     }
     // Get current user state to restore later
     const { data: currentProfile } = await supabaseClient

@@ -11,9 +11,8 @@ interface UserProfile {
   id: string;
   email: string;
   level: number;
-  coins: number;
-  is_admin: boolean;
-  is_premium: boolean;
+  credits: number;
+  isAdmin: boolean;
 }
 
 export function SearchPeople() {
@@ -32,13 +31,12 @@ export function SearchPeople() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('user_id', user.id)
-      .single();
+    const { data } = await supabase.rpc('has_role', {
+      _user_id: user.id,
+      _role: 'admin' as const
+    });
 
-    if (data && data.is_admin) {
+    if (data === true) {
       setIsAdmin(true);
     }
   };
@@ -57,7 +55,6 @@ export function SearchPeople() {
 
       let allUsers = data?.users || [];
 
-      // Filter by search query
       const filtered = allUsers.filter((user: UserProfile) =>
         user.email.toLowerCase().includes(query.toLowerCase()) ||
         user.id.toLowerCase().includes(query.toLowerCase())
@@ -68,7 +65,7 @@ export function SearchPeople() {
       console.error('Error searching users:', error);
       toast({
         title: "Search failed",
-        description: "Could not search for users. Service role key may not be configured.",
+        description: "Could not search for users.",
         variant: "destructive",
       });
     } finally {
@@ -79,57 +76,17 @@ export function SearchPeople() {
   const grantAdminToUser = async (userId: string, userEmail: string) => {
     setLoading(true);
     try {
-      // Save original state
-      const { data: currentProfile } = await supabase
-        .from('profiles')
-        .select('level, xp_points, coins, is_premium')
-        .eq('id', userId)
-        .single();
+      const { error } = await supabase.functions.invoke('grant-admin', {
+        body: { userId }
+      });
 
-      // Save to user_stats
-      await supabase
-        .from('user_stats')
-        .update({
-          is_admin: true,
-          original_state: currentProfile || { level: 1, xp_points: 0, coins: 100, is_premium: false }
-        })
-        .eq('user_id', userId);
-
-      // Grant admin
-      await supabase
-        .from('profiles')
-        .update({
-          is_admin: true,
-          level: 1000,
-          xp_points: 100000,
-          coins: 999999999,
-          is_premium: true
-        })
-        .eq('id', userId);
-
-      // Add all shop items
-      const { data: shopItems } = await supabase
-        .from('shop_items')
-        .select('id');
-
-      if (shopItems) {
-        for (const item of shopItems) {
-          try {
-            await supabase
-              .from('user_inventory')
-              .insert({ user_id: userId, item_id: item.id });
-          } catch (err) {
-            // Ignore duplicates
-          }
-        }
-      }
+      if (error) throw error;
 
       toast({
         title: "Admin Granted",
         description: `${userEmail} is now an admin`,
       });
 
-      // Refresh search
       searchUsers(searchQuery);
     } catch (error) {
       toast({
@@ -145,35 +102,11 @@ export function SearchPeople() {
   const revokeAdminFromUser = async (userId: string, userEmail: string) => {
     setLoading(true);
     try {
-      // Get original state
-      const { data: userStats } = await supabase
-        .from('user_stats')
-        .select('original_state')
-        .eq('user_id', userId)
-        .single();
+      const { error } = await supabase.functions.invoke('revoke-admin', {
+        body: { userId }
+      });
 
-      const originalState = userStats?.original_state || { level: 1, xp_points: 0, coins: 100, is_premium: false };
-
-      // Restore original state
-      await supabase
-        .from('profiles')
-        .update({
-          is_admin: false,
-          level: originalState.level,
-          xp_points: originalState.xp_points,
-          coins: originalState.coins,
-          is_premium: originalState.is_premium
-        })
-        .eq('id', userId);
-
-      // Clear admin
-      await supabase
-        .from('user_stats')
-        .update({
-          is_admin: false,
-          original_state: null
-        })
-        .eq('user_id', userId);
+      if (error) throw error;
 
       toast({
         title: "Admin Revoked",
@@ -192,128 +125,75 @@ export function SearchPeople() {
     }
   };
 
-  // Don't render if not admin
   if (!isAdmin) {
     return null;
   }
 
   return (
-    <Card className="border-purple-500/50 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20">
+    <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Crown className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              Search People
-            </CardTitle>
-            <CardDescription>Grant or revoke admin access to any user</CardDescription>
-          </div>
-        </div>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Search className="w-5 h-5" />
+          User Management
+        </CardTitle>
+        <CardDescription>Search and manage user admin privileges</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Search Input */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="flex gap-2">
           <Input
-            placeholder="Search by email or user ID..."
+            placeholder="Search by email or ID..."
             value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              searchUsers(e.target.value);
-            }}
-            className="pl-10"
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && searchUsers(searchQuery)}
           />
+          <Button onClick={() => searchUsers(searchQuery)} disabled={searching}>
+            {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+          </Button>
         </div>
 
-        {/* Results */}
-        {searching && (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-        )}
-
-        {!searching && users.length > 0 && (
-          <div className="space-y-2 max-h-96 overflow-y-auto">
+        {users.length > 0 && (
+          <div className="space-y-2">
             {users.map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center justify-between p-3 bg-background/50 rounded-lg hover:bg-background/80 transition-colors"
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
-                    {user.email.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate text-sm">{user.email}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>Lvl {user.level}</span>
-                      <span>•</span>
-                      <span>{user.coins.toLocaleString()} coins</span>
-                      {user.is_premium && (
-                        <>
-                          <span>•</span>
-                          <Badge variant="secondary" className="text-xs">Premium</Badge>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
+              <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-2">
-                  {user.is_admin ? (
-                    <Badge className="bg-green-500">
-                      <Shield className="w-3 h-3 mr-1" />
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">{user.email}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Level: {user.level} | Credits: {user.credits}
+                    </p>
+                  </div>
+                  {user.isAdmin && (
+                    <Badge variant="default" className="ml-2">
+                      <Crown className="w-3 h-3 mr-1" />
                       Admin
                     </Badge>
-                  ) : (
-                    <Badge variant="outline">
-                      <User className="w-3 h-3 mr-1" />
-                      User
-                    </Badge>
                   )}
-
-                  {user.is_admin ? (
+                </div>
+                <div className="flex gap-2">
+                  {!user.isAdmin ? (
                     <Button
                       size="sm"
-                      variant="destructive"
-                      onClick={() => revokeAdminFromUser(user.id, user.email)}
+                      onClick={() => grantAdminToUser(user.id, user.email)}
                       disabled={loading}
                     >
-                      {loading ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <>
-                          <ShieldOff className="w-3 h-3 mr-1" />
-                          Revoke
-                        </>
-                      )}
+                      <Shield className="w-3 h-3 mr-1" />
+                      Grant
                     </Button>
                   ) : (
                     <Button
                       size="sm"
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                      onClick={() => grantAdminToUser(user.id, user.email)}
+                      variant="outline"
+                      onClick={() => revokeAdminFromUser(user.id, user.email)}
                       disabled={loading}
                     >
-                      {loading ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <>
-                          <Shield className="w-3 h-3 mr-1" />
-                          Grant
-                        </>
-                      )}
+                      <ShieldOff className="w-3 h-3 mr-1" />
+                      Revoke
                     </Button>
                   )}
                 </div>
               </div>
             ))}
-          </div>
-        )}
-
-        {!searching && searchQuery && users.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            No users found matching "{searchQuery}"
           </div>
         )}
       </CardContent>

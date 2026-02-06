@@ -100,51 +100,53 @@ export default function LandingPage() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const stars: { x: number; y: number; z: number; pz: number }[] = [];
+    const starObjects: { x: number; y: number; z: number; pz: number; reset: () => void; update: () => void; draw: () => void }[] = [];
     const numStars = 200;
 
-    class Star {
-      constructor() {
-        this.reset();
-      }
-
-      reset() {
-        this.x = Math.random() * canvas.width - canvas.width / 2;
-        this.y = Math.random() * canvas.height - canvas.height / 2;
-        this.z = Math.random() * 1000 + 500;
-        this.pz = this.z;
-      }
-
-      update() {
-        this.z -= 8;
-        if (this.z < 1) {
-          this.reset();
-          this.z = 1000;
+    function createStar() {
+      const star = {
+        x: Math.random() * canvas.width - canvas.width / 2,
+        y: Math.random() * canvas.height - canvas.height / 2,
+        z: Math.random() * 1000 + 500,
+        pz: 0,
+        reset() {
+          this.x = Math.random() * canvas.width - canvas.width / 2;
+          this.y = Math.random() * canvas.height - canvas.height / 2;
+          this.z = Math.random() * 1000 + 500;
           this.pz = this.z;
+        },
+        update() {
+          this.z -= 8;
+          if (this.z < 1) {
+            this.reset();
+            this.z = 1000;
+            this.pz = this.z;
+          }
+        },
+        draw() {
+          const sx = (this.x / this.z) * canvas.width + canvas.width / 2;
+          const sy = (this.y / this.z) * canvas.height + canvas.height / 2;
+          const px = (this.x / this.pz) * canvas.width + canvas.width / 2;
+          const py = (this.y / this.pz) * canvas.height + canvas.height / 2;
+          this.pz = this.z;
+
+          const size = (1 - this.z / 1000) * 3;
+          const alpha = 1 - this.z / 1000;
+
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+          ctx.lineWidth = size;
+          ctx.moveTo(px, py);
+          ctx.lineTo(sx, sy);
+          ctx.stroke();
         }
-      }
-
-      draw() {
-        const sx = (this.x / this.z) * canvas.width + canvas.width / 2;
-        const sy = (this.y / this.z) * canvas.height + canvas.height / 2;
-        const px = (this.x / this.pz) * canvas.width + canvas.width / 2;
-        const py = (this.y / this.pz) * canvas.height + canvas.height / 2;
-        this.pz = this.z;
-
-        const size = (1 - this.z / 1000) * 3;
-        const alpha = 1 - this.z / 1000;
-
-        ctx.beginPath();
-        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-        ctx.lineWidth = size;
-        ctx.moveTo(px, py);
-        ctx.lineTo(sx, sy);
-        ctx.stroke();
-      }
+      };
+      star.pz = star.z;
+      return star;
     }
 
     for (let i = 0; i < numStars; i++) {
-      stars.push(new Star());
+      starObjects.push(createStar());
     }
 
     let animationId: number;
@@ -152,7 +154,7 @@ export default function LandingPage() {
       ctx.fillStyle = 'rgba(15, 23, 42, 0.2)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      stars.forEach(star => {
+      starObjects.forEach(star => {
         star.update();
         star.draw();
       });

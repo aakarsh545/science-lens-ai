@@ -21,9 +21,10 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
 
   const loadCredits = useCallback(async () => {
     try {
-      // SERVER-SIDE admin verification - cannot be spoofed by client
-      const { data: adminCheck } = await supabase.rpc('verify_admin_for_credits', {
-        p_user_id: userId
+      // SERVER-SIDE admin verification using has_role RPC
+      const { data: adminCheck } = await supabase.rpc('has_role', {
+        _user_id: userId,
+        _role: 'admin' as const
       });
 
       const isUserAdmin = adminCheck || false;
@@ -89,8 +90,9 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
           const newCredits = payload.new.credits;
 
           // SERVER-SIDE admin verification on every change
-          const { data: adminCheck } = await supabase.rpc('verify_admin_for_credits', {
-            p_user_id: userId
+          const { data: adminCheck } = await supabase.rpc('has_role', {
+            _user_id: userId,
+            _role: 'admin' as const
           });
 
           const isUserAdmin = adminCheck || false;
