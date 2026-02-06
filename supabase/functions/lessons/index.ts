@@ -16,7 +16,24 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Verify authentication for all requests
     const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Invalid authentication token' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Parse body once and reuse
     let body: any = null;
@@ -31,15 +48,8 @@ serve(async (req) => {
     if (req.method === 'POST' && body) {
       const lessonId = body.id || path[0];
 
-      // Handle complete action (requires auth)
+      // Handle complete action (requires auth - already verified above)
       if (body.action === 'complete') {
-        if (!authHeader) {
-          throw new Error('No authorization header');
-        }
-        const token = authHeader.replace('Bearer ', '');
-        const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-        
-        if (userError || !user) throw new Error('Unauthorized');
 
         const { data: lesson } = await supabase
           .from('lessons')
@@ -231,14 +241,21 @@ serve(async (req) => {
     });
 
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[lessons] Error:', error, { 
-      url: req.url, 
-      method: req.method 
+    // Log detailed error server-side only
+    console.error('[lessons] Error:', {
+      error: error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      } : error,
+      url: req.url,
+      method: req.method,
+      timestamp: new Date().toISOString(),
     });
-    return new Response(JSON.stringify({ 
-      error: errorMessage,
-      code: 'LESSONS_ERROR'
+
+    // Return generic error to client (hide internals)
+    return new Response(JSON.stringify({
+      error: 'An error occurred. Please try again.',
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
