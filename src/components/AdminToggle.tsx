@@ -33,12 +33,16 @@ export function AdminToggle() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not logged in');
 
-      // Call the server-side grant-admin edge function
+<<<<<<< HEAD
+      // SERVER-SIDE: Call Edge Function to grant admin
+      // This ensures proper server-side authorization and logging
       const { data, error } = await supabase.functions.invoke('grant-admin', {
         body: { userId: user.id }
       });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       toast({
         title: "👑 Admin Mode Activated!",
@@ -65,18 +69,23 @@ export function AdminToggle() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not logged in');
 
-      // Call the server-side revoke-admin edge function
+<<<<<<< HEAD
+      // SERVER-SIDE: Call Edge Function to revoke admin
+      // This ensures proper server-side authorization and logging
       const { data, error } = await supabase.functions.invoke('revoke-admin', {
         body: { userId: user.id }
       });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       toast({
         title: "Admin Mode Deactivated",
         description: "Your account has been restored.",
       });
 
+      // Force hard reload
       setTimeout(() => {
         window.location.href = window.location.href;
       }, 1000);

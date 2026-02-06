@@ -76,11 +76,15 @@ export function SearchPeople() {
   const grantAdminToUser = async (userId: string, userEmail: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase.functions.invoke('grant-admin', {
+      // SERVER-SIDE: Call Edge Function to grant admin
+      // This ensures proper server-side authorization and logging
+      const { data, error } = await supabase.functions.invoke('grant-admin', {
         body: { userId }
       });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       toast({
         title: "Admin Granted",
@@ -102,11 +106,15 @@ export function SearchPeople() {
   const revokeAdminFromUser = async (userId: string, userEmail: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase.functions.invoke('revoke-admin', {
+      // SERVER-SIDE: Call Edge Function to revoke admin
+      // This ensures proper server-side authorization and logging
+      const { data, error } = await supabase.functions.invoke('revoke-admin', {
         body: { userId }
       });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       toast({
         title: "Admin Revoked",
