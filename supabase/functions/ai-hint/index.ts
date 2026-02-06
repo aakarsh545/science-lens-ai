@@ -29,32 +29,42 @@ serve(async (req) => {
 
     const { question, context } = await req.json();
 
-    // Check credits
-    const { data: stats } = await supabase
-      .from('user_stats')
-      .select('credits')
-      .eq('user_id', user.id)
-      .single();
+    // Check if user is admin (skip credit check/deduction for admins)
+    const { data: isAdmin } = await supabase.rpc('has_role', {
+      _user_id: user.id,
+      _role: 'admin'
+    });
 
-    if (!stats || stats.credits < 1) {
-      return new Response(JSON.stringify({ 
-        error: 'credits_exhausted',
-        message: "You've run out of learning credits. Recharge to continue receiving AI-powered hints and full explanations. Visit Pricing to buy credits."
-      }), {
-        status: 402,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (!isAdmin) {
+      // Check credits
+      const { data: stats } = await supabase
+        .from('user_stats')
+        .select('credits')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!stats || stats.credits < 1) {
+        return new Response(JSON.stringify({ 
+          error: 'credits_exhausted',
+          message: "You've run out of learning credits. Recharge to continue receiving AI-powered hints and full explanations. Visit Pricing to buy credits."
+        }), {
+          status: 402,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Deduct credit
+      await supabase
+        .from('user_stats')
+        .update({ 
+          credits: stats.credits - 1,
+          questions_asked: (stats as any).questions_asked + 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+    } else {
+      console.log(`Admin user ${user.id} - skipping credit check/deduction`);
     }
-
-    // Deduct credit
-    await supabase
-      .from('user_stats')
-      .update({ 
-        credits: stats.credits - 1,
-        questions_asked: (stats as any).questions_asked + 1,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', user.id);
 
     // Call OpenAI
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');

@@ -128,15 +128,16 @@ serve(async (req) => {
       );
 
       if (!rateLimitCheck.allowed) {
+        const retryAfter = Math.ceil((rateLimitCheck.resetAt.getTime() - Date.now()) / 1000);
         return new Response(JSON.stringify({
-          error: rateLimitCheck.message,
-          retryAfter: rateLimitCheck.retryAfter,
+          error: rateLimitCheck.error || 'Rate limit exceeded',
+          retryAfter,
         }), {
           status: 429,
           headers: {
             ...corsHeaders,
             'Content-Type': 'application/json',
-            'Retry-After': rateLimitCheck.retryAfter?.toString() || '3600',
+            'Retry-After': retryAfter.toString(),
           },
         });
       }
@@ -256,15 +257,16 @@ serve(async (req) => {
       );
 
       if (!rateLimitCheck.allowed) {
+        const retryAfter = Math.ceil((rateLimitCheck.resetAt.getTime() - Date.now()) / 1000);
         return new Response(JSON.stringify({
-          error: rateLimitCheck.message,
-          retryAfter: rateLimitCheck.retryAfter,
+          error: rateLimitCheck.error || 'Rate limit exceeded',
+          retryAfter,
         }), {
           status: 429,
           headers: {
             ...corsHeaders,
             'Content-Type': 'application/json',
-            'Retry-After': rateLimitCheck.retryAfter?.toString() || '60',
+            'Retry-After': retryAfter.toString(),
           },
         });
       }
@@ -404,8 +406,8 @@ serve(async (req) => {
                   difficulty: session.challenge_difficulty
                 },
                 status: 'flagged'
-              }).then(() => console.log('Suspicious activity logged'))
-                .catch(err => console.error('Failed to log suspicious activity:', err));
+              });
+            console.log('Suspicious activity logged');
           }
 
           // Award XP (with penalty if applicable)
@@ -475,8 +477,8 @@ serve(async (req) => {
             p_total_questions: session.total_questions,
             p_time_taken_seconds: timeTakenSeconds,
             p_difficulty: session.challenge_difficulty
-          }).then(() => console.log('Challenge completion logged'))
-            .catch(err => console.error('Failed to log challenge completion:', err));
+          });
+          console.log('Challenge completion logged');
 
           // Mark rewards as awarded (idempotency protection)
           await supabase
@@ -557,7 +559,7 @@ async function generateAIQuestions(topic: string, count: number, difficulty: str
   const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
   if (!OPENAI_API_KEY) {
     // Return fallback questions if no API key
-    return getFallbackQuestions(topic, count);
+    throw new Error('OPENAI_API_KEY not configured');
   }
 
   try {
@@ -605,7 +607,7 @@ Return as a JSON array with this structure:
 
     if (!response.ok) {
       console.error('OpenAI API error:', await response.text());
-      return getFallbackQuestions(topic, count);
+      throw new Error('Failed to parse AI questions');
     }
 
     const data = await response.json();

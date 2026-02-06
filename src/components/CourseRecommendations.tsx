@@ -82,7 +82,7 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
     try {
       // Fetch all data in parallel for better performance
       const [coursesResult, lessonsResult, progressResult, questionsResult, messagesResult, profileResult] = await Promise.all([
-        supabase.from("courses").select("id, slug, title, description, category, difficulty"),
+        supabase.from("courses").select("id, slug, title, description, category"),
         supabase.from("lessons").select("id, course_id"),
         supabase.from("user_progress").select("lesson_id, status").eq("user_id", userId),
         supabase.from("questions").select("question_text, topic, difficulty_level, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
@@ -105,7 +105,7 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
       // Create course map with lesson counts and difficulty
       const courseMap = courses.reduce((acc, course) => {
         const lessonCount = lessons.filter((l) => l.course_id === course.id).length;
-        acc[course.slug] = { ...course, lessonCount, difficulty: course.difficulty || 'beginner' };
+        acc[course.slug] = { ...course, lessonCount, difficulty: 'beginner' };
         return acc;
       }, {} as Record<string, Course>);
 
@@ -120,7 +120,7 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
         return {
           slug: course.slug,
           category: course.category,
-          difficulty: course.difficulty || 'beginner',
+          difficulty: 'beginner',
           completed,
           total: courseLessons.length,
           isComplete: completed === courseLessons.length && courseLessons.length > 0,
@@ -282,7 +282,7 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
       // 6. If still have space, fill with popular beginner courses
       if (recs.length < 4) {
         courses
-          .filter((c) => !recommendedSlugs.has(c.slug) && (c.difficulty || 'beginner') === 'beginner')
+          .filter((c) => !recommendedSlugs.has(c.slug))
           .slice(0, 4 - recs.length)
           .forEach((course) => {
             if (!recommendedSlugs.has(course.slug)) {
