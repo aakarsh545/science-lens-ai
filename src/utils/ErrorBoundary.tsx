@@ -29,7 +29,16 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error Boundary caught an error:', error, errorInfo);
+    // Log detailed error server-side only (never exposed to client)
+    console.error('Error Boundary caught an error:', {
+      error: {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      },
+      componentStack: errorInfo.componentStack,
+      timestamp: new Error().toISOString(),
+    });
   }
 
   handleReset = () => {
@@ -55,16 +64,8 @@ export class ErrorBoundary extends Component<Props, State> {
               <p className="text-muted-foreground">
                 An unexpected error occurred. Please try again or refresh the page.
               </p>
-              {this.state.error && (
-                <details className="text-sm bg-muted p-3 rounded-lg">
-                  <summary className="cursor-pointer font-semibold mb-2">
-                    Error details
-                  </summary>
-                  <pre className="text-xs overflow-auto">
-                    {this.state.error.toString()}
-                  </pre>
-                </details>
-              )}
+              {/* SECURITY: Error details removed - never expose internals to client */}
+              {/* Developers can check browser console for detailed logs */}
               <div className="flex gap-2">
                 <Button onClick={this.handleReset} variant="default">
                   Try Again

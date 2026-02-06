@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { API_ENDPOINTS } from "@/utils/constants";
+import { getUserFriendlyMessage } from "@/utils/errorHandling";
 
 interface AIRequestOptions {
   userId: string;
@@ -106,7 +107,7 @@ export class AIService {
       onComplete?.();
     } catch (error: unknown) {
       console.error("AI Service Error:", error);
-      onError?.(error instanceof Error ? error.message : "An unexpected error occurred");
+      onError?.(getUserFriendlyMessage(error, 'AIService.sendMessage'));
     }
   }
 }

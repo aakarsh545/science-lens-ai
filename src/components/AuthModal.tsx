@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { getUserFriendlyMessage } from "@/utils/errorHandling";
 
 interface AuthModalProps {
   open: boolean;
@@ -142,7 +143,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
       toast({
         variant: "destructive",
         title: "Signup failed",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getUserFriendlyMessage(error, 'AuthModal.signup'),
       });
     } finally {
       setIsLoading(false);

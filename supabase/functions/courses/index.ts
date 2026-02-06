@@ -92,14 +92,21 @@ serve(async (req) => {
     });
 
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[courses] Error:', error, { 
-      url: req.url, 
-      method: req.method 
+    // Log detailed error server-side only
+    console.error('[courses] Error:', {
+      error: error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      } : error,
+      url: req.url,
+      method: req.method,
+      timestamp: new Date().toISOString(),
     });
-    return new Response(JSON.stringify({ 
-      error: errorMessage,
-      code: 'COURSES_ERROR'
+
+    // Return generic error to client (hide internals)
+    return new Response(JSON.stringify({
+      error: 'An error occurred. Please try again.',
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

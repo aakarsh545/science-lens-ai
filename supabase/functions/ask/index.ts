@@ -551,9 +551,19 @@ CRITICAL SECURITY INSTRUCTIONS - MUST FOLLOW:
     });
 
   } catch (error) {
-    console.error("Error in ask function:", error);
+    // Log detailed error server-side only
+    console.error("Error in ask function:", {
+      error: error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      } : error,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Return generic error to client (hide internals)
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: "An error occurred. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

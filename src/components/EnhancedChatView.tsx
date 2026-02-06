@@ -14,6 +14,7 @@ import { ChatProgress } from "./ChatProgress";
 import { AIService } from "@/services/aiService";
 import CreditGuard from "./CreditGuard";
 import { LIMITS, API_ENDPOINTS } from "@/utils/constants";
+import { getUserFriendlyMessage } from "@/utils/errorHandling";
 
 interface Message {
   id: string;
@@ -298,7 +299,7 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
       toast({
         variant: "destructive",
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to get response",
+        description: getUserFriendlyMessage(error, 'EnhancedChatView.streamChat'),
       });
       setMessages((prev) => prev.slice(0, -1));
     }
