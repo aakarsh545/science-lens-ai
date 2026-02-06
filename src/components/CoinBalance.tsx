@@ -15,12 +15,12 @@ export function CoinBalance({ userId }: CoinBalanceProps) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('coins')
+        .select('credits')
         .eq('user_id', userId)
         .single();
 
       if (!error && data) {
-        setCoins(data.coins || 0);
+        setCoins(data.credits || 0);
       }
     } catch (error) {
       console.error('Error loading coins:', error);

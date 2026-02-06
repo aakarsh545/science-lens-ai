@@ -27,11 +27,11 @@ export function useAdmin(user: User | null): AdminStatus {
 
     const checkAdminStatus = async () => {
       try {
-        const { data, error } = await supabase
-          .from("user_stats")
-          .select("is_admin, admin_purchased_at")
-          .eq("user_id", user.id)
-          .single();
+        // Use the proper has_role RPC for server-side admin check
+        const { data, error } = await supabase.rpc('has_role', {
+          _user_id: user.id,
+          _role: 'admin' as const
+        });
 
         if (error) {
           console.error("Error checking admin status:", error);
@@ -44,8 +44,8 @@ export function useAdmin(user: User | null): AdminStatus {
         }
 
         setAdminStatus({
-          isAdmin: data?.is_admin || false,
-          adminPurchasedAt: data?.admin_purchased_at || null,
+          isAdmin: data === true,
+          adminPurchasedAt: null,
           loading: false,
         });
       } catch (err) {
@@ -60,23 +60,20 @@ export function useAdmin(user: User | null): AdminStatus {
 
     checkAdminStatus();
 
-    // Subscribe to changes in user_stats
+    // Subscribe to changes in user_roles
     const subscription = supabase
       .channel('admin-status-changes')
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
-          table: 'user_stats',
+          table: 'user_roles',
           filter: `user_id=eq.${user.id}`
         },
-        (payload) => {
-          setAdminStatus({
-            isAdmin: payload.new.is_admin || false,
-            adminPurchasedAt: payload.new.admin_purchased_at || null,
-            loading: false,
-          });
+        () => {
+          // Re-check admin status when roles change
+          checkAdminStatus();
         }
       )
       .subscribe();

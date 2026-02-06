@@ -9,65 +9,44 @@ interface UserAvatarProps {
 }
 
 export function UserAvatar({ userId, className = "" }: UserAvatarProps) {
-  const [avatarImagePath, setAvatarImagePath] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadEquippedAvatar = async () => {
+  const loadAvatar = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('equipped_avatar')
+        .select('avatar_url')
         .eq('user_id', userId)
         .single();
 
-      if (error) throw error;
-
-      if (data?.equipped_avatar) {
-        // Fetch the avatar item from shop to get the name
-        const { data: avatarData, error: avatarError } = await supabase
-          .from('shop_items')
-          .select('name')
-          .eq('id', data.equipped_avatar)
-          .eq('type', 'avatar')
-          .single();
-
-        if (!avatarError && avatarData?.name) {
-          // Construct the image path exactly like ShopPage does
-          const imagePath = `/icons/avatars/avatar-${avatarData.name.toLowerCase().replace(/\s+/g, '-')}.png`;
-          setAvatarImagePath(imagePath);
-        } else {
-          // No avatar equipped or error
-          setAvatarImagePath(null);
-        }
+      if (!error && data?.avatar_url) {
+        setAvatarUrl(data.avatar_url);
       } else {
-        // No avatar equipped
-        setAvatarImagePath(null);
+        setAvatarUrl(null);
       }
     } catch (error) {
       console.error('[UserAvatar] Error loading avatar:', error);
-      setAvatarImagePath(null);
+      setAvatarUrl(null);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadEquippedAvatar();
+    loadAvatar();
   }, [userId]);
 
-  // Listen for profile update events and refresh avatar
   useEffect(() => {
     const handleProfileUpdate = (event: Event) => {
       const customEvent = event as CustomEvent;
       if (customEvent.detail?.userId === userId) {
-        console.log('[UserAvatar] Profile update detected, refreshing avatar');
-        loadEquippedAvatar();
+        loadAvatar();
       }
     };
 
     window.addEventListener('profile-updated', handleProfileUpdate);
-
     return () => {
       window.removeEventListener('profile-updated', handleProfileUpdate);
     };
@@ -83,17 +62,9 @@ export function UserAvatar({ userId, className = "" }: UserAvatarProps) {
 
   return (
     <Avatar className={className}>
-      {avatarImagePath ? (
+      {avatarUrl ? (
         <>
-          <AvatarImage
-            src={avatarImagePath}
-            alt="Avatar"
-            onError={(e) => {
-              // Fallback if image doesn't load
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-            }}
-          />
+          <AvatarImage src={avatarUrl} alt="Avatar" />
           <AvatarFallback className="bg-gradient-to-br from-primary/20 to-purple-500/20">
             <User className="h-4 w-4" />
           </AvatarFallback>

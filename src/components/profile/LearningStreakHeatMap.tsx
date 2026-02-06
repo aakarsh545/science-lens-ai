@@ -38,7 +38,7 @@ export default function LearningStreakHeatMap({ userId }: LearningStreakHeatMapP
       startDate.setFullYear(startDate.getFullYear() - 1);
 
       const { data: activities, error } = await supabase
-        .from("activity_log")
+        .from("daily_streaks")
         .select("*")
         .eq("user_id", userId)
         .gte("created_at", startDate.toISOString())
@@ -48,12 +48,12 @@ export default function LearningStreakHeatMap({ userId }: LearningStreakHeatMapP
 
       // Aggregate by date
       const activityByDate: { [key: string]: number } = {};
-      activities?.forEach((activity) => {
+      activities?.forEach((activity: any) => {
         const date = new Date(activity.created_at).toISOString().split("T")[0];
         if (!activityByDate[date]) {
           activityByDate[date] = 0;
         }
-        activityByDate[date]++;
+        activityByDate[date] += (activity.questions_answered || 1);
       });
 
       // Generate last 52 weeks of data

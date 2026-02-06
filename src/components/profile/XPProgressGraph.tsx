@@ -39,11 +39,11 @@ export default function XPProgressGraph({ userId }: XPProgressGraphProps) {
       }
 
       const { data: activityData, error } = await supabase
-        .from("activity_log")
+        .from("study_sessions")
         .select("*")
         .eq("user_id", userId)
-        .gte("created_at", startDate.toISOString())
-        .order("created_at", { ascending: true });
+        .gte("started_at", startDate.toISOString())
+        .order("started_at", { ascending: true });
 
       if (error) throw error;
 
@@ -51,8 +51,8 @@ export default function XPProgressGraph({ userId }: XPProgressGraphProps) {
       const xpByDate: { [key: string]: number } = {};
       const levelUpDates: Set<string> = new Set();
 
-      activityData?.forEach((activity) => {
-        const date = new Date(activity.created_at).toLocaleDateString("en-US", {
+      activityData?.forEach((activity: any) => {
+        const date = new Date(activity.started_at).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
         });
@@ -62,10 +62,6 @@ export default function XPProgressGraph({ userId }: XPProgressGraphProps) {
         }
 
         xpByDate[date] += activity.xp_earned || 0;
-
-        if (activity.activity_type === "level_up") {
-          levelUpDates.add(date);
-        }
       });
 
       // Convert to array and sort

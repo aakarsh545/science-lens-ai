@@ -110,7 +110,7 @@ const Dashboard = ({ user }: DashboardProps) => {
       mounted = false;
       channel.unsubscribe();
     };
-  }, [user, loadProfile, loadAchievements]);
+  }, [user]);
 
   const loadProfile = useCallback(async () => {
     const { data, error } = await supabase

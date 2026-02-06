@@ -4,7 +4,7 @@ import {
   getCorsHeaders,
   handleOptions,
   validateOrigin,
-  checkRateLimit,
+  checkRateLimit as sharedCheckRateLimit,
   rateLimitResponse,
   logAuthFailure,
   logRateLimitViolation,
@@ -127,7 +127,8 @@ serve(async (req) => {
 
     if (!rateLimitResult.allowed) {
       await logRateLimitViolation(supabaseClient, user.id, "search-users", 30, 60);
-      return rateLimitResponse(rateLimitResult.resetAt, corsHeaders);
+      const resetAt = new Date(Date.now() + (rateLimitResult.retryAfter || 60) * 1000);
+      return rateLimitResponse(resetAt, corsHeaders);
     }
 
     if (!profile || !profile.is_admin) {

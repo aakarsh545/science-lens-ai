@@ -42,20 +42,7 @@ export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderPr
   // Load avatar image path from equipped_avatar
   const loadAvatar = useCallback(async () => {
     if (profile?.equipped_avatar) {
-      const { data } = await supabase
-        .from('shop_items')
-        .select('name')
-        .eq('id', profile.equipped_avatar)
-        .eq('type', 'avatar')
-        .single();
-
-      if (data?.name) {
-        // Construct the image path exactly like ShopPage does
-        const imagePath = `/icons/avatars/avatar-${data.name.toLowerCase().replace(/\s+/g, '-')}.png`;
-        setAvatarImagePath(imagePath);
-      } else {
-        setAvatarImagePath(null);
-      }
+      setAvatarImagePath(profile.equipped_avatar);
     } else {
       setAvatarImagePath(null);
     }
