@@ -1,9 +1,10 @@
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Sphere, Box, Torus, MeshDistortMaterial, Cylinder, Cone, Ring } from '@react-three/drei';
+// Temporarily disabled Three.js imports due to WebGL compatibility issues
+// import { Canvas } from '@react-three/fiber';
+// import { OrbitControls, Sphere, Box, Torus, MeshDistortMaterial, Cylinder, Cone, Ring } from '@react-three/drei';
 import { Suspense, useMemo, useRef } from 'react';
 import { Image as ImageIcon } from 'lucide-react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+// import { useFrame } from '@react-three/fiber';
+// import * as THREE from 'three';
 
 interface TopicVisualProps {
   topic: string;
@@ -879,8 +880,12 @@ export default function TopicVisual({ topic, title, type = 'auto' }: TopicVisual
   }
 
   return (
-    <div className="w-full h-64 rounded-lg overflow-hidden bg-muted/20">
-      <Scene3D model={visual.model || 'generic'} color={visual.color || '#6366F1'} />
+    <div className="w-full h-64 rounded-lg overflow-hidden bg-muted/20 flex items-center justify-center">
+      <div className="text-center">
+        <ImageIcon className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">{title || topic}</p>
+        <p className="text-xs text-muted-foreground/60 mt-1">3D visualization temporarily disabled</p>
+      </div>
     </div>
   );
 }

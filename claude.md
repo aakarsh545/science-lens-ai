@@ -1,5 +1,11 @@
 # Science Lens - AI-Powered Science Learning Platform
 
+## MANDATORY: Work Protocol
+
+Before any implementation or PRP creation, you MUST read:
+
+- `docs/SCIENCE_LENS_WORK_PROTOCOL.md`
+
 ## Project Overview
 Science Lens is a React + TypeScript web application for AI-powered science education. It uses Supabase for authentication, database, and edge functions, with OpenAI for AI-powered features.
 

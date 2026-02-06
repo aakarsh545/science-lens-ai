@@ -27,7 +27,9 @@ import BillingPage from "./pages/BillingPage";
 
 const queryClient = new QueryClient();
 
-const basename = '/';
+// Use basename from environment variable for production deployment
+// Locally this will be undefined, in production it will be "/" (root)
+const basename = import.meta.env.VITE_BASEPATH?.replace(/\/$/, '') || '/';
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

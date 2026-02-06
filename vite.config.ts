@@ -11,37 +11,65 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
-  define: {
-    'import.meta.env.VITE_SUPABASE_URL': JSON.stringify("https://pfrmkmlstzjexccmdkoc.supabase.co"),
-    'import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY': JSON.stringify("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmcm1rbWxzdHpqZXhjY21ka29jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE2MzksImV4cCI6MjA3NDc0NzYzOX0.b0mjj8CS604Y38Pf1iQefrBz59pV0yEl3sCewGe4DmA"),
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    dedupe: ['react', 'react-dom'],
   },
   build: {
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // Split vendor chunks more granularly to avoid circular dependencies
           if (id.includes('node_modules')) {
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
               return 'react-vendor';
             }
+            // Supabase
             if (id.includes('@supabase')) {
               return 'supabase-vendor';
             }
-            if (id.includes('framer-motion') || id.includes('lucide-react')) {
-              return 'ui-vendor';
+            // UI libraries
+            if (id.includes('framer-motion')) {
+              return 'framer-motion-vendor';
+            }
+            if (id.includes('lucide-react')) {
+              return 'lucide-vendor';
+            }
+            // Radix UI components
+            if (id.includes('@radix-ui')) {
+              return 'radix-vendor';
             }
             if (id.includes('jspdf')) {
               return 'pdf-export';
             }
+            // Class variance authority
+            if (id.includes('class-variance-authority') || id.includes('clsx') || id.includes('tailwind-merge')) {
+              return 'cva-vendor';
+            }
+            // Other node_modules - split by package to avoid circular deps
+            const match = id.match(/node_modules\/([^/]+)/);
+            if (match) {
+              return `vendor-${match[1].replace('@', '')}`;
+            }
             return 'vendor';
           }
         },
+        // Improve module format to avoid circular dependencies
+        interop: 'auto',
+      },
+      // Experimental features to help with circular dependencies
+      onwarn(warning, warn) {
+        // Ignore circular dependency warnings for node_modules
+        if (warning.code === 'CIRCULAR_DEPENDENCY' && warning.message.includes('node_modules')) {
+          return;
+        }
+        warn(warning);
       },
     },
     chunkSizeWarningLimit: 1000,
+    minify: 'esbuild',
+    target: 'es2020',
   },
 }));

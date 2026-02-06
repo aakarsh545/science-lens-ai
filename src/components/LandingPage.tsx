@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import SpaceBackground from './SpaceBackground';
 import AuthModal from './AuthModal';
+import { Suspense } from 'react';
 import { OnboardingCutscene } from './OnboardingCutscene';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -56,8 +57,8 @@ const stats = [
 export default function LandingPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   // Initialize with default values, then read from localStorage in useEffect
-  const [showOnboarding, setShowOnboarding] = useState(true);
-  const [showIntro, setShowIntro] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showIntro, setShowIntro] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
 
@@ -192,6 +193,13 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      {/* Background with error fallback */}
+      <Suspense fallback={
+        <div className="fixed inset-0 -z-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+      }>
+        <SpaceBackground />
+      </Suspense>
+
       {/* Intro Animation */}
       <AnimatePresence>
         {showIntro && (
@@ -250,8 +258,6 @@ export default function LandingPage() {
       )}
 
       {/* Main Landing Page */}
-      <SpaceBackground />
-      
       {/* Navigation */}
       <motion.nav 
         initial={{ y: -100, opacity: 0 }}
