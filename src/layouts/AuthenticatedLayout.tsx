@@ -15,57 +15,66 @@ export default function AuthenticatedLayout() {
   const [loading, setLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [checkedAuth, setCheckedAuth] = useState(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        setUser(null);
-        setLoading(false);
-        // Redirect to landing page instead of showing it inline
-        navigate('/', { replace: true });
-        return;
-      }
-      setUser(session.user);
+    let mounted = true;
 
-      // Safely check if user has seen onboarding
-      try {
-        const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-        if (!hasSeenOnboarding) {
-          setShowOnboarding(true);
-        }
-      } catch (error) {
-        console.warn('localStorage not available:', error);
-        setShowOnboarding(true);
-      }
-
-      setLoading(false);
-    });
-
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        setUser(null);
-        setLoading(false);
-        // Redirect to landing page instead of showing it inline
-        navigate('/', { replace: true });
-        return;
-      }
-      setUser(session.user);
+      if (!mounted) return;
 
-      // Safely check if user has seen onboarding
-      try {
-        const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-        if (!hasSeenOnboarding) {
+      if (session) {
+        setUser(session.user);
+        // Safely check if user has seen onboarding
+        try {
+          const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+          if (!hasSeenOnboarding) {
+            setShowOnboarding(true);
+          }
+        } catch (error) {
+          console.warn('localStorage not available:', error);
           setShowOnboarding(true);
         }
-      } catch (error) {
-        console.warn('localStorage not available:', error);
-        setShowOnboarding(true);
       }
-
+      setCheckedAuth(true);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+
+      if (event === 'SIGNED_OUT') {
+        // User explicitly signed out - redirect to landing
+        setUser(null);
+        setCheckedAuth(true);
+        setLoading(false);
+        navigate('/', { replace: true });
+        return;
+      }
+
+      if (session) {
+        setUser(session.user);
+        // Safely check if user has seen onboarding
+        try {
+          const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+          if (!hasSeenOnboarding) {
+            setShowOnboarding(true);
+          }
+        } catch (error) {
+          console.warn('localStorage not available:', error);
+          setShowOnboarding(true);
+        }
+        setLoading(false);
+      }
+      setCheckedAuth(true);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleOnboardingComplete = () => {
@@ -94,9 +103,19 @@ export default function AuthenticatedLayout() {
     );
   }
 
-  if (!user) {
-    // Redirect to landing page - this is handled by the useEffect
+  if (!user && checkedAuth) {
+    // User is not authenticated and we've checked auth state - redirect to landing
+    navigate('/', { replace: true });
     return null;
+  }
+
+  if (!user) {
+    // Still checking auth or loading
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   // Show onboarding for logged-in users who haven't seen it
