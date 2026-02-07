@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { CreditsBar } from "@/components/CreditsBar";
@@ -7,10 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import LandingPage from "@/components/LandingPage";
 import { OnboardingCutscene } from "@/components/OnboardingCutscene";
 
 export default function AuthenticatedLayout() {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -21,6 +21,8 @@ export default function AuthenticatedLayout() {
       if (!session) {
         setUser(null);
         setLoading(false);
+        // Redirect to landing page instead of showing it inline
+        navigate('/', { replace: true });
         return;
       }
       setUser(session.user);
@@ -43,6 +45,8 @@ export default function AuthenticatedLayout() {
       if (!session) {
         setUser(null);
         setLoading(false);
+        // Redirect to landing page instead of showing it inline
+        navigate('/', { replace: true });
         return;
       }
       setUser(session.user);
@@ -62,7 +66,7 @@ export default function AuthenticatedLayout() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleOnboardingComplete = () => {
     try {
@@ -91,7 +95,8 @@ export default function AuthenticatedLayout() {
   }
 
   if (!user) {
-    return <LandingPage />;
+    // Redirect to landing page - this is handled by the useEffect
+    return null;
   }
 
   // Show onboarding for logged-in users who haven't seen it

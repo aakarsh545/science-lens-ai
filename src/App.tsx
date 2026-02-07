@@ -39,7 +39,11 @@ const App = () => (
       <ErrorBoundary>
         <BrowserRouter basename={basename}>
           <Routes>
-            <Route path="/" element={<AuthenticatedLayout />}>
+            {/* Public landing page - always accessible */}
+            <Route path="/" element={<Index />} />
+
+            {/* Authenticated app routes - all under /app path for clarity */}
+            <Route path="/dashboard" element={<AuthenticatedLayout />}>
               <Route index element={<DashboardMainPage />} />
               <Route path="learning" element={<UnifiedLearningPage />} />
               <Route path="learning/:courseSlug" element={<CoursePage />} />

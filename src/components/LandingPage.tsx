@@ -81,7 +81,7 @@ export default function LandingPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' && session) {
         // User is authenticated, navigate to dashboard
-        navigate('/', { replace: true });
+        navigate('/dashboard', { replace: true });
       }
     });
 
