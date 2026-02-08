@@ -304,31 +304,38 @@ function LessonQuiz({ userId, lessonId, lessonTitle, onComplete }: LessonQuizPro
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
-    generateQuiz();
+    loadQuiz();
   }, []);
 
-  const generateQuiz = async () => {
-    setGenerating(true);
+  const loadQuiz = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('quiz-generate', {
-        body: { lessonId, lessonTitle, questionCount: 10 }
-      });
+      // Fetch pre-generated quiz from database
+      const { data, error } = await supabase
+        .from('course_quizzes')
+        .select('questions')
+        .eq('course_id', lessonId)
+        .single();
 
-      if (error) throw error;
-      if (!data?.questions || data.questions.length === 0) {
-        throw new Error('No questions generated');
+      if (error) {
+        // If no quiz found, that's okay - show error UI
+        console.warn('No pre-generated quiz found for course:', lessonId);
+        setQuestions([]);
+        setLoading(false);
+        return;
       }
-      setQuestions(data.questions);
+
+      if (data?.questions && Array.isArray(data.questions)) {
+        setQuestions(data.questions);
+      } else {
+        setQuestions([]);
+      }
     } catch (error) {
-      console.error('Error generating quiz:', error);
-      // Set empty state to trigger error UI
+      console.error('Error loading quiz:', error);
       setQuestions([]);
     } finally {
       setLoading(false);
-      setGenerating(false);
     }
   };
 
@@ -386,14 +393,14 @@ function LessonQuiz({ userId, lessonId, lessonTitle, onComplete }: LessonQuizPro
     }, 1500);
   };
 
-  if (loading || generating) {
+  if (loading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm">
         <Card className="w-full max-w-md p-8 text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">Generating Quiz</h2>
+          <h2 className="text-xl font-bold mb-2">Loading Quiz</h2>
           <p className="text-muted-foreground">
-            {generating ? 'Creating questions based on lesson content...' : 'Loading quiz...'}
+            Preparing your placement quiz...
           </p>
         </Card>
       </div>
@@ -405,10 +412,10 @@ function LessonQuiz({ userId, lessonId, lessonTitle, onComplete }: LessonQuizPro
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center space-y-4">
-            <div className="text-4xl">⚠️</div>
-            <h2 className="text-xl font-bold">Quiz Generation Failed</h2>
+            <div className="text-4xl">📚</div>
+            <h2 className="text-xl font-bold">Quiz Not Available</h2>
             <p className="text-muted-foreground">
-              We couldn't generate the placement quiz right now. You can start from the beginning and we'll adjust as you learn.
+              The placement quiz for this course isn't ready yet. You can start from the beginning and we'll adjust as you learn.
             </p>
             <Button onClick={() => onComplete()} className="w-full">
               Start from Basics
