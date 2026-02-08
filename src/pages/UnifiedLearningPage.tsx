@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { BookOpen, Search, Filter, Loader2, CheckCircle2, Star } from "lucide-react";
 import { calculateLevel, getXpForNextLevel, getXpRemainingToNextLevel, getProgressToNextLevel } from "@/utils/levelCalculations";
+import LessonOnboarding from "@/components/LessonOnboarding";
 
 // Course emoji mapping
 const getCourseEmoji = (slug: string): string => {
@@ -82,6 +83,10 @@ export default function UnifiedLearningPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
+
+  // Course onboarding state
+  const [showCourseOnboarding, setShowCourseOnboarding] = useState(false);
+  const [pendingCourse, setPendingCourse] = useState<{ id: string; slug: string; title: string; firstLessonSlug?: string } | null>(null);
 
   useEffect(() => {
     initPage();
@@ -165,6 +170,94 @@ export default function UnifiedLearningPage() {
     }
   };
 
+  const handleStartCourse = async (course: Course) => {
+    if (!userId) {
+      // Not logged in, redirect to landing
+      navigate('/');
+      return;
+    }
+
+    try {
+      // Check if course onboarding is completed using profiles.onboarding_completed jsonb
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('user_id', userId)
+        .single();
+
+      const courseOnboarding = profile?.onboarding_completed as Record<string, boolean> | null;
+      const isCompleted = courseOnboarding?.[course.id] ?? false;
+
+      // Get first lesson slug
+      const { data: lessonsData } = await supabase
+        .from('lessons')
+        .select('slug')
+        .eq('course_id', course.id)
+        .order('order_index', { ascending: true })
+        .limit(1);
+
+      const firstLessonSlug = lessonsData?.[0]?.slug;
+
+      if (!isCompleted) {
+        // Show onboarding survey
+        setPendingCourse({
+          id: course.id,
+          slug: course.slug,
+          title: course.title,
+          firstLessonSlug,
+        });
+        setShowCourseOnboarding(true);
+      } else {
+        // Already completed, navigate directly to first lesson or course page
+        if (firstLessonSlug) {
+          navigate(`/learning/${course.slug}/${firstLessonSlug}`);
+        } else {
+          navigate(`/learning/${course.slug}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking course onboarding:', error);
+      // On error, navigate directly to course
+      navigate(`/learning/${course.slug}`);
+    }
+  };
+
+  const handleCourseOnboardingComplete = async () => {
+    if (!userId || !pendingCourse) return;
+
+    try {
+      // Mark course as completed in profiles.onboarding_completed jsonb
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('user_id', userId)
+        .single();
+
+      const currentOnboarding = (currentProfile?.onboarding_completed as Record<string, boolean> | null) || {};
+      const updatedOnboarding = {
+        ...currentOnboarding,
+        [pendingCourse.id]: true,
+      };
+
+      await supabase
+        .from('profiles')
+        .update({ onboarding_completed: updatedOnboarding })
+        .eq('user_id', userId);
+
+      setShowCourseOnboarding(false);
+
+      // Navigate to first lesson or course page
+      if (pendingCourse.firstLessonSlug) {
+        navigate(`/learning/${pendingCourse.slug}/${pendingCourse.firstLessonSlug}`);
+      } else {
+        navigate(`/learning/${pendingCourse.slug}`);
+      }
+    } catch (error) {
+      console.error('Error completing course onboarding:', error);
+      setShowCourseOnboarding(false);
+    }
+  };
+
   // Helper to normalize category names (capitalize first letter)
   const normalizeCategory = (cat: string) => {
     if (!cat) return cat;
@@ -223,6 +316,7 @@ export default function UnifiedLearningPage() {
 
   // Main learning page view
   return (
+    <>
     <div className="p-6 max-w-7xl mx-auto">
       {/* User Level Display */}
       <Card className="mb-6 bg-gradient-to-r from-primary/10 to-purple-500/10 border-primary/20">
@@ -337,7 +431,7 @@ export default function UnifiedLearningPage() {
                 <Card
                   key={course.id}
                   className="bg-card hover:border-primary/50 transition-all cursor-pointer group overflow-hidden"
-                  onClick={() => navigate(`/learning/${course.slug}`)}
+                  onClick={() => handleStartCourse(course)}
                 >
                   <CardContent className="p-4">
                     <div className="flex gap-3">
@@ -384,7 +478,7 @@ export default function UnifiedLearningPage() {
                           variant={isStarted ? "outline" : "default"}
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/learning/${course.slug}`);
+                            handleStartCourse(course);
                           }}
                         >
                           {isStarted ? "Continue Learning" : "Start Course"}
@@ -422,5 +516,16 @@ export default function UnifiedLearningPage() {
         </Card>
       )}
     </div>
+
+    {/* Course Onboarding Modal */}
+      {showCourseOnboarding && pendingCourse && userId && (
+        <LessonOnboarding
+          userId={userId}
+          lessonId={pendingCourse.id}
+          lessonTitle={pendingCourse.title}
+          onComplete={handleCourseOnboardingComplete}
+        />
+      )}
+    </>
   );
 }
