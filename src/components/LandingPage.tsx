@@ -86,8 +86,8 @@ export default function LandingPage() {
       if (!mounted) return;
 
       if (session) {
-        // User is already logged in, redirect to dashboard immediately
-        navigate('/dashboard', { replace: true });
+        // User is already logged in, redirect to home immediately
+        navigate('/', { replace: true });
       } else {
         setInitialAuthCheck(false);
       }
@@ -100,7 +100,7 @@ export default function LandingPage() {
       // Only handle SIGNED_IN event (user just signed in through form)
       // INITIAL_SESSION is handled by getSession() above
       if (event === 'SIGNED_IN' && session) {
-        navigate('/dashboard', { replace: true });
+        navigate('/', { replace: true });
       }
     });
 

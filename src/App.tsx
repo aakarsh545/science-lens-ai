@@ -22,7 +22,6 @@ import ChallengeSession from "./pages/ChallengeSession";
 import ProfilePage from "./pages/ProfilePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import ShopPage from "./pages/ShopPage";
-import PricingPage from "./pages/PricingPage";
 import BillingPage from "./pages/BillingPage";
 
 const queryClient = new QueryClient();
@@ -42,8 +41,8 @@ const App = () => (
             {/* Public landing page - always accessible */}
             <Route path="/" element={<Index />} />
 
-            {/* Authenticated app routes - all under /app path for clarity */}
-            <Route path="/dashboard" element={<AuthenticatedLayout />}>
+            {/* Authenticated app routes - no prefix, clean URLs */}
+            <Route path="/" element={<AuthenticatedLayout />}>
               <Route index element={<DashboardMainPage />} />
               <Route path="learning" element={<UnifiedLearningPage />} />
               <Route path="learning/:courseSlug" element={<CoursePage />} />
@@ -54,7 +53,6 @@ const App = () => (
               <Route path="ask" element={<AskPage />} />
               <Route path="api-test" element={<TestPage />} />
               <Route path="shop" element={<ShopPage />} />
-              <Route path="pricing" element={<PricingPage />} />
               <Route path="billing" element={<BillingPage />} />
               <Route path="achievements" element={<AchievementsPage />} />
               <Route path="profile" element={<ProfilePage />} />
