@@ -51,6 +51,11 @@
     --shadow-md: 0 4px 6px -1px hsla(0, 0%, 0%, 0.3);
     --shadow-lg: 0 16px 16px -5px hsla(0, 0%, 0%, 0.3);
 
+    /* Custom shadow effects */
+    --shadow-cosmic: 0 0 20px hsla(217, 91%, 60%, 0.3);
+    --shadow-achievement: 0 0 20px hsla(45, 93%, 47%, 0.4);
+    --shadow-glow: 0 0 30px hsla(217, 91%, 60%, 0.5);
+
     --gradient-primary: linear-gradient(135deg, hsla(212, 100%, 60%, 0.8), hsla(263, 85%, 70%, 0.8));
     --gradient-surface: linear-gradient(180deg, hsla(225, 39%, 8%, 1), hsla(225, 39%, 12%, 1));
     --bg-decoration: none;
@@ -196,6 +201,11 @@
   .btn-ghost-cosmic {
     @apply bg-transparent border border-primary/20 text-primary;
     @apply hover:bg-primary/10 hover:border-primary/40 transition-all duration-300 ease-smooth;
+  }
+
+  /* Gradients */
+  .bg-gradient-cosmic {
+    background: var(--gradient-primary);
   }
 
   /* Space Cards */
