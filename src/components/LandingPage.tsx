@@ -59,6 +59,7 @@ export default function LandingPage() {
   // Initialize with default values, then read from localStorage in useEffect
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
+  const [initialAuthCheck, setInitialAuthCheck] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
 
@@ -76,16 +77,35 @@ export default function LandingPage() {
     }
   }, []);
 
-  // Listen for authentication state changes and navigate to dashboard
+  // Check authentication on mount and listen for auth state changes
   useEffect(() => {
+    let mounted = true;
+
+    // Check initial session immediately on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+
+      if (session) {
+        // User is already logged in, redirect to dashboard immediately
+        navigate('/dashboard', { replace: true });
+      } else {
+        setInitialAuthCheck(false);
+      }
+    });
+
+    // Listen for authentication state changes (for when user signs in through the form)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' && session) {
-        // User is authenticated, navigate to dashboard
+      if (!mounted) return;
+
+      // Only handle SIGNED_IN event (user just signed in through form)
+      // INITIAL_SESSION is handled by getSession() above
+      if (event === 'SIGNED_IN' && session) {
         navigate('/dashboard', { replace: true });
       }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [navigate]);

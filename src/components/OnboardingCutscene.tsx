@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Sparkles, BookOpen, Target, Trophy } from "lucide-react";
 
@@ -38,21 +38,34 @@ export function OnboardingCutscene({ onComplete, onClose }: OnboardingCutscenePr
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(0);
 
-  const isLastSlide = currentSlide === welcomeSlides.length - 1;
+  const totalSlides = welcomeSlides.length;
+  const safeIndex = Math.min(Math.max(currentSlide, 0), Math.max(totalSlides - 1, 0));
+  const isLastSlide = safeIndex === totalSlides - 1;
+  const slide = totalSlides > 0 ? welcomeSlides[safeIndex] : null;
+
+  useEffect(() => {
+    if (safeIndex !== currentSlide) {
+      setCurrentSlide(safeIndex);
+    }
+  }, [safeIndex, currentSlide]);
+
+  if (!slide) {
+    return null;
+  }
 
   const handleNext = () => {
     if (isLastSlide) {
       onComplete();
     } else {
       setDirection(1);
-      setCurrentSlide(prev => prev + 1);
+      setCurrentSlide(prev => Math.min(prev + 1, totalSlides - 1));
     }
   };
 
   const handleBack = () => {
     if (currentSlide > 0) {
       setDirection(-1);
-      setCurrentSlide(prev => prev - 1);
+      setCurrentSlide(prev => Math.max(prev - 1, 0));
     } else {
       onClose();
     }
@@ -112,19 +125,19 @@ export function OnboardingCutscene({ onComplete, onClose }: OnboardingCutscenePr
               className="text-center"
             >
               <div className="flex justify-center mb-6 text-primary">
-                {welcomeSlides[currentSlide].icon}
+                {slide.icon}
               </div>
 
               <h2 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
-                {welcomeSlides[currentSlide].title}
+                {slide.title}
               </h2>
 
               <p className="text-lg text-muted-foreground mb-4">
-                {welcomeSlides[currentSlide].subtitle}
+                {slide.subtitle}
               </p>
 
               <p className="text-base text-foreground/80 mb-8 max-w-md mx-auto">
-                {welcomeSlides[currentSlide].description}
+                {slide.description}
               </p>
 
               {/* Navigation Buttons */}
