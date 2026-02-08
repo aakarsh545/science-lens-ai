@@ -1,15 +1,13 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import {
-  BookOpen, Clock, Award, Loader2, Lock, CheckCircle2, ArrowLeft,
-  ChevronDown, ChevronRight, FolderOpen, FileText
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { TopBar } from "@/components/course/TopBar";
+import { PathLayout } from "@/components/course/PathLayout";
+import { UnitCard } from "@/components/course/UnitCard";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import { calculateLevel, getProgressToNextLevel, getXpRemainingToNextLevel } from "@/utils/levelCalculations";
 
 interface Lesson {
   id: string;
@@ -35,20 +33,36 @@ interface UserProgress {
   status: string;
 }
 
+interface UserProfile {
+  level: number;
+  xp_points: number;
+  xp_total: number;
+  streak?: number;
+}
+
 interface LessonGroup {
   name: string;
   lessons: Lesson[];
+  progress: {
+    completed: number;
+    total: number;
+  };
+  totalXP: number;
 }
 
 export default function CoursePage() {
   const { courseSlug } = useParams();
   const navigate = useNavigate();
   const [course, setCourse] = useState<Course | null>(null);
-  const [relatedCourses, setRelatedCourses] = useState<Course[]>([]);
   const [progress, setProgress] = useState<UserProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    level: 1,
+    xp_points: 0,
+    xp_total: 0,
+    streak: 0
+  });
 
   useEffect(() => {
     const init = async () => {
@@ -57,6 +71,7 @@ export default function CoursePage() {
         setUserId(session.user.id);
         await loadCourse();
         await loadProgress(session.user.id);
+        await loadUserProfile(session.user.id);
       } else {
         await loadCourse();
       }
@@ -76,65 +91,23 @@ export default function CoursePage() {
         return;
       }
 
-      if (!data) {
-        console.warn('No course data returned');
+      if (!data || data.error) {
+        console.error('Course not found or has error');
         return;
       }
 
-      // Check if course has an error
-      if (data.error) {
-        console.error('Course error:', data.error);
-        return;
-      }
-
-      // Ensure lessons array exists
       const courseWithLessons = {
         ...data,
         lessons: data.lessons || [],
       };
 
       setCourse(courseWithLessons);
-
-      // Load related courses after setting course
-      if (courseWithLessons.category && courseWithLessons.id) {
-        await loadRelatedCourses(courseWithLessons.category, courseWithLessons.id);
-      }
     } catch (err) {
       console.error('Exception in loadCourse:', err);
     }
   };
 
-  const loadRelatedCourses = async (category: string, currentCourseId: string) => {
-    const { data: coursesData, error } = await supabase
-      .from('courses')
-      .select('id, slug, title, description, category')
-      .eq('category', category)
-      .neq('id', currentCourseId)
-      .order('title', { ascending: true });
-
-    if (!error && coursesData) {
-      // Get lesson count for each course
-      const coursesWithCounts = await Promise.all(
-        coursesData.map(async (course) => {
-          const { count } = await supabase
-            .from('lessons')
-            .select('*', { count: 'exact', head: true })
-            .eq('course_id', course.id);
-
-          return {
-            ...course,
-            lessons: [],
-            lesson_count: count || 0
-          };
-        })
-      );
-      setRelatedCourses(coursesWithCounts);
-    }
-  };
-
   const loadProgress = async (uid: string) => {
-    if (!course?.id) return;
-
     const { data } = await supabase
       .from('user_progress')
       .select('lesson_id, status')
@@ -145,13 +118,32 @@ export default function CoursePage() {
     }
   };
 
-  // Group lessons by chapter from database
-  const groupedLessons = useMemo(() => {
+  const loadUserProfile = async (uid: string) => {
+    try {
+      const [userStatsResult, profileResult] = await Promise.all([
+        supabase.from("user_stats").select("xp_total").eq("user_id", uid).single(),
+        supabase.from("profiles").select("xp_points, level").eq("user_id", uid).single(),
+      ]);
+
+      const xp_total = userStatsResult.data?.xp_total || 0;
+      const xp_points = profileResult.data?.xp_points || 0;
+      const calculatedLevel = calculateLevel(xp_points);
+
+      setUserProfile({
+        level: calculatedLevel,
+        xp_points,
+        xp_total,
+      });
+    } catch (error) {
+      console.error("Error loading user profile:", error);
+    }
+  };
+
+  // Group lessons by chapter
+  const groupedUnits = useMemo(() => {
     if (!course?.lessons) return [];
 
     const sortedLessons = [...course.lessons].sort((a, b) => a.order_index - b.order_index);
-
-    // Group by chapter field from database
     const groupsMap = new Map<string, Lesson[]>();
 
     sortedLessons.forEach((lesson) => {
@@ -162,7 +154,6 @@ export default function CoursePage() {
       groupsMap.get(chapter)!.push(lesson);
     });
 
-    // Convert map to array and sort by chapter order
     const chapterOrder = [
       'Introduction',
       'Basics',
@@ -172,71 +163,78 @@ export default function CoursePage() {
       'Expert Level'
     ];
 
-    const groups: LessonGroup[] = Array.from(groupsMap.entries())
-      .map(([name, lessons]) => ({ name, lessons }))
+    const units: LessonGroup[] = Array.from(groupsMap.entries())
+      .map(([name, lessons]) => {
+        const completed = lessons.filter(l => {
+          const lessonProgress = progress.find(p => p.lesson_id === l.id);
+          return lessonProgress?.status === 'completed';
+        }).length;
+
+        const totalXP = lessons.reduce((sum, l) => sum + (l.xp_reward || 10), 0);
+
+        return {
+          name,
+          lessons,
+          progress: {
+            completed,
+            total: lessons.length
+          },
+          totalXP
+        };
+      })
       .sort((a, b) => {
         const aIndex = chapterOrder.indexOf(a.name);
         const bIndex = chapterOrder.indexOf(b.name);
-        // If both chapters are in our ordered list, sort by that order
         if (aIndex >= 0 && bIndex >= 0) return aIndex - bIndex;
-        // If only one is in the list, that one comes first
         if (aIndex >= 0) return -1;
         if (bIndex >= 0) return 1;
-        // Otherwise, sort alphabetically
         return a.name.localeCompare(b.name);
       });
 
-    return groups;
-  }, [course?.lessons]);
+    return units;
+  }, [course?.lessons, progress]);
 
-  // Initialize open groups
-  useEffect(() => {
-    const initial: Record<string, boolean> = {};
-    groupedLessons.forEach(g => { initial[g.name] = true; });
-    setOpenGroups(initial);
-  }, [groupedLessons]);
+  // Determine which unit is current (first incomplete)
+  const currentUnitIndex = useMemo(() => {
+    return groupedUnits.findIndex(unit => unit.progress.completed < unit.progress.total);
+  }, [groupedUnits]);
+
+  const isUnitLocked = (index: number) => {
+    if (index === 0) return false;
+    const previousUnit = groupedUnits[index - 1];
+    if (!previousUnit) return true;
+    return previousUnit.progress.completed < previousUnit.progress.total;
+  };
+
+  const isUnitCompleted = (index: number) => {
+    const unit = groupedUnits[index];
+    if (!unit) return false;
+    return unit.progress.completed >= unit.progress.total;
+  };
+
+  const handleUnitStart = (unit: LessonGroup, index: number) => {
+    if (isUnitLocked(index) && userId) {
+      toast.error('Complete the previous unit first to unlock this one.');
+      return;
+    }
+
+    // Find first incomplete lesson in this unit
+    const incompleteLesson = unit.lessons.find(l => {
+      const lessonProgress = progress.find(p => p.lesson_id === l.id);
+      return lessonProgress?.status !== 'completed';
+    });
+
+    if (incompleteLesson) {
+      navigate(`/learning/${courseSlug}/${incompleteLesson.slug}`);
+    } else {
+      // All lessons completed, navigate to first lesson
+      navigate(`/learning/${courseSlug}/${unit.lessons[0].slug}`);
+    }
+  };
 
   const getLessonStatus = (lessonId: string) => {
     const lessonProgress = progress.find(p => p.lesson_id === lessonId);
     return lessonProgress?.status || 'not_started';
-  };
-
-  const isLessonUnlocked = (lesson: Lesson, allLessons: Lesson[]) => {
-    const sortedAll = [...allLessons].sort((a, b) => a.order_index - b.order_index);
-    const lessonIndex = sortedAll.findIndex(l => l.id === lesson.id);
-    
-    if (lessonIndex === 0) return true;
-    if (!userId) return false;
-    
-    const prevLesson = sortedAll[lessonIndex - 1];
-    if (!prevLesson) return false;
-    
-    return getLessonStatus(prevLesson.id) === 'completed';
-  };
-
-  const handleLessonClick = (lesson: Lesson) => {
-    if (!isLessonUnlocked(lesson, course?.lessons || []) && userId) {
-      // Find the previous lesson that needs to be completed
-      const sortedLessons = [...(course?.lessons || [])].sort((a, b) => a.order_index - b.order_index);
-      const lessonIndex = sortedLessons.findIndex(l => l.id === lesson.id);
-      const previousLesson = sortedLessons[lessonIndex - 1];
-
-      toast.error(
-        `🔒 "${previousLesson.title}" must be completed first to unlock this lesson.`,
-        { duration: 4000 }
-      );
-      return;
-    }
-    navigate(`/learning/${courseSlug}/${lesson.slug}`);
-  };
-
-  const toggleGroup = (groupName: string) => {
-    setOpenGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
-  };
-
-  const getGroupProgress = (lessons: Lesson[]) => {
-    const completed = lessons.filter(l => getLessonStatus(l.id) === 'completed').length;
-    return { completed, total: lessons.length };
   };
 
   if (loading) {
@@ -250,280 +248,96 @@ export default function CoursePage() {
   if (!course) {
     return (
       <div className="container mx-auto p-6">
-        <Card className="p-12">
-          <div className="text-center space-y-2">
-            <BookOpen className="w-12 h-12 mx-auto text-muted-foreground" />
-            <h3 className="text-xl font-semibold">Course Not Found</h3>
-            <p className="text-muted-foreground">The course you're looking for doesn't exist.</p>
-            <Button onClick={() => navigate('/learning')} className="mt-4">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Courses
-            </Button>
-          </div>
-        </Card>
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold mb-2">Course Not Found</h2>
+          <p className="text-muted-foreground mb-4">The course you're looking for doesn't exist.</p>
+          <button
+            onClick={() => navigate('/learning')}
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+          >
+            Back to Courses
+          </button>
+        </div>
       </div>
     );
   }
 
-  const completedLessons = (course.lessons || []).filter(l => getLessonStatus(l.id) === 'completed').length;
-  const totalLessons = course.lessons?.length || 0;
-  const progressPercentage = totalLessons > 0
-    ? Math.round((completedLessons / totalLessons) * 100)
-    : 0;
-
-  const hasGroups = groupedLessons.length > 1 || (groupedLessons[0]?.name !== '');
+  const xpToNextLevel = getXpRemainingToNextLevel(userProfile.xp_points);
+  const progressToNextLevel = getProgressToNextLevel(userProfile.xp_points);
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl space-y-6">
-      <Button 
-        variant="ghost" 
-        onClick={() => navigate('/learning')}
-        className="mb-4"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Courses
-      </Button>
+    <div className="min-h-screen bg-background">
+      {/* Top Bar */}
+      <TopBar
+        courseTitle={course.title}
+        xp={userProfile.xp_points}
+        xpToNextLevel={xpToNextLevel}
+        progressToNextLevel={progressToNextLevel}
+        level={userProfile.level}
+        streak={userProfile.streak}
+      />
 
-      {/* Course Header */}
-      <Card className="card-cosmic">
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex-1 space-y-2">
-              <Badge variant="secondary" className="mb-2">{course.category}</Badge>
-              <CardTitle className="text-3xl">{course.title}</CardTitle>
-              <CardDescription className="text-base">
-                {course.description}
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        {/* Course Description */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-purple-500/10 border border-primary/20"
+        >
+          <h2 className="text-xl font-bold mb-2">{course.title}</h2>
+          <p className="text-muted-foreground">{course.description}</p>
+        </motion.div>
 
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-primary" />
-              <span>{totalLessons} lessons</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-achievement" />
-              <span>{(course.lessons || []).reduce((sum, l) => sum + (l.xp_reward || 10), 0)} XP total</span>
-            </div>
-            {userId && (
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success" />
-                <span>{completedLessons}/{totalLessons} completed ({progressPercentage}%)</span>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        {/* Learning Path */}
+        <PathLayout>
+          <AnimatePresence mode="popLayout">
+            {groupedUnits.map((unit, index) => {
+              const isCurrent = index === currentUnitIndex;
+              const isLocked = isUnitLocked(index);
+              const isCompleted = isUnitCompleted(index);
 
-      {/* Lessons List - Tree Structure */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Lessons</h2>
-        
-        <div className="space-y-2">
-          {groupedLessons.map((group, groupIdx) => {
-            const groupProgress = getGroupProgress(group.lessons);
-            const isOpen = openGroups[group.name] ?? true;
-
-            // If no grouping, render flat list
-            if (!group.name) {
               return (
-                <div key="flat" className="space-y-3">
-                  {group.lessons.map((lesson, idx) => {
-                    const sortedLessons = [...course.lessons].sort((a, b) => a.order_index - b.order_index);
-                    const lessonIndex = sortedLessons.findIndex(l => l.id === lesson.id);
-                    const prevLesson = lessonIndex > 0 ? sortedLessons[lessonIndex - 1] : undefined;
-
-                    return (
-                      <LessonCard
-                        key={lesson.id}
-                        lesson={lesson}
-                        status={getLessonStatus(lesson.id)}
-                        isUnlocked={isLessonUnlocked(lesson, course.lessons)}
-                        onClick={() => handleLessonClick(lesson)}
-                        indented={false}
-                        previousLessonTitle={prevLesson?.title}
-                      />
-                    );
-                  })}
-                </div>
+                <UnitCard
+                  key={unit.name}
+                  unit={unit}
+                  index={index}
+                  isCurrent={isCurrent}
+                  isLocked={isLocked}
+                  isCompleted={isCompleted}
+                  onStart={() => handleUnitStart(unit, index)}
+                  totalXP={unit.totalXP}
+                />
               );
-            }
+            })}
+          </AnimatePresence>
+        </PathLayout>
 
-            return (
-              <Collapsible 
-                key={group.name} 
-                open={isOpen}
-                onOpenChange={() => toggleGroup(group.name)}
-              >
-                <CollapsibleTrigger asChild>
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors">
-                    {isOpen ? (
-                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                    )}
-                    <FolderOpen className="w-5 h-5 text-primary" />
-                    <span className="font-semibold flex-1">{group.name}</span>
-                    <Badge variant="outline" className="text-xs">
-                      {groupProgress.completed}/{groupProgress.total}
-                    </Badge>
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="ml-4 mt-2 space-y-2 border-l-2 border-muted pl-4">
-                    {group.lessons.map((lesson) => {
-                      const sortedLessons = [...course.lessons].sort((a, b) => a.order_index - b.order_index);
-                      const lessonIndex = sortedLessons.findIndex(l => l.id === lesson.id);
-                      const prevLesson = lessonIndex > 0 ? sortedLessons[lessonIndex - 1] : undefined;
-
-                      return (
-                        <LessonCard
-                          key={lesson.id}
-                          lesson={lesson}
-                          status={getLessonStatus(lesson.id)}
-                          isUnlocked={isLessonUnlocked(lesson, course.lessons)}
-                          onClick={() => handleLessonClick(lesson)}
-                          indented={true}
-                          previousLessonTitle={prevLesson?.title}
-                        />
-                      );
-                    })}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Related Courses Section */}
-      {relatedCourses.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2">
-              <BookOpen className="w-5 h-5" />
-              More {course.category} Courses
-            </CardTitle>
-            <CardDescription>
-              Explore other courses in {course.category}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              {relatedCourses.map((relatedCourse) => (
-                <Card
-                  key={relatedCourse.id}
-                  className="cursor-pointer hover:shadow-lg transition-all border-muted"
-                  onClick={() => navigate(`/learning/${relatedCourse.slug}`)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-1">
-                        <CardTitle className="text-lg">{relatedCourse.title}</CardTitle>
-                        <CardDescription className="text-sm line-clamp-2">
-                          {relatedCourse.description}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <BookOpen className="w-3 h-3" />
-                      <span>{relatedCourse.lesson_count || 0} lessons</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-}
-
-interface LessonCardProps {
-  lesson: Lesson;
-  status: string;
-  isUnlocked: boolean;
-  onClick: () => void;
-  indented: boolean;
-  previousLessonTitle?: string;
-}
-
-function LessonCard({ lesson, status, isUnlocked, onClick, indented, previousLessonTitle }: LessonCardProps) {
-  const isCompleted = status === 'completed';
-
-  return (
-    <Card
-      className={`
-        transition-all cursor-pointer
-        ${isUnlocked
-          ? 'hover:shadow-lg hover:border-primary/50'
-          : 'opacity-60 cursor-not-allowed bg-muted/30'
-        }
-        ${isCompleted ? 'border-success/30 bg-success/5' : ''}
-      `}
-      onClick={onClick}
-    >
-      <CardContent className={`p-4 ${indented ? 'py-3' : ''}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1">
-            <div className={`
-              w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
-              ${isCompleted
-                ? 'bg-success/20 text-success'
-                : isUnlocked
-                  ? 'bg-primary/20 text-primary'
-                  : 'bg-muted text-muted-foreground'
-              }
-            `}>
-              {isCompleted ? (
-                <CheckCircle2 className="w-4 h-4" />
-              ) : isUnlocked ? (
-                <FileText className="w-4 h-4" />
-              ) : (
-                <Lock className="w-4 h-4" />
-              )}
-            </div>
-
-            <div className="flex-1">
-              <h3 className={`font-medium ${indented ? 'text-sm' : ''}`}>{lesson.title}</h3>
-              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  <span>~5 min</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Award className="w-3 h-3" />
-                  <span>+{lesson.xp_reward || 10} XP</span>
-                </div>
-                {!isUnlocked && previousLessonTitle && (
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <span>Complete "{previousLessonTitle}" to unlock</span>
-                  </div>
-                )}
-              </div>
-            </div>
+        {/* Course Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4"
+        >
+          <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20">
+            <div className="text-2xl font-bold text-blue-400">{course.lessons?.length || 0}</div>
+            <div className="text-sm text-muted-foreground">Total Lessons</div>
           </div>
-
-          {!isUnlocked && (
-            <Badge variant="outline" className="text-xs bg-muted/50">
-              <Lock className="w-3 h-3 mr-1" />
-              Locked
-            </Badge>
-          )}
-          {isCompleted && (
-            <Badge variant="outline" className="text-xs border-success text-success bg-success/5">
-              <CheckCircle2 className="w-3 h-3 mr-1" />
-              Completed
-            </Badge>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20">
+            <div className="text-2xl font-bold text-purple-400">
+              {groupedUnits.reduce((sum, u) => sum + u.totalXP, 0)}
+            </div>
+            <div className="text-sm text-muted-foreground">Total XP Available</div>
+          </div>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20">
+            <div className="text-2xl font-bold text-green-400">
+              {groupedUnits.reduce((sum, u) => sum + u.progress.completed, 0)}
+            </div>
+            <div className="text-sm text-muted-foreground">Lessons Completed</div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
   );
 }

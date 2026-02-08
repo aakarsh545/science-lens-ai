@@ -115,6 +115,14 @@ export default {
           from: { transform: "scale(0.95)", opacity: "0" },
           to: { transform: "scale(1)", opacity: "1" },
         },
+        "pulse-slow": {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.9", transform: "scale(1.02)" },
+        },
+        "gradient": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -123,6 +131,8 @@ export default {
         "glow": "glow 2s ease-in-out infinite",
         "slide-up": "slide-up 0.5s ease-out",
         "zoom-in": "zoom-in 0.3s ease-out",
+        "pulse-slow": "pulse-slow 3s ease-in-out infinite",
+        "gradient": "gradient 3s ease infinite",
       },
     },
   },
