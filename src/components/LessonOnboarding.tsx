@@ -318,22 +318,14 @@ function LessonQuiz({ userId, lessonId, lessonTitle, onComplete }: LessonQuizPro
       });
 
       if (error) throw error;
-      if (data?.questions) {
-        setQuestions(data.questions);
+      if (!data?.questions || data.questions.length === 0) {
+        throw new Error('No questions generated');
       }
+      setQuestions(data.questions);
     } catch (error) {
       console.error('Error generating quiz:', error);
-      // Fallback to generic questions if generation fails
-      setQuestions([
-        {
-          id: '1',
-          question: `What is a fundamental concept in ${lessonTitle}?`,
-          options: ['Option A', 'Option B', 'Option C', 'Option D'],
-          correctAnswer: 0,
-          difficulty: 'easy'
-        },
-        // Add more fallback questions...
-      ]);
+      // Set empty state to trigger error UI
+      setQuestions([]);
     } finally {
       setLoading(false);
       setGenerating(false);
@@ -410,10 +402,18 @@ function LessonQuiz({ userId, lessonId, lessonTitle, onComplete }: LessonQuizPro
 
   if (questions.length === 0) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm">
-        <Card className="w-full max-w-md p-8 text-center">
-          <p className="text-muted-foreground mb-4">Unable to generate quiz. Starting from basics.</p>
-          <Button onClick={() => onComplete()}>Continue to Lesson</Button>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center space-y-4">
+            <div className="text-4xl">⚠️</div>
+            <h2 className="text-xl font-bold">Quiz Generation Failed</h2>
+            <p className="text-muted-foreground">
+              We couldn't generate the placement quiz right now. You can start from the beginning and we'll adjust as you learn.
+            </p>
+            <Button onClick={() => onComplete()} className="w-full">
+              Start from Basics
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );
