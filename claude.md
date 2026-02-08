@@ -153,13 +153,14 @@ Check existing PRPs in `/docs/` to determine the next number.
 
 ## IMPORTANT: Commit Policy
 
-**After completing each improvement, feature, or bug fix, you MUST create a git commit.**
+**After completing each improvement, feature, or bug fix, you MUST create a git commit and push it.**
 
 Follow this workflow:
 1. Make the code changes
 2. Test the changes work correctly
 3. Stage and commit with a descriptive message
-4. Then move on to the next task
+4. Push the commit (`git push`)
+5. Then move on to the next task
 
 Commit message format:
 ```
