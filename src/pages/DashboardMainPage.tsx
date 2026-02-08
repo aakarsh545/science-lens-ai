@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Zap, Trophy, Flame, Target, BookOpen, MessageSquare } from "lucide-react";
+import { Loader2, Zap, Trophy, Flame, Target, BookOpen, MessageSquare, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -19,6 +19,7 @@ interface Profile {
   level: number;
   xp_points: number;
   credits: number;
+  daily_goal_minutes?: number;
 }
 
 export default function DashboardMainPage() {
@@ -220,6 +221,35 @@ export default function DashboardMainPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Daily Goal Section */}
+      {profile.daily_goal_minutes && (
+        <Card className="bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 border-primary/20">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
+                Your Daily Learning Goal
+              </CardTitle>
+              <div className="text-sm font-semibold text-primary">
+                {profile.daily_goal_minutes} min/day
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Today's progress</span>
+                <span className="font-semibold">0 / {profile.daily_goal_minutes} min</span>
+              </div>
+              <Progress value={0} className="h-3" />
+              <p className="text-xs text-muted-foreground">
+                Start learning to track your daily progress! 🚀
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

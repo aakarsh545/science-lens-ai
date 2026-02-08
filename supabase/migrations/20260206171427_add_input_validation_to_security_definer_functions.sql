@@ -22,6 +22,8 @@
 -- Current: Missing auth.uid() check and parameter validation
 -- Fix: Add authentication check, validate amounts, check for NULLs
 
+DROP FUNCTION IF EXISTS public.spend_coins(UUID, INTEGER, UUID);
+
 CREATE OR REPLACE FUNCTION public.spend_coins(
   p_user_id UUID,
   p_amount INTEGER,
@@ -89,6 +91,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 -- ============================================================================
 -- Current: Missing auth.uid() check for admin verification
 -- Fix: Add authentication check, validate amounts
+
+DROP FUNCTION IF EXISTS public.award_coins(UUID, INTEGER, TEXT, JSONB);
 
 CREATE OR REPLACE FUNCTION public.award_coins(
   p_user_id UUID,
@@ -212,6 +216,8 @@ $$;
 -- Current: Missing auth.uid() check
 -- Fix: Add authentication and authorization checks
 
+DROP FUNCTION IF EXISTS public.deduct_credits(UUID, INTEGER);
+
 CREATE OR REPLACE FUNCTION public.deduct_credits(
   p_user_id uuid,
   p_amount integer
@@ -277,6 +283,8 @@ $$;
 -- ============================================================================
 -- Current: Missing auth.uid() check for admin operations
 -- Fix: Add authentication checks for both purchase and admin operations
+
+DROP FUNCTION IF EXISTS public.add_credits(UUID, INTEGER, UUID, TEXT);
 
 CREATE OR REPLACE FUNCTION public.add_credits(
   p_user_id uuid,

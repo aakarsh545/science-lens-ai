@@ -8,14 +8,17 @@ import { User } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { OnboardingCutscene } from "@/components/OnboardingCutscene";
+import OnboardingSurvey from "@/components/OnboardingSurvey";
 
 export default function AuthenticatedLayout() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboardingCutscene, setShowOnboardingCutscene] = useState(false);
+  const [showSurvey, setShowSurvey] = useState(false);
   const [checkedAuth, setCheckedAuth] = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -26,15 +29,19 @@ export default function AuthenticatedLayout() {
 
       if (session) {
         setUser(session.user);
-        // Safely check if user has seen onboarding
+
+        // Check if user has completed onboarding survey
+        checkOnboardingStatus(session.user.id);
+
+        // Safely check if user has seen visual onboarding cutscene
         try {
           const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
           if (!hasSeenOnboarding) {
-            setShowOnboarding(true);
+            setShowOnboardingCutscene(true);
           }
         } catch (error) {
           console.warn('localStorage not available:', error);
-          setShowOnboarding(true);
+          setShowOnboardingCutscene(true);
         }
       }
       setCheckedAuth(true);
@@ -93,13 +100,40 @@ export default function AuthenticatedLayout() {
     };
   }, [navigate]);
 
+  const checkOnboardingStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error checking onboarding status:', error);
+        // If error, assume not completed to be safe
+        setShowSurvey(true);
+      } else if (data && !data.onboarding_completed) {
+        setShowSurvey(true);
+      }
+    } catch (error) {
+      console.error('Error checking onboarding:', error);
+      setShowSurvey(true);
+    } finally {
+      setCheckingOnboarding(false);
+    }
+  };
+
+  const handleSurveyComplete = () => {
+    setShowSurvey(false);
+  };
+
   const handleOnboardingComplete = () => {
     try {
       localStorage.setItem('hasSeenOnboarding', 'true');
     } catch (error) {
       console.warn('localStorage not available:', error);
     }
-    setShowOnboarding(false);
+    setShowOnboardingCutscene(false);
   };
 
   const handleOnboardingClose = () => {
@@ -108,10 +142,10 @@ export default function AuthenticatedLayout() {
     } catch (error) {
       console.warn('localStorage not available:', error);
     }
-    setShowOnboarding(false);
+    setShowOnboardingCutscene(false);
   };
 
-  if (loading) {
+  if (loading || checkingOnboarding) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -133,8 +167,17 @@ export default function AuthenticatedLayout() {
     );
   }
 
-  // Show onboarding for logged-in users who haven't seen it
-  if (showOnboarding) {
+  // Show onboarding survey if not completed
+  if (showSurvey) {
+    return (
+      <ThemeProvider userId={user.id}>
+        <OnboardingSurvey userId={user.id} onComplete={handleSurveyComplete} />
+      </ThemeProvider>
+    );
+  }
+
+  // Show visual onboarding cutscene for logged-in users who haven't seen it
+  if (showOnboardingCutscene) {
     return (
       <ThemeProvider userId={user.id}>
         <OnboardingCutscene
