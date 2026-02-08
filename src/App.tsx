@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import AppLayout from "./layouts/AppLayout";
 import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
 import TestPage from "./pages/TestPage";
 import AchievementsPage from "./pages/AchievementsPage";
@@ -36,28 +35,56 @@ const App = () => (
       <Toaster />
       <Sonner />
       <ErrorBoundary>
-        <BrowserRouter basename={basename}>
+        <BrowserRouter basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             {/* Public landing page - always accessible */}
             <Route path="/" element={<Index />} />
 
-            {/* Authenticated app routes - no prefix, clean URLs */}
-            <Route path="/" element={<AuthenticatedLayout />}>
+            {/* Authenticated app routes - all under AuthenticatedLayout */}
+            <Route path="/dashboard" element={<AuthenticatedLayout />}>
               <Route index element={<DashboardMainPage />} />
-              <Route path="learning" element={<UnifiedLearningPage />} />
-              <Route path="learning/:courseSlug" element={<CoursePage />} />
-              <Route path="learning/:courseSlug/:lessonSlug" element={<LessonPlayer />} />
-              <Route path="challenges" element={<ChallengesPage />} />
-              <Route path="challenges/session/:sessionId" element={<ChallengeSession />} />
-              <Route path="leaderboard" element={<LeaderboardPage />} />
-              <Route path="ask" element={<AskPage />} />
-              <Route path="api-test" element={<TestPage />} />
-              <Route path="shop" element={<ShopPage />} />
-              <Route path="billing" element={<BillingPage />} />
-              <Route path="achievements" element={<AchievementsPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="settings/account" element={<AccountInformationPage />} />
+            </Route>
+            <Route path="learning" element={<AuthenticatedLayout />}>
+              <Route index element={<UnifiedLearningPage />} />
+            </Route>
+            <Route path="learning/:courseSlug" element={<AuthenticatedLayout />}>
+              <Route index element={<CoursePage />} />
+            </Route>
+            <Route path="learning/:courseSlug/:lessonSlug" element={<AuthenticatedLayout />}>
+              <Route index element={<LessonPlayer />} />
+            </Route>
+            <Route path="challenges" element={<AuthenticatedLayout />}>
+              <Route index element={<ChallengesPage />} />
+            </Route>
+            <Route path="challenges/session/:sessionId" element={<AuthenticatedLayout />}>
+              <Route index element={<ChallengeSession />} />
+            </Route>
+            <Route path="leaderboard" element={<AuthenticatedLayout />}>
+              <Route index element={<LeaderboardPage />} />
+            </Route>
+            <Route path="ask" element={<AuthenticatedLayout />}>
+              <Route index element={<AskPage />} />
+            </Route>
+            <Route path="api-test" element={<AuthenticatedLayout />}>
+              <Route index element={<TestPage />} />
+            </Route>
+            <Route path="shop" element={<AuthenticatedLayout />}>
+              <Route index element={<ShopPage />} />
+            </Route>
+            <Route path="billing" element={<AuthenticatedLayout />}>
+              <Route index element={<BillingPage />} />
+            </Route>
+            <Route path="achievements" element={<AuthenticatedLayout />}>
+              <Route index element={<AchievementsPage />} />
+            </Route>
+            <Route path="profile" element={<AuthenticatedLayout />}>
+              <Route index element={<ProfilePage />} />
+            </Route>
+            <Route path="settings" element={<AuthenticatedLayout />}>
+              <Route index element={<SettingsPage />} />
+            </Route>
+            <Route path="settings/account" element={<AuthenticatedLayout />}>
+              <Route index element={<AccountInformationPage />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

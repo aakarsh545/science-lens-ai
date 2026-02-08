@@ -117,7 +117,7 @@ export default function ShopPage() {
           <p className="text-muted-foreground max-w-md mx-auto">
             The shop requires additional database tables to be set up. Themes, avatars, and other items will be available here once configured.
           </p>
-          <Button variant="outline" onClick={() => navigate('/')}>
+          <Button variant="outline" onClick={() => navigate('/dashboard')}>
             Back to Dashboard
           </Button>
         </div>

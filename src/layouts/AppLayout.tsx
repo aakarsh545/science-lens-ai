@@ -70,7 +70,7 @@ export default function AppLayout() {
 
   const handleSelectConversation = (convId: string) => {
     setConversationId(convId);
-    navigate("/");
+    navigate("/dashboard");
   };
 
   const handleNewConversation = async () => {
@@ -84,7 +84,7 @@ export default function AppLayout() {
 
     if (!error && newConvo) {
       setConversationId(newConvo.id);
-      navigate("/");
+      navigate("/dashboard");
     }
   };
 

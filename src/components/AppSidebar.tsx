@@ -29,7 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import { clearUserDataById } from "@/utils/userStorage";
 
 const menuItems = [
-  { title: "Home", icon: Compass, path: "/" },
+  { title: "Home", icon: Compass, path: "/dashboard" },
   { title: "Learning", icon: GraduationCap, path: "/learning" },
   { title: "Challenges", icon: Target, path: "/challenges" },
   { title: "Leaderboard", icon: Award, path: "/leaderboard" },

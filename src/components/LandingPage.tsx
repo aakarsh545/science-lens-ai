@@ -55,6 +55,7 @@ const stats = [
 ];
 
 export default function LandingPage() {
+  console.log('LandingPage rendering!');
   const [showAuthModal, setShowAuthModal] = useState(false);
   // Initialize with default values, then read from localStorage in useEffect
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -136,8 +137,8 @@ export default function LandingPage() {
       if (!mounted) return;
 
       if (session) {
-        // User is already logged in, redirect to home immediately
-        navigate('/', { replace: true });
+        // User is already logged in, redirect to dashboard immediately
+        navigate('/dashboard', { replace: true });
       } else {
         setInitialAuthCheck(false);
       }
@@ -150,7 +151,7 @@ export default function LandingPage() {
       // Only handle SIGNED_IN event (user just signed in through form)
       // INITIAL_SESSION is handled by getSession() above
       if (event === 'SIGNED_IN' && session) {
-        navigate('/', { replace: true });
+        navigate('/dashboard', { replace: true });
       }
     });
 

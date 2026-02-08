@@ -58,7 +58,7 @@ export default function PricingPage() {
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <Button variant="ghost" onClick={() => navigate('/')} className="mb-4">
+            <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Dashboard
             </Button>
