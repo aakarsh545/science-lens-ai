@@ -66,29 +66,41 @@ export default function CoursePage() {
   }, [courseSlug]);
 
   const loadCourse = async () => {
-    const { data, error } = await supabase.functions.invoke('courses', {
-      body: { slug: courseSlug }
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke('courses', {
+        body: { slug: courseSlug }
+      });
 
-    if (!error && data) {
-      // If chapters are not included, fetch them directly from database
-      if (data.lessons && data.lessons.length > 0 && !data.lessons[0].chapter) {
-        const { data: lessonsWithChapters } = await supabase
-          .from('lessons')
-          .select('id, slug, title, order_index, xp_reward, chapter')
-          .eq('course_id', data.id)
-          .order('order_index', { ascending: true });
-
-        if (lessonsWithChapters) {
-          setCourse({ ...data, lessons: lessonsWithChapters });
-          // Load related courses after setting course
-          await loadRelatedCourses(data.category, data.id);
-          return;
-        }
+      if (error) {
+        console.error('Error loading course:', error);
+        return;
       }
-      setCourse(data);
+
+      if (!data) {
+        console.warn('No course data returned');
+        return;
+      }
+
+      // Check if course has an error
+      if (data.error) {
+        console.error('Course error:', data.error);
+        return;
+      }
+
+      // Ensure lessons array exists
+      const courseWithLessons = {
+        ...data,
+        lessons: data.lessons || [],
+      };
+
+      setCourse(courseWithLessons);
+
       // Load related courses after setting course
-      await loadRelatedCourses(data.category, data.id);
+      if (courseWithLessons.category && courseWithLessons.id) {
+        await loadRelatedCourses(courseWithLessons.category, courseWithLessons.id);
+      }
+    } catch (err) {
+      console.error('Exception in loadCourse:', err);
     }
   };
 
@@ -253,9 +265,10 @@ export default function CoursePage() {
     );
   }
 
-  const completedLessons = course.lessons.filter(l => getLessonStatus(l.id) === 'completed').length;
-  const progressPercentage = course.lessons.length > 0 
-    ? Math.round((completedLessons / course.lessons.length) * 100) 
+  const completedLessons = (course.lessons || []).filter(l => getLessonStatus(l.id) === 'completed').length;
+  const totalLessons = course.lessons?.length || 0;
+  const progressPercentage = totalLessons > 0
+    ? Math.round((completedLessons / totalLessons) * 100)
     : 0;
 
   const hasGroups = groupedLessons.length > 1 || (groupedLessons[0]?.name !== '');
@@ -289,16 +302,16 @@ export default function CoursePage() {
           <div className="flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-primary" />
-              <span>{course.lessons.length} lessons</span>
+              <span>{totalLessons} lessons</span>
             </div>
             <div className="flex items-center gap-2">
               <Award className="w-4 h-4 text-achievement" />
-              <span>{course.lessons.reduce((sum, l) => sum + (l.xp_reward || 10), 0)} XP total</span>
+              <span>{(course.lessons || []).reduce((sum, l) => sum + (l.xp_reward || 10), 0)} XP total</span>
             </div>
             {userId && (
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-success" />
-                <span>{completedLessons}/{course.lessons.length} completed ({progressPercentage}%)</span>
+                <span>{completedLessons}/{totalLessons} completed ({progressPercentage}%)</span>
               </div>
             )}
           </div>
