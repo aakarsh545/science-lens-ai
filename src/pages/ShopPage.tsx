@@ -358,7 +358,6 @@ export default function ShopPage() {
                                     </Badge>
                                   </div>
                                 </div>
-                              )}
                               <CardHeader className="pb-3">
                                 <div className="flex items-start justify-between">
                                   <div className="flex items-center gap-2">
@@ -449,7 +448,6 @@ export default function ShopPage() {
                                 </Badge>
                               </div>
                             </div>
-                          )}
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between">
                               <div className="flex items-center gap-2">
