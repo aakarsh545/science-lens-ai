@@ -51,7 +51,8 @@ export default function AuthenticatedLayout() {
         setCheckedAuth(true);
         setLoading(false);
 
-        // Clear ALL theme CSS variables on sign out (both prefixed and non-prefixed)
+        // Clear only theme system variables (prefixed with --color-)
+        // Don't remove Tailwind's base variables
         const root = document.documentElement;
         const themeVars = [
           '--color-primary', '--color-secondary', '--color-accent', '--color-surface', '--color-background',
@@ -60,14 +61,8 @@ export default function AuthenticatedLayout() {
           '--color-border', '--color-border-subtle',
           '--color-card', '--color-card-hover', '--color-popover', '--color-muted', '--color-input',
           '--glow-primary', '--glow-accent',
-          '--shadow-sm', '--shadow-md', '--shadow-lg',
           '--gradient-primary', '--gradient-surface',
-          '--blur-backdrop',
-          '--radius-sm', '--radius-md', '--radius-lg',
-          '--decoration-type', '--particle-intensity', '--animation-speed', '--bg-decoration',
-          '--primary', '--secondary', '--accent', '--background', '--surface',
-          '--text-primary', '--text-secondary', '--text-muted',
-          '--border', '--ring', '--radius', '--glow', '--shadow'
+          '--decoration-type', '--particle-intensity', '--animation-speed', '--bg-decoration'
         ];
         themeVars.forEach(varName => root.style.removeProperty(varName));
 

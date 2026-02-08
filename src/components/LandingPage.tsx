@@ -81,11 +81,12 @@ export default function LandingPage() {
   useEffect(() => {
     let mounted = true;
 
-    // Reset ALL theme CSS variables for landing page (remove custom user themes)
+    // Reset theme CSS variables for landing page (remove custom user themes)
     // This ensures the landing page always has consistent blue/purple/cyan appearance
     const root = document.documentElement;
 
-    // Clear ALL existing theme variables first
+    // Only remove the theme system variables (prefixed with --color-)
+    // Don't remove Tailwind's base variables like --ring
     const themeVarNames = [
       '--color-primary', '--color-secondary', '--color-accent', '--color-surface', '--color-background',
       '--color-text-primary', '--color-text-secondary', '--color-text-muted',
@@ -93,15 +94,8 @@ export default function LandingPage() {
       '--color-border', '--color-border-subtle',
       '--color-card', '--color-card-hover', '--color-popover', '--color-muted', '--color-input',
       '--glow-primary', '--glow-accent',
-      '--shadow-sm', '--shadow-md', '--shadow-lg',
       '--gradient-primary', '--gradient-surface',
-      '--blur-backdrop',
-      '--radius-sm', '--radius-md', '--radius-lg',
-      '--decoration-type', '--particle-intensity', '--animation-speed', '--bg-decoration',
-      // Also remove simple names that might be set
-      '--primary', '--secondary', '--accent', '--background', '--surface',
-      '--text-primary', '--text-secondary', '--text-muted',
-      '--border', '--ring', '--radius', '--glow', '--shadow'
+      '--decoration-type', '--particle-intensity', '--animation-speed', '--bg-decoration'
     ];
     themeVarNames.forEach(varName => root.style.removeProperty(varName));
 
@@ -124,9 +118,6 @@ export default function LandingPage() {
       '--glow-primary': '0 0 20px hsla(217, 91%, 60%, 0.3)',
       '--glow-accent': '0 0 20px hsla(188, 94%, 47%, 0.3)',
       '--gradient-primary': 'linear-gradient(135deg, hsla(217, 91%, 60%, 0.8), hsla(262, 83%, 58%, 0.8))',
-      '--radius-md': '0.75rem',
-      '--radius-lg': '1.125rem',
-      '--blur-backdrop': '8px',
       '--decoration-type': 'cosmic',
       '--particle-intensity': 'subtle',
       '--animation-speed': '3s',
