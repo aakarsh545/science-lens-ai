@@ -340,17 +340,16 @@ export default function ShopPage() {
                               className={`overflow-hidden transition-all duration-300 ${config.borderGlow} ${preview.background} border-2`}
                               style={{ borderColor: isEquipped ? preview.borderColor : undefined }}
                             >
-                              {item.thumbnail_url && (
-                                <div className="relative h-32 overflow-hidden">
-                                  <img
-                                    src={item.thumbnail_url}
-                                    alt={item.name}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      const target = e.target as HTMLImageElement;
-                                      target.src = `https://via.placeholder.com/300x200?text=${encodeURIComponent(item.name)}`;
-                                    }}
-                                  />
+                              <div className="relative h-32 overflow-hidden">
+                                <img
+                                  src={item.thumbnail_url || `https://via.placeholder.com/300x200/333/fff?text=${encodeURIComponent(item.name)}`}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    e.currentTarget.src = `https://via.placeholder.com/300x200/333/fff?text=${encodeURIComponent(item.name)}`;
+                                  }}
+                                />
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                   <div className="absolute top-2 right-2">
                                     <Badge className={config.color}>
@@ -432,17 +431,16 @@ export default function ShopPage() {
                           className={`overflow-hidden transition-all duration-300 ${config.borderGlow} bg-gradient-to-br ${config.gradient} border-2`}
                           style={{ borderColor: isEquipped ? preview.borderColor : undefined }}
                         >
-                          {item.thumbnail_url && (
-                            <div className="relative h-32 overflow-hidden">
-                              <img
-                                src={item.thumbnail_url}
-                                alt={item.name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = `https://via.placeholder.com/300x200?text=${encodeURIComponent(item.name)}`;
-                                }}
-                              />
+                          <div className="relative h-32 overflow-hidden">
+                            <img
+                              src={item.thumbnail_url || `https://via.placeholder.com/300x200/333/fff?text=${encodeURIComponent(item.name)}`}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              onError={(e) => {
+                                e.currentTarget.src = `https://via.placeholder.com/300x200/333/fff?text=${encodeURIComponent(item.name)}`;
+                              }}
+                            />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                               <div className="absolute top-2 right-2">
                                 <Badge className={config.color}>
