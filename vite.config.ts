@@ -21,51 +21,16 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Split vendor chunks more granularly to avoid circular dependencies
+          // Simplified chunking to avoid circular dependencies
           if (id.includes('node_modules')) {
+            // Put all React-related in one chunk
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
               return 'react-vendor';
             }
-            // Supabase
-            if (id.includes('@supabase')) {
-              return 'supabase-vendor';
-            }
-            // UI libraries
-            if (id.includes('framer-motion')) {
-              return 'framer-motion-vendor';
-            }
-            if (id.includes('lucide-react')) {
-              return 'lucide-vendor';
-            }
-            // Radix UI components
-            if (id.includes('@radix-ui')) {
-              return 'radix-vendor';
-            }
-            if (id.includes('jspdf')) {
-              return 'pdf-export';
-            }
-            // Class variance authority
-            if (id.includes('class-variance-authority') || id.includes('clsx') || id.includes('tailwind-merge')) {
-              return 'cva-vendor';
-            }
-            // Other node_modules - split by package to avoid circular deps
-            const match = id.match(/node_modules\/([^/]+)/);
-            if (match) {
-              return `vendor-${match[1].replace('@', '')}`;
-            }
+            // Put everything else in vendor
             return 'vendor';
           }
         },
-        // Improve module format to avoid circular dependencies
-        interop: 'auto',
-      },
-      // Experimental features to help with circular dependencies
-      onwarn(warning, warn) {
-        // Ignore circular dependency warnings for node_modules
-        if (warning.code === 'CIRCULAR_DEPENDENCY' && warning.message.includes('node_modules')) {
-          return;
-        }
-        warn(warning);
       },
     },
     chunkSizeWarningLimit: 1000,

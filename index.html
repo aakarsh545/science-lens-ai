@@ -17,6 +17,30 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <!-- Early debug script - runs before React -->
+    <script>
+      console.log('[EARLY DEBUG] HTML loaded');
+      console.log('[EARLY DEBUG] User agent:', navigator.userAgent);
+      console.log('[EARLY DEBUG] Location:', window.location.href);
+
+      // Catch errors before React loads
+      window.addEventListener('error', function(e) {
+        console.error('[EARLY ERROR]', {
+          message: e.message,
+          filename: e.filename,
+          lineno: e.lineno,
+          colno: e.colno,
+          error: e.error?.message || e.error
+        });
+      }, true);
+
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('[EARLY UNHANDLED REJECTION]', e.reason);
+      });
+
+      console.log('[EARLY DEBUG] Error listeners attached');
+    </script>
   </head>
 
   <body>

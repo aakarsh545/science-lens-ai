@@ -30,16 +30,19 @@ const queryClient = new QueryClient();
 // Locally this will be undefined, in production it will be "/" (root)
 const basename = import.meta.env.VITE_BASEPATH?.replace(/\/$/, '') || '/';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <ErrorBoundary>
-        <BrowserRouter basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Routes>
-            {/* Public landing page - always accessible */}
-            <Route path="/" element={<Index />} />
+const App = () => {
+  console.log('[APP] App component rendering');
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <ErrorBoundary>
+          <BrowserRouter basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <Routes>
+              {/* Public landing page - always accessible */}
+              <Route path="/" element={<Index />} />
 
             {/* Authenticated app routes - all under AuthenticatedLayout */}
             <Route path="/dashboard" element={<AuthenticatedLayout />}>
@@ -94,6 +97,7 @@ const App = () => (
       </ErrorBoundary>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
