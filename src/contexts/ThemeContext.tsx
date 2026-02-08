@@ -94,8 +94,12 @@ export function ThemeProvider({ children, userId }: { children: ReactNode; userI
 
         console.log('[ThemeContext] Loading equipped theme:', shopItem.name, metadata);
 
-        // Parse theme config from metadata
+        // Use parseThemeConfig to get appropriate visual effects based on theme name
+        const baseConfig = parseThemeConfig(shopItem);
+
+        // Override with exact colors from metadata
         const config: ThemeConfig = {
+          ...baseConfig,
           palette: {
             primary: metadata.primary || '#3b82f6',
             secondary: metadata.secondary || '#1e40af',
@@ -107,20 +111,7 @@ export function ThemeProvider({ children, userId }: { children: ReactNode; userI
               secondary: metadata.text || '#f1f5f9',
               muted: '#94a3b8',
             }
-          },
-          appearance: {
-            mode: 'dark',
-            contrast: 'medium',
-            glow: 'subtle',
-            blur: 8,
-            rounding: 1
-          },
-          effects: {
-            decoration: 'cosmic',
-            particles: 'subtle',
-            animation: 'gentle'
-          },
-          tags: []
+          }
         };
 
         const loadedTheme: Theme = {
