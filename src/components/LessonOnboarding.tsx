@@ -314,7 +314,7 @@ function LessonQuiz({ userId, lessonId, lessonTitle, onComplete }: LessonQuizPro
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('quiz-generate', {
-        body: { lessonId, lessonTitle, questionCount: 5 }
+        body: { lessonId, lessonTitle, questionCount: 10 }
       });
 
       if (error) throw error;
