@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { CreditsBar } from "@/components/CreditsBar";
@@ -121,8 +121,7 @@ export default function AuthenticatedLayout() {
 
   if (!user && checkedAuth) {
     // User is not authenticated and we've checked auth state - redirect to landing
-    navigate('/', { replace: true });
-    return null;
+    return <Navigate to="/" replace />;
   }
 
   if (!user) {
