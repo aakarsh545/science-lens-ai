@@ -10,12 +10,12 @@
  * - SUPABASE_SERVICE_ROLE_KEY: Supabase service role key for admin access
  */
 
+import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
-import fetch from 'node-fetch';
 
 // Configuration
 const QUIZ_QUESTIONS_PER_COURSE = 10;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 interface Course {
   id: string;
@@ -46,16 +46,21 @@ interface CourseQuiz {
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const geminiApiKey = process.env.LOVABLE_API_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+const openaiApiKey = process.env.OPENAI_API_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Missing Supabase credentials. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+  console.error('❌ Missing Supabase credentials. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY).');
   process.exit(1);
 }
 
-if (!geminiApiKey) {
-  console.error('❌ Missing LOVABLE_API_KEY. Please set LOVABLE_API_KEY environment variable.');
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.warn('⚠️  Using SUPABASE_ANON_KEY instead of SUPABASE_SERVICE_ROLE_KEY.');
+  console.warn('⚠️  If you get permission errors, add SUPABASE_SERVICE_ROLE_KEY to your .env file.');
+}
+
+if (!openaiApiKey) {
+  console.error('❌ Missing OPENAI_API_KEY. Please set OPENAI_API_KEY environment variable.');
   process.exit(1);
 }
 
@@ -101,32 +106,37 @@ Course context: ${course.description}
 Generate ${QUIZ_QUESTIONS_PER_COURSE} REAL questions NOW. Return ONLY the JSON array.`;
 
   try {
-    const response = await fetch(`${GEMINI_API_URL}?key=${geminiApiKey}`, {
+    const response = await fetch(OPENAI_API_URL, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 4000,
-        },
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert science educator. Always respond with valid JSON arrays of multiple-choice questions. Every question must be real and educational with specific answer choices. Never use generic placeholders.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ Gemini API error for ${course.title}:`, response.status, errorText);
+      console.error(`❌ OpenAI API error for ${course.title}:`, response.status, errorText);
       return null;
     }
 
     const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const content = data.choices?.[0]?.message?.content || '';
 
     console.log(`📝 Generated ${content.length} characters for ${course.title}`);
 
@@ -193,8 +203,8 @@ Generate ${QUIZ_QUESTIONS_PER_COURSE} REAL questions NOW. Return ONLY the JSON a
       course_id: course.id,
       questions: formattedQuestions.slice(0, QUIZ_QUESTIONS_PER_COURSE),
       metadata: {
-        generated_by: 'gemini-2.0-flash-exp',
-        model: 'gemini-2.0-flash-exp',
+        generated_by: 'openai-gpt-4o-mini',
+        model: 'gpt-4o-mini',
         generated_at: new Date().toISOString(),
         total_questions: formattedQuestions.length
       }
