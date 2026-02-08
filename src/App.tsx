@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
+import CourseLayout from "./layouts/CourseLayout";
 import TestPage from "./pages/TestPage";
 import AchievementsPage from "./pages/AchievementsPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -47,7 +48,7 @@ const App = () => (
             <Route path="learning" element={<AuthenticatedLayout />}>
               <Route index element={<UnifiedLearningPage />} />
             </Route>
-            <Route path="learning/:courseSlug" element={<AuthenticatedLayout />}>
+            <Route path="learning/:courseSlug" element={<CourseLayout />}>
               <Route index element={<CoursePage />} />
             </Route>
             <Route path="learning/:courseSlug/:lessonSlug" element={<AuthenticatedLayout />}>
