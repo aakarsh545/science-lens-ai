@@ -34,7 +34,8 @@ const STARTING_POINT_OPTIONS = [
   { value: 'find_my_level', label: 'Find my level', subtitle: 'Take a quick quiz', icon: '🎯' },
 ];
 
-const MASCOT_MESSAGES = [
+// Function to get mascot messages based on lesson title
+const getMascotMessages = (lessonTitle: string) => [
   `Let's personalize your ${lessonTitle} experience! 🔬`,
   "Great! Let's find the perfect starting point! 🌟",
 ];
@@ -45,6 +46,11 @@ export default function LessonOnboarding({
   lessonTitle,
   onComplete
 }: LessonOnboardingProps) {
+  // EMERGENCY FIX: Prevent crash if called without lesson context
+  if (!userId || !lessonId || !lessonTitle) {
+    console.warn('LessonOnboarding: Missing required props (userId, lessonId, lessonTitle), skipping render');
+    return null;
+  }
   const [currentStep, setCurrentStep] = useState(0);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     knowledge_level: '',
@@ -217,7 +223,7 @@ export default function LessonOnboarding({
             <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-2xl">
               🔬
             </div>
-            <p className="text-sm font-medium flex-1">{MASCOT_MESSAGES[currentStep]}</p>
+            <p className="text-sm font-medium flex-1">{getMascotMessages(lessonTitle)[currentStep]}</p>
           </motion.div>
 
           {/* Step Content */}
