@@ -55,7 +55,7 @@ const stats = [
 ];
 
 export default function LandingPage() {
-  console.log('LandingPage rendering!');
+  console.log('[LANDING PAGE] Rendering...');
   const [showAuthModal, setShowAuthModal] = useState(false);
   // Initialize with default values, then read from localStorage in useEffect
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -66,6 +66,7 @@ export default function LandingPage() {
 
   // Safely read localStorage after component mounts
   useEffect(() => {
+    console.log('[LANDING PAGE] useEffect - checking localStorage');
     try {
       const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
       setShowOnboarding(!hasSeenOnboarding);

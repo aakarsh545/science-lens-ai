@@ -5,6 +5,20 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// Debug: Log Supabase client initialization
+console.log('[DEBUG] Supabase Client Init:', {
+  url: SUPABASE_URL ? 'SET' : 'MISSING',
+  key: SUPABASE_PUBLISHABLE_KEY ? 'SET' : 'MISSING',
+  urlPreview: SUPABASE_URL,
+});
+
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  console.error('[CRITICAL] Missing Supabase environment variables!', {
+    hasUrl: !!SUPABASE_URL,
+    hasKey: !!SUPABASE_PUBLISHABLE_KEY,
+  });
+}
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
