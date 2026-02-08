@@ -347,7 +347,8 @@ export default function ShopPage() {
                                     alt={item.name}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                      (e.target as HTMLImageElement).style.display = 'none';
+                                      const target = e.target as HTMLImageElement;
+                                      target.src = `https://via.placeholder.com/300x200?text=${encodeURIComponent(item.name)}`;
                                     }}
                                   />
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -438,7 +439,8 @@ export default function ShopPage() {
                                 alt={item.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = `https://via.placeholder.com/300x200?text=${encodeURIComponent(item.name)}`;
                                 }}
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
