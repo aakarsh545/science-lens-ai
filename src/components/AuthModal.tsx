@@ -100,6 +100,9 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
         email,
         password,
         options: {
+          data: {
+            username: username.trim(),
+          },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         }
       });
@@ -140,10 +143,50 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
       onOpenChange(false);
       // Don't force navigation - let parent component decide
     } catch (error: unknown) {
+      console.error('Signup error:', error);
+
+      let errorMessage = "An error occurred during signup";
+      let errorTitle = "Signup failed";
+
+      // Handle specific error cases
+      if (error instanceof Error) {
+        const message = error.message.toLowerCase();
+
+        // Email already registered
+        if (message.includes('already been registered') || message.includes('already registered')) {
+          errorTitle = "Email already in use";
+          errorMessage = "An account with this email already exists. Try signing in instead.";
+        }
+        // Weak password
+        else if (message.includes('password') && (message.includes('weak') || message.includes('strength') || message.includes('valid'))) {
+          errorTitle = "Password too weak";
+          errorMessage = "Password must be at least 8 characters with letters and numbers.";
+        }
+        // Validation error (422)
+        else if (message.includes('validation') || message.includes('422') || message.includes('invalid')) {
+          errorTitle = "Invalid information";
+          errorMessage = "Please check your email, username, and password format.";
+        }
+        // Rate limiting
+        else if (message.includes('rate limit') || message.includes('too many requests')) {
+          errorTitle = "Too many attempts";
+          errorMessage = "Please wait a moment before trying again.";
+        }
+        // Network errors
+        else if (message.includes('network') || message.includes('fetch') || message.includes('connection')) {
+          errorTitle = "Connection error";
+          errorMessage = "Please check your internet connection and try again.";
+        }
+        // Use the actual error message as fallback
+        else {
+          errorMessage = error.message;
+        }
+      }
+
       toast({
         variant: "destructive",
-        title: "Signup failed",
-        description: getUserFriendlyMessage(error, 'AuthModal.signup'),
+        title: errorTitle,
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -282,8 +325,11 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                 />
+                <p className="text-xs text-muted-foreground">
+                  At least 8 characters. Use letters and numbers for better security.
+                </p>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading || !!usernameError || checkingUsername}>
                 {isLoading ? (
