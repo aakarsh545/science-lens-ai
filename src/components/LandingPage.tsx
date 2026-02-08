@@ -81,19 +81,59 @@ export default function LandingPage() {
   useEffect(() => {
     let mounted = true;
 
-    // Reset theme CSS variables for landing page (remove custom user themes)
-    // This ensures the landing page always has consistent appearance
+    // Reset ALL theme CSS variables for landing page (remove custom user themes)
+    // This ensures the landing page always has consistent blue/purple/cyan appearance
     const root = document.documentElement;
-    const defaultLandingColors = {
-      '--primary': '#3b82f6',
-      '--secondary': '#8b5cf6',
-      '--accent': '#06b6d4',
-      '--background': '#0f172a',
-      '--surface': '#1e293b',
+
+    // Clear ALL existing theme variables first
+    const themeVarNames = [
+      '--color-primary', '--color-secondary', '--color-accent', '--color-surface', '--color-background',
+      '--color-text-primary', '--color-text-secondary', '--color-text-muted',
+      '--color-primary-hover', '--color-accent-hover',
+      '--color-border', '--color-border-subtle',
+      '--color-card', '--color-card-hover', '--color-popover', '--color-muted', '--color-input',
+      '--glow-primary', '--glow-accent',
+      '--shadow-sm', '--shadow-md', '--shadow-lg',
+      '--gradient-primary', '--gradient-surface',
+      '--blur-backdrop',
+      '--radius-sm', '--radius-md', '--radius-lg',
+      '--decoration-type', '--particle-intensity', '--animation-speed', '--bg-decoration',
+      // Also remove simple names that might be set
+      '--primary', '--secondary', '--accent', '--background', '--surface',
+      '--text-primary', '--text-secondary', '--text-muted',
+      '--border', '--ring', '--radius', '--glow', '--shadow'
+    ];
+    themeVarNames.forEach(varName => root.style.removeProperty(varName));
+
+    // Apply landing page defaults (blue/purple/cyan space theme)
+    const landingPageDefaults = {
+      '--color-primary': '217 91% 60%',        // blue-500
+      '--color-secondary': '262 83% 58%',      // purple-500
+      '--color-accent': '188 94% 47%',         // cyan-500
+      '--color-surface': '217 33% 17%',        // slate-800
+      '--color-background': '222 47% 11%',     // slate-900
+      '--color-text-primary': '0 0% 100%',     // white
+      '--color-text-secondary': '210 40% 95%', // slate-200
+      '--color-text-muted': '215 16% 70%',     // slate-400
+      '--color-primary-hover': '217 91% 50%',
+      '--color-accent-hover': '188 94% 40%',
+      '--color-border': '217 33% 25%',
+      '--color-border-subtle': '217 33% 30%',
+      '--color-card': '217 33% 17%',
+      '--color-muted': '217 33% 19%',
+      '--glow-primary': '0 0 20px hsla(217, 91%, 60%, 0.3)',
+      '--glow-accent': '0 0 20px hsla(188, 94%, 47%, 0.3)',
+      '--gradient-primary': 'linear-gradient(135deg, hsla(217, 91%, 60%, 0.8), hsla(262, 83%, 58%, 0.8))',
+      '--radius-md': '0.75rem',
+      '--radius-lg': '1.125rem',
+      '--blur-backdrop': '8px',
+      '--decoration-type': 'cosmic',
+      '--particle-intensity': 'subtle',
+      '--animation-speed': '3s',
+      '--bg-decoration': 'radial-gradient(circle at 15% 85%, hsla(217, 91%, 60%, 0.1) 0%, transparent 50%), radial-gradient(circle at 85% 15%, hsla(262, 83%, 58%, 0.1) 0%, transparent 50%)',
     };
 
-    // Apply default landing page colors
-    Object.entries(defaultLandingColors).forEach(([key, value]) => {
+    Object.entries(landingPageDefaults).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });
 
