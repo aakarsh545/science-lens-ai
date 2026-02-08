@@ -170,7 +170,7 @@ export default function UnifiedLearningPage() {
     }
   };
 
-  const handleStartCourse = async (course: Course) => {
+  const handleStartCourse = async (course: Course, isStarted: boolean = false) => {
     if (!userId) {
       // Not logged in, redirect to landing
       navigate('/');
@@ -178,7 +178,47 @@ export default function UnifiedLearningPage() {
     }
 
     try {
-      // Check if course onboarding is completed using profiles.onboarding_completed jsonb
+      // If course is already started, skip onboarding and navigate to next incomplete lesson
+      if (isStarted) {
+        // Get all lessons for this course
+        const { data: lessonsData } = await supabase
+          .from('lessons')
+          .select('id, slug')
+          .eq('course_id', course.id)
+          .order('order_index', { ascending: true });
+
+        if (!lessonsData || lessonsData.length === 0) {
+          navigate(`/learning/${course.slug}`);
+          return;
+        }
+
+        // Get user progress for these lessons
+        const { data: progressData } = await supabase
+          .from('user_progress')
+          .select('lesson_id, status')
+          .eq('user_id', userId);
+
+        if (!progressData) {
+          navigate(`/learning/${course.slug}`);
+          return;
+        }
+
+        // Find first incomplete lesson
+        const nextLesson = lessonsData.find(lesson => {
+          const progress = progressData.find(p => p.lesson_id === lesson.id);
+          return progress?.status !== 'completed';
+        });
+
+        // Navigate to next incomplete lesson or course page if all completed
+        if (nextLesson) {
+          navigate(`/learning/${course.slug}/${nextLesson.slug}`);
+        } else {
+          navigate(`/learning/${course.slug}`);
+        }
+        return;
+      }
+
+      // New course - check if onboarding is completed
       const { data: profile } = await supabase
         .from('profiles')
         .select('onboarding_completed')
@@ -186,7 +226,7 @@ export default function UnifiedLearningPage() {
         .single();
 
       const courseOnboarding = profile?.onboarding_completed as Record<string, boolean> | null;
-      const isCompleted = courseOnboarding?.[course.id] ?? false;
+      const isOnboardingCompleted = courseOnboarding?.[course.id] ?? false;
 
       // Get first lesson slug
       const { data: lessonsData } = await supabase
@@ -198,7 +238,7 @@ export default function UnifiedLearningPage() {
 
       const firstLessonSlug = lessonsData?.[0]?.slug;
 
-      if (!isCompleted) {
+      if (!isOnboardingCompleted) {
         // Show onboarding survey
         setPendingCourse({
           id: course.id,
@@ -208,7 +248,7 @@ export default function UnifiedLearningPage() {
         });
         setShowCourseOnboarding(true);
       } else {
-        // Already completed, navigate directly to first lesson or course page
+        // Onboarding already completed, navigate directly to first lesson
         if (firstLessonSlug) {
           navigate(`/learning/${course.slug}/${firstLessonSlug}`);
         } else {
@@ -216,7 +256,7 @@ export default function UnifiedLearningPage() {
         }
       }
     } catch (error) {
-      console.error('Error checking course onboarding:', error);
+      console.error('Error in handleStartCourse:', error);
       // On error, navigate directly to course
       navigate(`/learning/${course.slug}`);
     }
@@ -431,7 +471,7 @@ export default function UnifiedLearningPage() {
                 <Card
                   key={course.id}
                   className="bg-card hover:border-primary/50 transition-all cursor-pointer group overflow-hidden"
-                  onClick={() => handleStartCourse(course)}
+                  onClick={() => handleStartCourse(course, isStarted)}
                 >
                   <CardContent className="p-4">
                     <div className="flex gap-3">
@@ -478,7 +518,7 @@ export default function UnifiedLearningPage() {
                           variant={isStarted ? "outline" : "default"}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStartCourse(course);
+                            handleStartCourse(course, isStarted);
                           }}
                         >
                           {isStarted ? "Continue Learning" : "Start Course"}
