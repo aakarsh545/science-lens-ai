@@ -71,7 +71,7 @@ const RARITY_CONFIG: Record<string, {
   },
 };
 
-const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary', 'mythical'];
+const RARITY_ORDER = ['mythical', 'legendary', 'epic', 'rare', 'common']; // Descending order (rarest first)
 
 export default function ShopPage() {
   const navigate = useNavigate();
