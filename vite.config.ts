@@ -15,25 +15,10 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    dedupe: ['react', 'react-dom'],
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          // Simplified chunking to avoid circular dependencies
-          if (id.includes('node_modules')) {
-            // Put all React-related in one chunk
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'react-vendor';
-            }
-            // Put everything else in vendor
-            return 'vendor';
-          }
-        },
-      },
-    },
-    chunkSizeWarningLimit: 1000,
+    // Completely remove manual chunking - let Vite handle it safely
+    sourcemap: true, // Keep for debugging
     minify: 'esbuild',
     target: 'es2020',
   },
