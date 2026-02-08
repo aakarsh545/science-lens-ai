@@ -342,12 +342,15 @@ export default function ShopPage() {
                             >
                               <div className="relative h-32 overflow-hidden">
                                 <img
-                                  src={item.thumbnail_url || `https://via.placeholder.com/300x200/333/fff?text=${encodeURIComponent(item.name)}`}
+                                  src={item.thumbnail_url}
                                   alt={item.name}
+                                  width="300"
+                                  height="200"
                                   className="w-full h-full object-cover"
                                   loading="lazy"
                                   onError={(e) => {
-                                    e.currentTarget.src = `https://via.placeholder.com/300x200/333/fff?text=${encodeURIComponent(item.name)}`;
+                                    e.currentTarget.src = `https://via.placeholder.com/300x200/1e293b/94a3b8?text=${encodeURIComponent(item.name)}`;
+                                    e.currentTarget.alt = 'Fallback: ' + item.name;
                                   }}
                                 />
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -432,12 +435,15 @@ export default function ShopPage() {
                         >
                           <div className="relative h-32 overflow-hidden">
                             <img
-                              src={item.thumbnail_url || `https://via.placeholder.com/300x200/333/fff?text=${encodeURIComponent(item.name)}`}
+                              src={item.thumbnail_url}
                               alt={item.name}
+                              width="300"
+                              height="200"
                               className="w-full h-full object-cover"
                               loading="lazy"
                               onError={(e) => {
-                                e.currentTarget.src = `https://via.placeholder.com/300x200/333/fff?text=${encodeURIComponent(item.name)}`;
+                                e.currentTarget.src = `https://via.placeholder.com/300x200/1e293b/94a3b8?text=${encodeURIComponent(item.name)}`;
+                                e.currentTarget.alt = 'Fallback: ' + item.name;
                               }}
                             />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
