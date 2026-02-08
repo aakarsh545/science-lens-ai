@@ -46,10 +46,20 @@ export default function AuthenticatedLayout() {
       if (!mounted) return;
 
       if (event === 'SIGNED_OUT') {
-        // User explicitly signed out - redirect to landing
+        // User explicitly signed out - clear theme and redirect to landing
         setUser(null);
         setCheckedAuth(true);
         setLoading(false);
+
+        // Clear custom theme CSS variables on sign out
+        const root = document.documentElement;
+        const themeVars = [
+          '--primary', '--secondary', '--accent', '--background',
+          '--surface', '--text-primary', '--text-secondary', '--text-muted',
+          '--border', '--ring', '--radius', '--glow', '--shadow'
+        ];
+        themeVars.forEach(varName => root.style.removeProperty(varName));
+
         navigate('/', { replace: true });
         return;
       }

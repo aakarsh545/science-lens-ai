@@ -81,6 +81,22 @@ export default function LandingPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Reset theme CSS variables for landing page (remove custom user themes)
+    // This ensures the landing page always has consistent appearance
+    const root = document.documentElement;
+    const defaultLandingColors = {
+      '--primary': '#3b82f6',
+      '--secondary': '#8b5cf6',
+      '--accent': '#06b6d4',
+      '--background': '#0f172a',
+      '--surface': '#1e293b',
+    };
+
+    // Apply default landing page colors
+    Object.entries(defaultLandingColors).forEach(([key, value]) => {
+      root.style.setProperty(key, value);
+    });
+
     // Check initial session immediately on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
