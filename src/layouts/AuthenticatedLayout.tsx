@@ -83,11 +83,11 @@ export default function AuthenticatedLayout() {
         try {
           const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
           if (!hasSeenOnboarding) {
-            setShowOnboarding(true);
+            setShowOnboardingCutscene(true);
           }
         } catch (error) {
           console.warn('localStorage not available:', error);
-          setShowOnboarding(true);
+          setShowOnboardingCutscene(true);
         }
         setLoading(false);
       }
@@ -110,21 +110,43 @@ export default function AuthenticatedLayout() {
 
       if (error) {
         console.error('Error checking onboarding status:', error);
-        // If error, assume not completed to be safe
-        setShowSurvey(true);
+        // Only show survey if we explicitly know it's not completed
+        // Don't show on error - could be a network issue that would show survey repeatedly
+        if (error.code === 'PGRST116') {
+          // Row not found - this is a new user, show survey
+          setShowSurvey(true);
+        }
+        // For other errors, don't show survey to prevent repeated displays
       } else if (data && !data.onboarding_completed) {
+        // User exists and hasn't completed onboarding
         setShowSurvey(true);
       }
+      // If data.onboarding_completed is true, survey won't show (default is false)
     } catch (error) {
       console.error('Error checking onboarding:', error);
-      setShowSurvey(true);
+      // Don't show survey on catch errors to prevent loops
     } finally {
       setCheckingOnboarding(false);
     }
   };
 
-  const handleSurveyComplete = () => {
-    setShowSurvey(false);
+  const handleSurveyComplete = async () => {
+    // Re-check database to verify completion before hiding
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('user_id', user!.id)
+        .single();
+
+      if (data?.onboarding_completed) {
+        setShowSurvey(false);
+      } else {
+        console.warn('Survey completion not verified in database');
+      }
+    } catch (error) {
+      console.error('Error verifying survey completion:', error);
+    }
   };
 
   const handleOnboardingComplete = () => {
