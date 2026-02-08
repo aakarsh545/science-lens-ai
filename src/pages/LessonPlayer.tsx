@@ -12,6 +12,7 @@ import remarkGfm from "remark-gfm";
 import TopicVisual from "@/components/animations/TopicVisual";
 import RelatedConceptsDropdown from "@/components/lessons/RelatedConceptsDropdown";
 import QuizResults from "@/pages/QuizResults";
+import LessonOnboarding from "@/components/LessonOnboarding";
 import {
   ArrowLeft,
   ArrowRight,
@@ -98,6 +99,11 @@ export default function LessonPlayer() {
   const [isCompleted, setIsCompleted] = useState(false);
   const [completingLesson, setCompletingLesson] = useState(false);
 
+  // Onboarding state
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const [recommendedSection, setRecommendedSection] = useState<string | undefined>();
+
   // Quiz state
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [showResults, setShowResults] = useState<Record<number, boolean>>({});
@@ -168,14 +174,34 @@ export default function LessonPlayer() {
           if (lessonData) {
             setLesson(lessonData);
 
-            const { data: progress } = await supabase
+            // Check onboarding status
+            const { data: progressData } = await supabase
               .from('user_progress')
-              .select('status')
+              .select('status, onboarding_completed, recommended_starting_section')
               .eq('user_id', uid)
               .eq('lesson_id', lessonData.id)
               .maybeSingle();
 
-            setIsCompleted(progress?.status === 'completed');
+            setIsCompleted(progressData?.status === 'completed');
+
+            // Check if onboarding is needed
+            if (progressData) {
+              if (!progressData.onboarding_completed) {
+                setShowOnboarding(true);
+              }
+              setRecommendedSection(progressData.recommended_starting_section || undefined);
+            } else {
+              // No progress record yet, create one and show onboarding
+              await supabase
+                .from('user_progress')
+                .insert({
+                  user_id: uid,
+                  lesson_id: lessonData.id,
+                  status: 'in_progress',
+                  onboarding_completed: false,
+                });
+              setShowOnboarding(true);
+            }
           }
         }
       }
@@ -184,6 +210,7 @@ export default function LessonPlayer() {
       toast.error('Failed to load lesson');
     } finally {
       setLoading(false);
+      setCheckingOnboarding(false);
     }
   };
 
@@ -463,7 +490,23 @@ export default function LessonPlayer() {
     }
   };
 
-  if (loading) {
+  const handleOnboardingComplete = (startingSection?: string) => {
+    setShowOnboarding(false);
+    setRecommendedSection(startingSection);
+
+    if (startingSection) {
+      toast.success(`Starting at ${startingSection} level based on your quiz results!`);
+      // Scroll to the recommended section if needed
+      setTimeout(() => {
+        const element = document.getElementById(startingSection);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 500);
+    }
+  };
+
+  if (loading || checkingOnboarding) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -493,6 +536,7 @@ export default function LessonPlayer() {
   const processedContent = (lesson.content || '').replace(/\\n/g, '\n');
 
   return (
+    <>
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -828,5 +872,16 @@ export default function LessonPlayer() {
         </Card>
       )}
     </div>
+
+    {/* Lesson Onboarding Modal */}
+    {showOnboarding && lesson && userId && (
+      <LessonOnboarding
+        userId={userId}
+        lessonId={lesson.id}
+        lessonTitle={lesson.title}
+        onComplete={handleOnboardingComplete}
+      />
+    )}
+    </>
   );
 }

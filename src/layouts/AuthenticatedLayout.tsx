@@ -8,7 +8,6 @@ import { User } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { OnboardingCutscene } from "@/components/OnboardingCutscene";
-import OnboardingSurvey from "@/components/OnboardingSurvey";
 
 export default function AuthenticatedLayout() {
   const navigate = useNavigate();
@@ -16,9 +15,7 @@ export default function AuthenticatedLayout() {
   const [loading, setLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [showOnboardingCutscene, setShowOnboardingCutscene] = useState(false);
-  const [showSurvey, setShowSurvey] = useState(false);
   const [checkedAuth, setCheckedAuth] = useState(false);
-  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -29,9 +26,6 @@ export default function AuthenticatedLayout() {
 
       if (session) {
         setUser(session.user);
-
-        // Check if user has completed onboarding survey
-        checkOnboardingStatus(session.user.id);
 
         // Safely check if user has seen visual onboarding cutscene
         try {
@@ -100,55 +94,6 @@ export default function AuthenticatedLayout() {
     };
   }, [navigate]);
 
-  const checkOnboardingStatus = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('onboarding_completed')
-        .eq('user_id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error checking onboarding status:', error);
-        // Only show survey if we explicitly know it's not completed
-        // Don't show on error - could be a network issue that would show survey repeatedly
-        if (error.code === 'PGRST116') {
-          // Row not found - this is a new user, show survey
-          setShowSurvey(true);
-        }
-        // For other errors, don't show survey to prevent repeated displays
-      } else if (data && !data.onboarding_completed) {
-        // User exists and hasn't completed onboarding
-        setShowSurvey(true);
-      }
-      // If data.onboarding_completed is true, survey won't show (default is false)
-    } catch (error) {
-      console.error('Error checking onboarding:', error);
-      // Don't show survey on catch errors to prevent loops
-    } finally {
-      setCheckingOnboarding(false);
-    }
-  };
-
-  const handleSurveyComplete = async () => {
-    // Re-check database to verify completion before hiding
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('onboarding_completed')
-        .eq('user_id', user!.id)
-        .single();
-
-      if (data?.onboarding_completed) {
-        setShowSurvey(false);
-      } else {
-        console.warn('Survey completion not verified in database');
-      }
-    } catch (error) {
-      console.error('Error verifying survey completion:', error);
-    }
-  };
-
   const handleOnboardingComplete = () => {
     try {
       localStorage.setItem('hasSeenOnboarding', 'true');
@@ -167,7 +112,7 @@ export default function AuthenticatedLayout() {
     setShowOnboardingCutscene(false);
   };
 
-  if (loading || checkingOnboarding) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -186,15 +131,6 @@ export default function AuthenticatedLayout() {
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-    );
-  }
-
-  // Show onboarding survey if not completed
-  if (showSurvey) {
-    return (
-      <ThemeProvider userId={user.id}>
-        <OnboardingSurvey userId={user.id} onComplete={handleSurveyComplete} />
-      </ThemeProvider>
     );
   }
 
