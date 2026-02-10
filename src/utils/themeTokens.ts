@@ -166,176 +166,54 @@ function getHighContrastAccent(hsl: { h: number; s: number; l: number }): { h: n
 }
 
 /**
- * Generate all CSS tokens from theme config
- * Uses lightness-based dark/light mode detection
+ * Generate simplified theme tokens
+ * ONLY sets text colors and button borders - does NOT change background
  */
 export function generateThemeTokens(config: ThemeConfig): Record<string, string> {
   const tokens: Record<string, string> = {};
 
-  // Convert all palette colors to HSL
-  const primary = hexToHSL(config.palette.primary);
-  const secondary = hexToHSL(config.palette.secondary);
+  // Convert palette colors for border calculation
   const accent = hexToHSL(config.palette.accent);
-  const surface = hexToHSL(config.palette.surface);
-  const background = hexToHSL(config.palette.background);
+  const primary = hexToHSL(config.palette.primary);
 
   // ═══════════════════════════════════════════════════════════════
-  // DARK/LIGHT MODE DETECTION (based on background lightness)
+  // DARK/LIGHT MODE DETECTION (based on theme's background lightness)
   // ═══════════════════════════════════════════════════════════════
-  // Calculate background lightness (0-1 range)
   const backgroundLightness = getLightness(config.palette.background);
-
-  // Threshold: lightness < 0.40 = dark mode, >= 0.40 = light mode
   const isDarkMode = backgroundLightness < 0.40;
 
   // ═══════════════════════════════════════════════════════════════
-  // THEME-SPECIFIC COLOR VALUES (computed based on dark/light mode)
+  // TEXT COLORS (only these change - background stays the same)
   // ═══════════════════════════════════════════════════════════════
-
-  // Text colors - dark mode gets white, light mode gets black
   if (isDarkMode) {
     // DARK MODE: white text, light muted
-    tokens['--color-text-primary'] = `255 255 255`;      // #ffffff
-    tokens['--color-text-secondary'] = `255 255 255`;   // #ffffff
-    tokens['--color-text-muted'] = `204 204 204`;       // #cccccc (80% white)
+    tokens['--theme-text-primary'] = `255 255 255`;      // #ffffff
+    tokens['--theme-text-secondary'] = `255 255 255`;   // #ffffff
+    tokens['--theme-text-muted'] = `204 204 204`;       // #cccccc
 
-    // Button text
-    tokens['--color-button-text'] = `255 255 255`;      // #ffffff
-    tokens['--color-button-secondary-text'] = `255 255 255`;
+    // Button borders: white/light for visibility
+    tokens['--theme-button-border'] = `255 255 255`;    // white
+    tokens['--theme-button-border-hover'] = `229 229 229`; // #e5e5e5 (lighter)
 
-    // Border with transparency (white)
-    tokens['--color-border-subtle'] = `255 255 255 / 0.2`;  // #ffffff33 (20% white)
-
+    console.log(`[Theme] Mode: DARK (white text, white borders)`);
   } else {
     // LIGHT MODE: black text, dark muted
-    tokens['--color-text-primary'] = `0 0 0`;            // #000000
-    tokens['--color-text-secondary'] = `0 0 0`;         // #000000
-    tokens['--color-text-muted'] = `68 68 68`;          // #444444 (27% black)
+    tokens['--theme-text-primary'] = `0 0 0`;            // #000000
+    tokens['--theme-text-secondary'] = `0 0 0`;         // #000000
+    tokens['--theme-text-muted'] = `68 68 68`;          // #444444
 
-    // Button text
-    tokens['--color-button-text'] = `0 0 0`;            // #000000
-    tokens['--color-button-secondary-text'] = `0 0 0`;
+    // Button borders: black/dark for visibility
+    tokens['--theme-button-border'] = `0 0 0`;          // black
+    tokens['--theme-button-border-hover'] = `51 51 51`; // #333333 (darker)
 
-    // Border with transparency (black)
-    tokens['--color-border-subtle'] = `0 0 0 / 0.2`;     // #00000033 (20% black)
+    console.log(`[Theme] Mode: LIGHT (black text, black borders)`);
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // CORE COLOR PALETTE (always set)
-  // ═══════════════════════════════════════════════════════════════
-  tokens['--color-primary'] = `${primary.h} ${primary.s}% ${primary.l}%`;
-  tokens['--color-secondary'] = `${secondary.h} ${secondary.s}% ${secondary.l}%`;
-  tokens['--color-accent'] = `${accent.h} ${accent.s}% ${accent.l}%`;
-  tokens['--color-surface'] = `${surface.h} ${surface.s}% ${surface.l}%`;
-  tokens['--color-background'] = `${background.h} ${background.s}% ${background.l}%`;
+  // Also store the theme's accent for optional use
+  tokens['--theme-accent'] = `${accent.h} ${accent.s}% ${accent.l}%`;
+  tokens['--theme-primary'] = `${primary.h} ${primary.s}% ${primary.l}%`;
 
-  // Button backgrounds
-  tokens['--color-button-bg'] = `${primary.h} ${primary.s}% ${primary.l}%`;
-  tokens['--color-button-secondary-bg'] = `${accent.h} ${accent.s}% ${accent.l}%`;
-
-  // ═══════════════════════════════════════════════════════════════
-  // HIGH-CONTRAST ACCENT (for borders, glows, interactive elements)
-  // ═══════════════════════════════════════════════════════════════
-  const accentBright = getHighContrastAccent(accent);
-  tokens['--color-accent-bright'] = `${accentBright.h} ${accentBright.s}% ${accentBright.l}%`;
-  const primaryBright = getHighContrastAccent(primary);
-  tokens['--color-primary-bright'] = `${primaryBright.h} ${primaryBright.s}% ${primaryBright.l}%`;
-
-  // ═══════════════════════════════════════════════════════════════
-  // DERIVED TOKENS (hover, active states)
-  // ═══════════════════════════════════════════════════════════════
-  const hoverAdjust = isDarkMode ? 10 : -10;
-  const primaryHover = adjustLightness(primary, hoverAdjust);
-  const accentHover = adjustLightness(accent, hoverAdjust);
-  tokens['--color-primary-hover'] = `${primaryHover.h} ${primaryHover.s}% ${primaryHover.l}%`;
-  tokens['--color-accent-hover'] = `${accentHover.h} ${accentHover.s}% ${accentHover.l}%`;
-
-  // Active state (even more visible)
-  const primaryActive = adjustLightness(primary, hoverAdjust * 2);
-  tokens['--color-primary-active'] = `${primaryActive.h} ${primaryActive.s}% ${primaryActive.l}%`;
-
-  // Border colors (higher contrast now)
-  const border = adjustLightness(surface, isDarkMode ? 15 : -15);
-  tokens['--color-border'] = `${border.h} ${border.s}% ${border.l}%`;
-
-  // High-contrast border using accent
-  tokens['--color-border-accent'] = `${accentBright.h} ${accentBright.s}% ${accentBright.l}%`;
-
-  // ═══════════════════════════════════════════════════════════════
-  // SURFACE VARIANTS (cards, panels, inputs)
-  // ═══════════════════════════════════════════════════════════════
-  tokens['--color-card'] = `${surface.h} ${surface.s}% ${surface.l}%`;
-  tokens['--color-card-hover'] = `${surface.h} ${surface.s}% ${Math.min(100, Math.max(0, surface.l + (isDarkMode ? 5 : -5)))}%`;
-  tokens['--color-popover'] = `${surface.h} ${surface.s}% ${surface.l}%`;
-  tokens['--color-muted'] = `${background.h} ${background.s}% ${Math.min(100, Math.max(0, background.l + (isDarkMode ? 8 : -8)))}%`;
-  tokens['--color-input'] = `${background.h} ${background.s}% ${Math.min(100, Math.max(0, background.l + (isDarkMode ? 6 : -6)))}%`;
-  tokens['--color-input-focus'] = `${background.h} ${background.s}% ${Math.min(100, Math.max(0, background.l + (isDarkMode ? 10 : -10)))}%`;
-
-  // ═══════════════════════════════════════════════════════════════
-  // GLOW & SHADOW TOKENS (mode-aware)
-  // ═══════════════════════════════════════════════════════════════
-  const glowOpacity = {
-    'none': '0',
-    'subtle': '0.2',
-    'medium': '0.4',
-    'strong': '0.6'
-  }[config.appearance.glow];
-
-  // For dark mode: mix accent with white for glow
-  // For light mode: mix accent with black for glow
-  if (isDarkMode) {
-    tokens['--glow-primary'] = `0 0 20px hsla(${primary.h}, ${primary.s}%, ${primary.l}%, ${glowOpacity})`;
-    tokens['--glow-accent'] = `0 0 20px hsla(${accentBright.h}, ${accentBright.s}%, ${accentBright.l}%, ${glowOpacity})`;
-    tokens['--glow-strong'] = `0 0 30px hsla(${accentBright.h}, ${accentBright.s}%, ${accentBright.l}%, ${Math.min(1, parseFloat(glowOpacity) + 0.2)})`;
-  } else {
-    tokens['--glow-primary'] = `0 0 20px hsla(${primary.h}, ${primary.s}%, ${primary.l}%, ${glowOpacity})`;
-    tokens['--glow-accent'] = `0 0 20px hsla(${accent.h}, ${accent.s}%, ${accent.l}%, ${glowOpacity})`;
-    tokens['--glow-strong'] = `0 0 30px hsla(${accent.h}, ${accent.s}%, ${accent.l}%, ${Math.min(1, parseFloat(glowOpacity) + 0.2)})`;
-  }
-
-  // Shadow softness based on blur setting
-  const shadowBlur = config.appearance.blur * 2;
-  tokens['--shadow-sm'] = `0 1px 2px 0 hsla(0, 0%, 0%, ${isDarkMode ? 0.5 : 0.2})`;
-  tokens['--shadow-md'] = `0 4px 6px -1px hsla(0, 0%, 0%, ${isDarkMode ? 0.5 : 0.2}), 0 2px 4px -1px hsla(0, 0%, 0%, ${isDarkMode ? 0.3 : 0.1})`;
-  tokens['--shadow-lg'] = `0 ${shadowBlur}px ${shadowBlur * 2}px -5px hsla(0, 0%, 0%, ${isDarkMode ? 0.5 : 0.2})`;
-  tokens['--shadow-glow'] = `0 0 20px hsla(${accentBright.h}, ${accentBright.s}%, ${accentBright.l}%, ${glowOpacity})`;
-
-  // ═══════════════════════════════════════════════════════════════
-  // GRADIENT TOKENS
-  // ═══════════════════════════════════════════════════════════════
-  tokens['--gradient-primary'] = `linear-gradient(135deg, hsla(${primary.h}, ${primary.s}%, ${primary.l}%, 0.9), hsla(${secondary.h}, ${secondary.s}%, ${secondary.l}%, 0.9))`;
-  tokens['--gradient-surface'] = `linear-gradient(180deg, hsla(${background.h}, ${background.s}%, ${background.l}%, 1), hsla(${surface.h} ${surface.s}% ${surface.l}%, 1))`;
-
-  // ═══════════════════════════════════════════════════════════════
-  // EFFECT TOKENS
-  // ═══════════════════════════════════════════════════════════════
-  tokens['--blur-backdrop'] = `${config.appearance.blur}px`;
-
-  // Border radius scale
-  const baseRadius = 0.75; // rem
-  tokens['--radius-sm'] = `${baseRadius * config.appearance.rounding * 0.5}rem`;
-  tokens['--radius-md'] = `${baseRadius * config.appearance.rounding}rem`;
-  tokens['--radius-lg'] = `${baseRadius * config.appearance.rounding * 1.5}rem`;
-
-  // Decoration effects
-  tokens['--decoration-type'] = config.effects.decoration;
-  tokens['--particle-intensity'] = config.effects.particles;
-  tokens['--animation-speed'] = {
-    'static': '0s',
-    'gentle': '3s',
-    'active': '1.5s',
-    'intense': '0.5s'
-  }[config.effects.animation];
-
-  // ═══════════════════════════════════════════════════════════════
-  // BACKGROUND EFFECTS
-  // ═══════════════════════════════════════════════════════════════
-  tokens['--bg-decoration'] = getDecorationPreset(config.effects.decoration, primary, secondary, accent);
-
-  // ═══════════════════════════════════════════════════════════════
-  // DEBUG: Log mode detection (can be removed later)
-  // ═══════════════════════════════════════════════════════════════
-  console.log(`[Theme] Background: ${config.palette.background}, Lightness: ${(backgroundLightness * 100).toFixed(1)}%, Mode: ${isDarkMode ? 'DARK' : 'LIGHT'}`);
+  console.log(`[Theme] Background: ${config.palette.background}, Lightness: ${(backgroundLightness * 100).toFixed(1)}%`);
 
   return tokens;
 }
