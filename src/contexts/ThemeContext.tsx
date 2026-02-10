@@ -17,19 +17,20 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const DEFAULT_THEME: Theme = {
-  id: 'default',
-  name: 'Default',
+// Cosmic default theme (matches the DB Cosmic theme colors)
+const COSMIC_THEME: Theme = {
+  id: 'cosmic-default',
+  name: 'Cosmic',
   config: {
     palette: {
-      primary: '#3b82f6',
-      secondary: '#1e40af',
-      accent: '#60a5fa',
-      surface: '#0f172a',
-      background: '#0f172a',
+      primary: '#1a2c3d',
+      secondary: '#2b3e50',
+      accent: '#3c4f61',
+      surface: '#0d1f30',
+      background: '#0d1f30',
       text: {
-        primary: '#f1f5f9',
-        secondary: '#f1f5f9',
+        primary: '#4e6172',
+        secondary: '#4e6172',
         muted: '#94a3b8',
       }
     },
@@ -59,20 +60,37 @@ function applyThemeTokens(tokens: Record<string, string>) {
   // Clear any existing body styles
   document.body.style.cssText = '';
 
-  // Apply all tokens
+  // Apply all tokens with error handling
   Object.entries(tokens).forEach(([key, value]) => {
-    root.style.setProperty(key, value);
+    try {
+      root.style.setProperty(key, value);
+    } catch (error) {
+      console.warn(`[ThemeContext] Failed to set CSS variable ${key}:`, error);
+    }
   });
+
+  console.log('[ThemeContext] Applied theme tokens:', Object.keys(tokens).length, 'variables');
 }
 
 export function ThemeProvider({ children, userId }: { children: ReactNode; userId: string }) {
-  const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
+  const [theme, setTheme] = useState<Theme>(COSMIC_THEME);
   const [loading, setLoading] = useState(true);
 
   const loadTheme = async () => {
+    if (!userId) {
+      console.warn('[ThemeContext] No userId provided, using Cosmic fallback');
+      setTheme(COSMIC_THEME);
+      const tokens = generateThemeTokens(COSMIC_THEME.config);
+      applyThemeTokens(tokens);
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Load equipped theme with shop item details
-      const { data, error } = await supabase
+      console.log('[ThemeContext] Loading theme for user:', userId);
+
+      // Load equipped theme with shop item details using foreign key join
+      const { data, error, status, statusText } = await supabase
         .from('profiles')
         .select(`
           equipped_theme,
@@ -85,54 +103,75 @@ export function ThemeProvider({ children, userId }: { children: ReactNode; userI
         .eq('user_id', userId)
         .single();
 
-      if (error) throw error;
+      // Log detailed error information
+      if (error) {
+        console.error('[ThemeContext] Database error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          status,
+          statusText
+        });
+        throw error;
+      }
 
-      // If user has equipped theme, load it
+      console.log('[ThemeContext] Profile data loaded:', {
+        equipped_theme: data?.equipped_theme,
+        shop_items_found: !!data?.shop_items,
+        shop_item_name: (data?.shop_items as any)?.name
+      });
+
+      // If user has equipped theme and shop_items data exists
       if (data?.equipped_theme && data.shop_items) {
         const shopItem = data.shop_items as any;
-        const metadata = shopItem.metadata as any;
 
-        console.log('[ThemeContext] Loading equipped theme:', shopItem.name, metadata);
+        if (!shopItem || !shopItem.metadata) {
+          console.warn('[ThemeContext] Shop item or metadata missing, using Cosmic fallback');
+          setTheme(COSMIC_THEME);
+          const tokens = generateThemeTokens(COSMIC_THEME.config);
+          applyThemeTokens(tokens);
+          setLoading(false);
+          return;
+        }
 
-        // Use parseThemeConfig to get appropriate visual effects based on theme name
-        const baseConfig = parseThemeConfig(shopItem);
+        console.log('[ThemeContext] Loading equipped theme:', shopItem.name, shopItem.metadata);
 
-        // Override with exact colors from metadata
-        const config: ThemeConfig = {
-          ...baseConfig,
-          palette: {
-            primary: metadata.primary || '#3b82f6',
-            secondary: metadata.secondary || '#1e40af',
-            accent: metadata.accent || '#60a5fa',
-            surface: metadata.background || '#0f172a',
-            background: metadata.background || '#0f172a',
-            text: {
-              primary: metadata.text || '#f1f5f9',
-              secondary: metadata.text || '#f1f5f9',
-              muted: '#94a3b8',
-            }
-          }
-        };
+        try {
+          // Use parseThemeConfig to parse all metadata (colors + mode + glow + decoration)
+          const config = parseThemeConfig(shopItem);
 
-        const loadedTheme: Theme = {
-          id: shopItem.id,
-          name: shopItem.name,
-          config
-        };
+          const loadedTheme: Theme = {
+            id: shopItem.id,
+            name: shopItem.name,
+            config
+          };
 
-        setTheme(loadedTheme);
-        const tokens = generateThemeTokens(config);
-        applyThemeTokens(tokens);
+          setTheme(loadedTheme);
+          const tokens = generateThemeTokens(config);
+          applyThemeTokens(tokens);
+
+          console.log('[ThemeContext] Successfully applied theme:', shopItem.name);
+        } catch (parseError) {
+          console.error('[ThemeContext] Error parsing theme config:', parseError);
+          console.log('[ThemeContext] Falling back to Cosmic theme');
+          setTheme(COSMIC_THEME);
+          const tokens = generateThemeTokens(COSMIC_THEME.config);
+          applyThemeTokens(tokens);
+        }
       } else {
-        // No equipped theme, use default
-        setTheme(DEFAULT_THEME);
-        const tokens = generateThemeTokens(DEFAULT_THEME.config);
+        // No equipped theme, use Cosmic default
+        console.log('[ThemeContext] No equipped theme, using Cosmic default');
+        setTheme(COSMIC_THEME);
+        const tokens = generateThemeTokens(COSMIC_THEME.config);
         applyThemeTokens(tokens);
       }
     } catch (error) {
       console.error('[ThemeContext] Error loading theme:', error);
-      setTheme(DEFAULT_THEME);
-      const tokens = generateThemeTokens(DEFAULT_THEME.config);
+      console.log('[ThemeContext] Using Cosmic fallback theme');
+
+      setTheme(COSMIC_THEME);
+      const tokens = generateThemeTokens(COSMIC_THEME.config);
       applyThemeTokens(tokens);
     } finally {
       setLoading(false);
@@ -140,14 +179,32 @@ export function ThemeProvider({ children, userId }: { children: ReactNode; userI
   };
 
   const equipTheme = async (themeId: string): Promise<boolean> => {
+    if (!userId) {
+      console.error('[ThemeContext] Cannot equip theme: no userId');
+      return false;
+    }
+
     try {
-      const { error } = await supabase
+      console.log('[ThemeContext] Equipping theme:', themeId);
+
+      const { error, status, statusText } = await supabase
         .from('profiles')
         .update({ equipped_theme: themeId })
         .eq('user_id', userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[ThemeContext] Error equipping theme:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          status,
+          statusText
+        });
+        throw error;
+      }
 
+      console.log('[ThemeContext] Theme equipped successfully, reloading...');
       // Reload theme after equipping
       await loadTheme();
       return true;
@@ -158,6 +215,7 @@ export function ThemeProvider({ children, userId }: { children: ReactNode; userI
   };
 
   const refreshTheme = async () => {
+    console.log('[ThemeContext] Refreshing theme...');
     await loadTheme();
   };
 
