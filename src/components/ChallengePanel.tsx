@@ -246,7 +246,7 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
           </p>
         </CardContent>
         <CardFooter>
-          <Button onClick={loadChallenge} className="w-full" disabled={loading}>
+          <Button onClick={() => navigate('/challenges')} className="w-full" disabled={loading}>
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
