@@ -4,19 +4,14 @@
 
 /**
  * ═══════════════════════════════════════════════════════════════
- * SIMPLIFIED THEME SYSTEM
+ * COMPREHENSIVE THEME SYSTEM WITH CONTRAST SAFETY
  * ═══════════════════════════════════════════════════════════════
  *
- * ONLY changes:
- * - Text colors (--theme-text-primary, --theme-text-secondary, --theme-text-muted)
- * - Button borders (--theme-button-border, --theme-button-border-hover)
+ * All theme colors are set by ThemeContext using palette from shop_items.
+ * The theme applies globally: background, cards, buttons, sidebar, etc.
+ * Contrast is automatically maintained: text is always readable.
  *
- * DOES NOT change:
- * - Background colors (keeps original dark/cosmic background)
- * - Card backgrounds
- * - Surface colors
- *
- * Theme colors are set by ThemeContext using theme metadata from shop_items
+ * Default values below are overridden when a theme is equipped.
  */
 
 @layer base {
@@ -24,79 +19,53 @@
     /* ═══════════════════════════════════════════════════════════════
        THEME VARIABLES (set dynamically by equipped theme)
        ═══════════════════════════════════════════════════════════════ */
-    /* These are overridden by theme system - defaults provided */
-    --theme-text-primary: 210 40% 98%;        /* Default: light text */
-    --theme-text-secondary: 215 20.2% 65.1%;  /* Default: secondary text */
-    --theme-text-muted: 215 20.2% 65.1%;      /* Default: muted text */
-    --theme-button-border: 255 255 255;       /* Default: white border */
-    --theme-button-border-hover: 229 229 229; /* Default: light hover */
-    --theme-accent: 189 94% 43%;              /* Theme accent color */
-    --theme-primary: 212 100% 60%;            /* Theme primary color */
+    /* Text colors (contrast-safe based on theme background) */
+    --text-primary: 210 40% 98%;
+    --text-secondary: 215 20.2% 65.1%;
+    --text-muted: 215 20.2% 65.1%;
 
-    /* ═══════════════════════════════════════════════════════════════
-       CORE COLOR PALETTE (static - not changed by themes)
-       ═══════════════════════════════════════════════════════════════ */
-    --color-primary: 212 100% 60%;
-    --color-secondary: 263 85% 70%;
-    --color-accent: 189 94% 43%;
+    /* Core palette (from shop_items metadata) */
+    --primary: 212 100% 60%;
+    --secondary: 263 85% 70%;
+    --accent: 189 94% 43%;
+    --background: 225 39% 8%;
+    --surface: 225 39% 12%;
 
-    /* ═══════════════════════════════════════════════════════════════
-       BACKGROUND COLORS (static - never changed by themes)
-       ═══════════════════════════════════════════════════════════════ */
-    --color-background: 225 39% 8%;           /* Main background - NEVER changes */
-    --color-surface: 225 39% 12%;            /* Cards/panels */
-    --color-card: 225 39% 12%;               /* Card backgrounds */
-    --color-card-hover: 225 39% 16%;         /* Card hover */
-    --color-popover: 225 39% 12%;            /* Popover/dropdown */
-    --color-muted: 225 39% 20%;              /* Muted backgrounds */
-    --color-input: 225 39% 16%;              /* Input backgrounds */
+    /* Surface variants (cards, panels, inputs) */
+    --card: 225 39% 12%;
+    --card-hover: 225 39% 16%;
+    --card-foreground: 210 40% 98%;
+    --popover: 225 39% 12%;
+    --popover-foreground: 210 40% 98%;
+    --muted: 225 39% 20%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --input: 225 39% 16%;
+    --input-focus: 225 39% 20%;
 
-    /* Legacy text color variables (for compatibility) */
-    --color-text-primary: var(--theme-text-primary);
-    --color-text-secondary: var(--theme-text-secondary);
-    --color-text-muted: var(--theme-text-muted);
+    /* Button colors (theme primary/secondary with contrast-safe text) */
+    --button-bg: 212 100% 60%;
+    --button-foreground: 0 0% 98%;
+    --button-secondary-bg: 189 94% 43%;
+    --button-secondary-foreground: 0 0% 98%;
+    --button-border: 255 255 255;
+    --button-border-hover: 229 229 229;
 
-    /* ═══════════════════════════════════════════════════════════════
-       CONTRAST-SAFE BUTTON COLORS
-       ═══════════════════════════════════════════════════════════════ */
-    --color-button-bg: 212 100% 60%;         /* Button background */
-    --color-button-text: 0 0% 98%;           /* Button text (white/black) */
-    --color-button-secondary-bg: 189 94% 43%; /* Secondary button */
-    --color-button-secondary-text: 0 0% 98%; /* Secondary button text */
+    /* Hover states */
+    --primary-hover: 212 100% 50%;
+    --secondary-hover: 263 85% 60%;
+    --accent-hover: 189 94% 33%;
+    --hover-accent: 189 100% 70%;
 
-    /* ═══════════════════════════════════════════════════════════════
-       HIGH-CONTRAST ACCENT VARIANTS
-       ═══════════════════════════════════════════════════════════════ */
-    --color-accent-bright: 189 100% 70%;     /* Bright accent for borders/glows */
-    --color-primary-bright: 212 100% 70%;    /* Bright primary for borders/glows */
+    /* Border colors */
+    --border: 225 39% 24%;
+    --border-accent: 189 100% 70%;
 
-    /* ═══════════════════════════════════════════════════════════════
-       DERIVED TOKENS (auto-generated from palette)
-       ═══════════════════════════════════════════════════════════════ */
-    --color-primary-hover: 212 100% 50%;     /* Darker primary for hover */
-    --color-accent-hover: 189 94% 33%;       /* Darker accent for hover */
-    --color-primary-active: 212 100% 45%;    /* Even darker for active */
-
-    /* Border colors (high contrast) */
-    --color-border: 225 39% 24%;             /* Primary border */
-    --color-border-subtle: 225 39% 29%;      /* Subtle border */
-    --color-border-accent: 189 100% 70%;     /* High contrast accent border */
-
-    /* Surface variants */
-    --color-card: 225 39% 12%;               /* Card backgrounds */
-    --color-card-hover: 225 39% 16%;         /* Card hover state */
-    --color-popover: 225 39% 12%;            /* Popover/dropdown */
-    --color-muted: 225 39% 20%;              /* Muted backgrounds */
-    --color-input: 225 39% 16%;              /* Input backgrounds */
-    --color-input-focus: 225 39% 20%;        /* Input focus */
-
-    /* ═══════════════════════════════════════════════════════════════
-       EFFECT TOKENS (glows, shadows, gradients)
-       ═══════════════════════════════════════════════════════════════ */
+    /* Glow effects */
     --glow-primary: 0 0 20px hsla(212, 100%, 60%, 0.2);
     --glow-accent: 0 0 20px hsla(189, 100%, 70%, 0.2);
     --glow-strong: 0 0 30px hsla(189, 100%, 70%, 0.4);
 
+    /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsla(0, 0%, 0%, 0.4);
     --shadow-md: 0 4px 6px -1px hsla(0, 0%, 0%, 0.4), 0 2px 4px -1px hsla(0, 0%, 0%, 0.3);
     --shadow-lg: 0 16px 16px -5px hsla(0, 0%, 0%, 0.4);
@@ -118,28 +87,31 @@
     --particle-intensity: subtle;
     --animation-speed: 3s;
 
+    /* Focus ring */
+    --ring: 212 100% 60%;
+
     /* ═══════════════════════════════════════════════════════════════
        TAILWIND INTEGRATION (map to Tailwind's expected variables)
        ═══════════════════════════════════════════════════════════════ */
-    --background: var(--color-background);
-    --foreground: var(--theme-text-primary);
-    --card: var(--color-card);
-    --card-foreground: var(--theme-text-primary);
-    --popover: var(--color-popover);
-    --popover-foreground: var(--theme-text-primary);
-    --primary: var(--color-primary);
-    --primary-foreground: var(--color-button-text);
-    --secondary: var(--color-secondary);
-    --secondary-foreground: var(--color-button-text);
-    --muted: var(--color-muted);
-    --muted-foreground: var(--theme-text-muted);
-    --accent: var(--color-accent);
-    --accent-foreground: var(--color-button-text);
+    --background: var(--background);
+    --foreground: var(--text-primary);
+    --primary: var(--primary);
+    --primary-foreground: var(--button-foreground);
+    --secondary: var(--secondary);
+    --secondary-foreground: var(--button-secondary-foreground);
+    --accent: var(--accent);
+    --accent-foreground: var(--button-foreground);
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-    --border: var(--color-border);
-    --input: var(--color-input);
-    --ring: var(--color-primary);
+    --card: var(--card);
+    --card-foreground: var(--card-foreground);
+    --popover: var(--popover);
+    --popover-foreground: var(--popover-foreground);
+    --muted: var(--muted);
+    --muted-foreground: var(--muted-foreground);
+    --border: var(--border);
+    --input: var(--input);
+    --ring: var(--ring);
 
     --radius: var(--radius-md);
   }
@@ -161,17 +133,16 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     BUTTONS (Theme-colored borders)
+     BUTTONS (Theme primary/secondary colors with contrast-safe text)
      ═══════════════════════════════════════════════════════════════ */
   button,
   .btn,
   [role="button"],
   input[type="submit"],
   input[type="button"] {
-    /* Button with theme-colored border */
-    background: hsl(var(--color-button-bg));
-    color: hsl(var(--theme-text-primary));
-    border: 1px solid rgb(var(--theme-button-border));
+    background: hsl(var(--button-bg));
+    color: hsl(var(--button-foreground));
+    border: 1px solid hsl(var(--button-border));
     box-shadow: var(--glow-primary);
     transition: all 0.2s ease;
   }
@@ -179,8 +150,8 @@
   button:hover,
   .btn:hover,
   [role="button"]:hover {
-    background: hsl(var(--color-primary-hover));
-    border-color: rgb(var(--theme-button-border-hover));
+    background: hsl(var(--primary-hover));
+    border-color: hsl(var(--button-border-hover));
     box-shadow: var(--glow-strong), var(--shadow-md);
     transform: translateY(-1px);
   }
@@ -188,25 +159,25 @@
   button:active,
   .btn:active,
   [role="button"]:active {
-    background: hsl(var(--color-primary-active));
+    background: hsl(var(--primary-hover));
     transform: translateY(0);
   }
 
   /* Secondary button style */
   button.secondary,
   .btn-secondary {
-    background: hsl(var(--color-button-secondary-bg));
-    color: hsl(var(--theme-text-primary));
-    border: 1px solid rgb(var(--theme-button-border));
+    background: hsl(var(--button-secondary-bg));
+    color: hsl(var(--button-secondary-foreground));
+    border: 1px solid hsl(var(--button-border));
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     LINKS (High Visibility using theme accent)
+     LINKS (Theme accent with hover state)
      ═══════════════════════════════════════════════════════════════ */
   a,
   [role="link"],
   .link {
-    color: hsl(var(--theme-accent));
+    color: hsl(var(--accent));
     text-decoration: none;
     transition: all 0.2s ease;
     border-bottom: 1px solid transparent;
@@ -215,37 +186,38 @@
   a:hover,
   [role="link"]:hover,
   .link:hover {
-    color: hsl(var(--color-accent-hover));
+    color: hsl(var(--accent-hover));
     text-decoration: underline;
-    border-bottom-color: hsl(var(--theme-accent));
+    border-bottom-color: hsl(var(--hover-accent));
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     CARDS (Static backgrounds - no theme override)
+     CARDS (Theme card backgrounds with hover)
      ═══════════════════════════════════════════════════════════════ */
   .card,
   [role="article"],
   .card-themed {
-    background: hsl(var(--color-card));
-    border: 1px solid hsl(var(--color-border));
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--card-foreground));
     box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
   }
 
   .card:hover,
   [role="article"]:hover {
-    background: hsl(var(--color-card-hover));
-    border-color: rgb(var(--theme-button-border) / 0.5);
+    background: hsl(var(--card-hover));
+    border-color: hsl(var(--border-accent) / 0.5);
     box-shadow: var(--shadow-lg);
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     SIDEBAR & NAVIGATION (Theme text colors)
+     SIDEBAR & NAVIGATION (Theme colors)
      ═══════════════════════════════════════════════════════════════ */
   .sidebar-item,
   nav a,
   .nav-link {
-    color: hsl(var(--theme-text-primary));
+    color: hsl(var(--text-primary));
     border-left: 3px solid transparent;
     transition: all 0.2s ease;
   }
@@ -253,38 +225,38 @@
   .sidebar-item:hover,
   nav a:hover,
   .nav-link:hover {
-    color: hsl(var(--theme-accent));
-    background: hsl(var(--color-card-hover));
-    border-left-color: hsl(var(--theme-accent));
+    color: hsl(var(--hover-accent));
+    background: hsl(var(--card-hover));
+    border-left-color: hsl(var(--hover-accent));
   }
 
   .sidebar-item.active,
   nav a.active,
   .nav-link.active {
-    color: hsl(var(--theme-accent));
-    background: hsl(var(--color-muted));
-    border-left-color: hsl(var(--theme-accent));
+    color: hsl(var(--hover-accent));
+    background: hsl(var(--muted));
+    border-left-color: hsl(var(--hover-accent));
     font-weight: 600;
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     INPUTS (Theme text colors)
+     INPUTS (Theme backgrounds with text colors)
      ═══════════════════════════════════════════════════════════════ */
   input,
   textarea,
   select {
-    background: hsl(var(--color-input));
-    border: 1px solid hsl(var(--color-border));
-    color: hsl(var(--theme-text-primary));
+    background: hsl(var(--input));
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--text-primary));
     transition: all 0.2s ease;
   }
 
   input:focus,
   textarea:focus,
   select:focus {
-    background: hsl(var(--color-input-focus));
-    border-color: rgb(var(--theme-button-border));
-    box-shadow: 0 0 0 3px hsl(var(--theme-accent) / 0.2);
+    background: hsl(var(--input-focus));
+    border-color: hsl(var(--border-accent));
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.2);
     outline: none;
   }
 
@@ -293,23 +265,23 @@
      ═══════════════════════════════════════════════════════════════ */
   progress,
   .progress-bar {
-    background: hsl(var(--color-muted));
-    border: 1px solid hsl(var(--color-border));
+    background: hsl(var(--muted));
+    border: 1px solid hsl(var(--border));
   }
 
   progress::-webkit-progress-bar,
   .progress-bar::-webkit-progress-bar {
-    background: hsl(var(--color-muted));
+    background: hsl(var(--muted));
   }
 
   progress::-webkit-progress-value,
   .progress-bar::-webkit-progress-value {
-    background: hsl(var(--theme-accent));
+    background: hsl(var(--accent));
     box-shadow: var(--glow-accent);
   }
 
   progress::-moz-progress-bar {
-    background: hsl(var(--theme-accent));
+    background: hsl(var(--accent));
     box-shadow: var(--glow-accent);
   }
 
@@ -318,9 +290,9 @@
      ═══════════════════════════════════════════════════════════════ */
   .badge,
   .badge-themed {
-    background: hsl(var(--color-button-bg));
-    color: hsl(var(--theme-text-primary));
-    border: 1px solid rgb(var(--theme-button-border) / 0.3);
+    background: hsl(var(--button-bg));
+    color: hsl(var(--button-foreground));
+    border: 1px solid hsl(var(--button-border) / 0.3);
     font-weight: 600;
     box-shadow: var(--glow-primary);
   }
@@ -333,17 +305,17 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(var(--color-background));
+    background: hsl(var(--background));
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--theme-primary));
-    border: 2px solid hsl(var(--color-background));
+    background: hsl(var(--primary));
+    border: 2px solid hsl(var(--background));
     border-radius: 5px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--theme-accent));
+    background: hsl(var(--accent));
   }
 
   /* ═══════════════════════════════════════════════════════════════
