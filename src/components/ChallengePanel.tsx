@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ interface ChallengePanelProps {
 }
 
 export function ChallengePanel({ userId }: ChallengePanelProps) {
+  const navigate = useNavigate();
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState("");
@@ -332,15 +334,15 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
             </Button>
             <Button
               variant="outline"
-              onClick={loadChallenge}
+              onClick={() => navigate('/challenges')}
               disabled={loading}
             >
               Skip
             </Button>
           </>
         ) : (
-          <Button onClick={loadChallenge} className="w-full">
-            Next Challenge
+          <Button onClick={() => navigate('/challenges')} className="w-full">
+              View Challenges
           </Button>
         )}
       </CardFooter>

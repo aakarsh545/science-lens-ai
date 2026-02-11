@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Preview Set 3: Cosmic Infinity Effects</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(circle at 50% -50%, #0a0a14 0%, #1a1a2e 40%, #000000 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated starfield background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.6), transparent),
+                radial-gradient(2px 2px at 50px 40px, rgba(200, 200, 255, 0.7), transparent),
+                radial-gradient(1px 1px at 90px 20px, rgba(255, 255, 255, 0.5), transparent),
+                radial-gradient(2px 2px at 130px 80px, rgba(255, 255, 255, 0.4), transparent);
+            background-size: 550px 450px;
+            animation: starfield-move 60s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes starfield-move {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-450px); }
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            color: #ffd700;
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: #ff9500;
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 50px;
+            opacity: 0.9;
+        }
+
+        .themes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .theme-card {
+            background: rgba(255, 215, 0, 0.05);
+            border: 1px solid rgba(255, 215, 0, 0.15);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-card h2 {
+            color: #ff9500;
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        /* ========================================
+           COSMIC INFINITY EFFECTS
+           Infinite zoom, expanding universe, depth layers
+           ======================================== */
+
+        /* Cosmic 1: Infinite Depth Zoom */
+        .btn-cosmic-1 {
+            position: relative;
+            padding: 16px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            background: radial-gradient(circle at center,
+                rgba(255, 180, 0, 1) 0%,
+                rgba(255, 140, 0, 0.5) 30%,
+                rgba(255, 100, 0, 0.2) 60%,
+                rgba(0, 0, 0, 0.8) 100%);
+            background-size: 200% 200%;
+            color: #ffffff;
+            box-shadow:
+                0 0 40px rgba(255, 180, 0, 0.8),
+                0 0 80px rgba(255, 100, 0, 0.5),
+                inset 0 0 60px rgba(255, 255, 255, 0.3);
+            animation: cosmic-zoom 8s ease-in-out infinite;
+        }
+
+        .btn-cosmic-1::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 0 40px #ffffff;
+            animation: star-pulse 2s ease-in-out infinite;
+        }
+
+        .btn-cosmic-1:hover {
+            transform: scale(1.1);
+            box-shadow:
+                0 0 60px rgba(255, 180, 0, 1),
+                0 0 100px rgba(255, 100, 0, 0.7),
+                inset 0 0 80px rgba(255, 255, 255, 0.5);
+            animation-duration: 4s;
+        }
+
+        @keyframes cosmic-zoom {
+            0%, 100% { background-position: 50% 50%; transform: scale(1); }
+            50% { background-position: 30% 70%; transform: scale(1.05); }
+        }
+
+        @keyframes star-pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+        }
+
+        /* Cosmic 2: Expanding Universe */
+        .btn-cosmic-2 {
+            position: relative;
+            padding: 16px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: linear-gradient(135deg,
+                rgba(0, 100, 255, 0.9) 0%,
+                rgba(50, 50, 255, 0.7) 30%,
+                rgba(100, 0, 255, 0.5) 60%,
+                rgba(150, 50, 255, 0.3) 100%);
+            color: #ffffff;
+            overflow: hidden;
+            box-shadow:
+                0 0 35px rgba(0, 100, 255, 0.6),
+                inset 0 -5px 25px rgba(100, 100, 255, 0.3);
+        }
+
+        .btn-cosmic-2::before,
+        .btn-cosmic-2::after {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: conic-gradient(from 0deg,
+                rgba(0, 150, 255, 0.4) 0deg,
+                rgba(50, 100, 255, 0.3) 90deg,
+                rgba(100, 50, 255, 0.4) 180deg,
+                rgba(150, 0, 255, 0.3) 270deg,
+                rgba(200, 150, 255, 0.4) 360deg);
+            animation: universe-expand 10s linear infinite;
+            mix-blend-mode: screen;
+        }
+
+        .btn-cosmic-2::after {
+            width: 150%;
+            height: 150%;
+            background: conic-gradient(from 180deg,
+                rgba(255, 255, 255, 0.15) 0deg,
+                rgba(255, 255, 255, 0.1) 120deg,
+                rgba(255, 255, 255, 0.15) 240deg,
+                rgba(255, 255, 255, 0.1) 360deg);
+            animation-delay: -5s;
+        }
+
+        .btn-cosmic-2:hover {
+            transform: scale(1.08);
+            box-shadow:
+                0 0 50px rgba(50, 100, 255, 0.9),
+                inset 0 -10px 40px rgba(200, 100, 255, 0.4);
+            animation-duration: 5s;
+        }
+
+        @keyframes universe-expand {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Cosmic 3: Galaxy Spiral */
+        .btn-cosmic-3 {
+            position: relative;
+            padding: 16px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: conic-gradient(from 0deg at 50% 50%,
+                rgba(138, 43, 226, 0.9) 0deg,
+                rgba(67, 30, 180, 0.7) 45deg,
+                rgba(226, 60, 137, 0.5) 90deg,
+                rgba(180, 30, 120, 0.3) 135deg,
+                rgba(120, 60, 180, 0.5) 180deg,
+                rgba(60, 30, 138, 0.7) 225deg,
+                rgba(30, 60, 120, 0.3) 270deg,
+                rgba(138, 43, 226, 0.9) 315deg,
+                rgba(100, 60, 180, 0.5) 360deg);
+            background-size: 200% 200%;
+            color: #ffffff;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            box-shadow:
+                0 0 30px rgba(138, 43, 226, 0.8),
+                inset 0 0 20px rgba(255, 255, 255, 0.3);
+            animation: galaxy-spin 12s linear infinite;
+        }
+
+        .btn-cosmic-3::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50%;
+            animation: pulse-border 2s ease-in-out infinite;
+        }
+
+        .btn-cosmic-3:hover {
+            transform: scale(1.08) rotate(5deg);
+            box-shadow:
+                0 0 50px rgba(138, 43, 226, 1),
+                0 0 30px rgba(255, 215, 0, 0.8),
+                inset 0 0 30px rgba(255, 255, 255, 0.5);
+            animation-duration: 6s;
+        }
+
+        @keyframes galaxy-spin {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+        }
+
+        .instructions {
+            background: rgba(138, 43, 226, 0.7);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 15px;
+            padding: 25px 30px;
+            color: #ffffff;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #ff9500;
+        }
+
+        .instructions p {
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        .instructions code {
+            background: rgba(255, 215, 0, 0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌌 Cosmic Infinity Effects</h1>
+        <p class="subtitle">Infinite zoom, expanding universe, galaxy spirals</p>
+
+        <div class="themes-grid">
+            <!-- Aurora Theme Card -->
+            <div class="theme-card">
+                <h2>Aurora</h2>
+                <button class="btn-cosmic-1">Infinite Depth Zoom</button>
+            </div>
+
+            <!-- Nebula Dream Theme Card -->
+            <div class="theme-card">
+                <h2>Nebula Dream</h2>
+                <button class="btn-cosmic-2">Expanding Universe</button>
+            </div>
+
+            <!-- Cosmic Infinity Theme Card -->
+            <div class="theme-card">
+                <h2>Cosmic Infinity</h2>
+                <button class="btn-cosmic-3">Galaxy Spiral</button>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>🎨 How to Use</h3>
+            <p>
+                1. Save this page as <code>set3.html</code><br>
+                2. Open in Chrome/Safari in a new tab<br>
+                3. Compare with other sets to choose your favorite effects
+            </p>
+        </div>
+    </div>
+</body>
+</html>
