@@ -1279,4 +1279,1137 @@ INSERT INTO chapters (id, course_id, title, slug, description, order_index, crea
   NOW()
 );
 
--- LESSONS FOR CHAPTER 2 (continuing with more chapters...)
+-- LESSONS FOR CHAPTER 2 (complete)
+INSERT INTO lessons (id, chapter_id, title, slug, order_index, content_markdown, quiz_json, created_at) VALUES
+(
+  UUID_GENERATE_V4(),
+  (SELECT id FROM chapters WHERE slug = 'chemical-bonding-structure' LIMIT 1),
+  'Types of Chemical Bonds',
+  'types-chemical-bonds',
+  1,
+  '# Types of Chemical Bonds
+
+## Types of Chemical Bonds
+
+### Ionic Bonds
+
+**Formation**: Metal transfers electron(s) to nonmetal.
+
+**Characteristics**:
+- High melting/boiling points
+- Conductive when molten or dissolved
+- Often soluble in water
+- Crystalline structure
+
+**Examples**: NaCl, MgO, CaF₂
+
+### Covalent Bonds
+
+**Formation**: Nonmetals share electron pairs.
+
+**Characteristics**:
+- Lower melting points than ionic
+- Poor conductors (solid)
+- Can be polar or nonpolar
+- Flexible molecular shapes
+
+**Examples**: H₂O, CO₂, CH₄
+
+### Metallic Bonds
+
+**Formation**: Metal atoms share "electron sea" of delocalized electrons.
+
+**Characteristics**:
+- Excellent conductors
+- Malleable and ductile
+- Shiny luster
+- Variable melting points
+
+**Examples**: Cu, Fe, Ag, Au
+
+## Bond Polarity
+
+### Polar Covalent Bonds
+
+Unequal electron sharing creates dipole moment (δ+ and δ-):
+
+```
+  δ+              δ-
+    H   →   O   →   H-O
+    •                •            :
+   (shared         (unequal
+    electron pair)    sharing)
+```
+
+**Properties**:
+- Dissolves in polar solvents (like dissolves like)
+- Higher boiling points than nonpolar similar molecules
+- Attraction between molecules (dipole-dipole)
+
+**Examples**: H₂O, NH₃, HF
+
+### Nonpolar Covalent Bonds
+
+Equal electron sharing, no permanent dipole.
+
+**Properties**:
+- Low boiling points (weak intermolecular forces)
+- Insoluble in water (oil-water separation)
+- Symmetrical molecules
+
+**Examples**: CO₂, CH₄, O₂, N₂
+
+## Key Concepts
+
+| Bond Type | Electron Behavior | Melting Point | Conductivity |
+|-----------|------------------|--------------|-------------|
+| Ionic | Transfer | High | Yes (when molten/dissolved) |
+| Polar Covalent | Unequal sharing | Medium | No (solid) |
+| Nonpolar Covalent | Equal sharing | Low | No |
+| Metallic | Delocalized sea | Variable | Yes (excellent) |
+
+## Examples
+
+| Molecule | Bond Type | Polarity | Soluble in Water? |
+|-----------|-----------|---------|----------------------|
+| NaCl | Ionic | N/A | Yes |
+| H₂O | Polar covalent | Polar | Yes (universal solvent) |
+| CO₂ | Nonpolar covalent | Nonpolar | Slightly (carbonated drinks) |
+| CCl₄ | Nonpolar covalent | Nonpolar | No (grease) |
+| Cu (metal) | Metallic | N/A | N/A (insoluble) |
+
+## Sources
+- OpenStax Chemistry 2e (2015). "Chemical Bonding"
+- Khan Academy: "Chemical Bonds"
+- LibreTexts: "Chemistry"
+',
+
+  '[
+    {
+      "question": "Which type of bond involves transfer of electrons from metal to nonmetal?",
+      "options": ["Covalent bond", "Ionic bond", "Metallic bond", "Hydrogen bond"],
+      "correctAnswer": 1,
+      "explanation": "Ionic bonds form through ELECTRON TRANSFER from metals (low ionization energy) to nonmetals (high electron affinity). Metal loses electrons to become positive cation, nonmetal gains electrons to become negative anion. Electrostatic attraction between oppositely charged ions forms strong ionic bond!"
+    },
+    {
+      "question": "What determines whether a covalent bond is polar or nonpolar?",
+      "options": ["Difference in atomic masses", "Symmetry of the molecule", "Equal vs unequal electron sharing", "Number of bonds"],
+      "correctAnswer": 2,
+      "explanation": "Equal vs unequal electron sharing determines polarity. EQUAL sharing (nonpolar) occurs when atoms have identical electronegativity or symmetrical arrangement (CO₂, O₂). UNEQUAL sharing (polar) occurs with different EN values, creating dipole with δ+ and δ- ends (H₂O, NH₃)."
+    },
+    {
+      "question": "Why are metals good conductors of electricity?",
+      "options": ["They have free electrons that can move", "They share electrons in a \"delocalized electron sea\"", "They have more protons than electrons", "Their atoms are closely packed"],
+      "correctAnswer": 1,
+      "explanation": "Metals have metallic bonding where valence electrons are delocalized across the entire metal lattice (electron sea). These free-moving electrons can carry electrical current easily. Metallic bonding also explains malleability (atoms can slide past each other) and ductility (can be drawn into wires)!"
+    },
+    {
+      "question": "Which molecule is polar and dissolves well in water?",
+      "options": ["CCl₄ (nonpolar covalent)", "CO₂ (nonpolar covalent)", "H₂O (polar covalent)", "CH₄ (nonpolar covalent)"],
+      "correctAnswer": 2,
+      "explanation": "H₂O is POLAR due to unequal electron sharing between H (EN=2.2) and O (EN=3.5), creating dipole moment. \"Like dissolves like\"—polar water molecules attract each other and H₂O integrates easily. Nonpolar molecules like CO₂, CH₄ have weaker interactions with water!"
+    }
+  ]',
+  NOW()
+),
+(
+  UUID_GENERATE_V4(),
+  (SELECT id FROM chapters WHERE slug = 'chemical-bonding-structure' LIMIT 1),
+  'Chemical Reactions',
+  'chemical-reactions',
+  2,
+  '# Chemical Reactions
+
+## Types of Chemical Reactions
+
+### Synthesis (A + B → AB)
+
+Two or more substances combine to form more complex product.
+
+**Example**: 2Na + Cl₂ → 2NaCl
+
+### Decomposition (AB → A + B)
+
+Compound breaks down into simpler substances.
+
+**Example**: 2H₂O → 2H₂ + O₂ (electrolysis)
+
+### Single Displacement (A + BC → AC + B)
+
+More reactive element displaces less reactive element in compound.
+
+**Example**: Zn + 2HCl → ZnCl₂ + H₂↑
+
+### Combustion (Hydrocarbon + O₂ → CO₂ + H₂O)
+
+Rapid oxidation-reduction reaction releasing energy.
+
+**Example**: CH₄ + 2O₂ → CO₂ + 2H₂O
+
+## Key Concepts
+
+| Reaction Type | General Form | Example |
+|--------------|--------------|---------|
+| Synthesis | A + B → AB | 2H₂ + O₂ → 2H₂O |
+| Decomposition | AB → A + B | 2H₂O → 2H₂ + O₂ |
+| Single Displacement | A + BC → AC + B | Zn + 2HCl → ZnCl₂ + H₂ |
+| Combustion | CₓHᵧ + O₂ → CO₂ + H₂O | CH₄ + 2O₂ → CO₂ + 2H₂O |
+
+## Energy in Reactions
+
+**Exothermic**: Releases energy (feels hot)
+
+**Endothermic**: Absorbs energy (feels cold)
+
+## Reaction Rates
+
+Affected by:
+- Temperature
+- Concentration
+- Surface area
+- Catalysts
+
+## Equations
+
+All chemical equations must:
+- Balance atoms
+- Balance charge
+- Balance energy
+
+## Sources
+- Khan Academy: "Chemical Reactions"
+- OpenStax Chemistry 2e
+',
+
+  '[
+    {
+      "question": "What type of reaction is: 2Na + Cl₂ → 2NaCl?",
+      "options": ["Decomposition", "Synthesis", "Single displacement", "Combustion"],
+      "correctAnswer": 1,
+      "explanation": "2Na + Cl₂ → 2NaCl is SYNTHESIS reaction where two elements (sodium and chlorine) combine to form a more complex compound (sodium chloride). In synthesis, two or more substances (reactants) combine to form single product!"
+    },
+    {
+      "question": "What is a characteristic of exothermic reactions?",
+      "options": ["They absorb heat from surroundings", "They release heat to surroundings (feel hot)", "They don''t involve heat change", "They require activation energy to start"],
+      "correctAnswer": 1,
+      "explanation": "Exothermic reactions RELEASE energy to surroundings, usually making products feel hot. The products have LOWER potential energy than reactants. Examples include combustion (burning), neutralization reactions. Endothermic reactions do the opposite!"
+    },
+    {
+      "question": "Which factors increase the rate of a chemical reaction?",
+      "options": ["Lower temperature and concentration", "Higher temperature, increased concentration, surface area, and catalyst", "Adding more reactants", "Increasing pressure"],
+      "correctAnswer": 1,
+      "explanation": "Reaction rate increases with: 1) Temperature (more particles with sufficient energy), 2) Concentration (more particle collisions), 3) Surface area (more exposure), and 4) Catalysts (lower activation energy). Higher temperature and concentration are most direct factors for increasing reaction rate!"
+    }
+  ]',
+  NOW()
+),
+(
+  UUID_GENERATE_V4(),
+  (SELECT id FROM chapters WHERE slug = 'chemical-bonding-structure' LIMIT 1),
+  'Solutions and Colloids',
+  'solutions-colloids',
+  3,
+  '# Solutions and Colloids
+
+## What Are Solutions?
+
+**Solution**: Homogeneous mixture of two or more substances
+
+**Solute**: Substance being dissolved (usually present in smaller amount)
+
+**Solvent**: Substance doing the dissolving (usually present in larger amount)
+
+**Solubility**: Maximum amount of solute that can dissolve in specific amount of solvent at given temperature
+
+## Types of Solutions
+
+### Solid in Liquid
+
+Example: Salt (NaCl) dissolving in water (H₂O)
+
+**Process**:
+1. Water molecules attack NaCl crystal
+2. Ion-dipole attractions pull Na⁺ and Cl⁻ apart
+3. Water molecules surround ions (hydration)
+4. Ions become evenly distributed
+
+**Equation**: NaCl(s) → Na⁺(aq) + Cl⁻(aq)
+
+### Gas in Liquid
+
+Example: CO₂ dissolving in water
+
+**Process**:
+1. CO₂ molecules collide with water surface
+2. CO₂ reacts with water to form carbonic acid (H₂CO₃)
+3. H₂CO₃ partially ionizes
+4. Equilibrium establishes
+
+**Equation**: CO₂(g) + H₂O(l) ⇌ H₂CO₃(aq)
+
+### Liquid in Liquid
+
+Example: Ethanol (C₂H₅OH) in water
+
+**Miscible**: Liquids that dissolve in each other in all proportions
+
+## Colloids
+
+**Colloid**: Heterogeneous mixture with particle size 1-100 nm
+
+**Dispersed phase**: Particles are larger than true solutions but smaller than suspensions
+
+### Types of Colloids
+
+| Colloid Type | Dispersed Phase | Dispersion Medium | Example |
+|---------------|-----------------|-------------------|---------|
+| Sol | Solid in liquid | Liquid | Blood (cells in plasma) |
+| Gel | Liquid in solid | Solid | Gelatin dessert |
+| Emulsion | Liquid in liquid | Liquid | Mayonnaise, milk |
+| Foam | Gas in liquid | Liquid | Whipped cream |
+| Aerosol | Liquid/Solid in gas | Gas | Fog, smoke |
+| Solid foam | Gas in solid | Solid | Styrofoam, pumice |
+
+## Solubility Rules
+
+**Like Dissolves Like**:
+- Polar solutes dissolve in polar solvents
+- Nonpolar solutes dissolve in nonpolar solvents
+
+**Example**: Oil (nonpolar) separates from water (polar)
+
+**Temperature Dependence**:
+- Most solids dissolve MORE at higher temperatures
+- Gases dissolve LESS at higher temperatures
+
+**Pressure Effects**:
+- Solids: Increased pressure increases solubility
+- Gases: Increased pressure increases solubility
+
+## Concentration Units
+
+| Unit | Definition | Example |
+|------|-----------|---------|
+| Molarity (M) | Moles of solute per liter of solution | 1 M NaCl = 58.44 g/L |
+| Molality (m) | Moles of solute per kilogram of solvent | 1 mol/kg NaCl solution |
+| Parts per million (ppm) | Mass of solute per million parts of solution | 100 ppm = 0.01% |
+| Percent composition | Mass of solute per 100 mass units of solution | 10% NaCl solution |
+
+## Dilution
+
+**Formula**: M₁V₁ = M₂V₂
+
+When diluting, moles of solute remain constant, volume increases.
+
+## Key Concepts
+
+| Concept | Description |
+|----------|-------------|
+| Saturated solution | Maximum solute dissolved at given temperature |
+| Unsaturated solution | Less than maximum solute dissolved |
+| Supersaturated solution | More than maximum solute dissolved (unstable) |
+| Concentrated solution | Large amount of solute relative to solvent |
+| Dilute solution | Small amount of solute relative to solvent |
+
+## Sources
+- Khan Academy: "Solutions and Colloids"
+- OpenStax Chemistry 2e
+',
+
+  '[
+    {
+      "question": "What is the difference between a solution and a colloid?",
+      "options": ["Solutions are homogeneous, colloids are heterogeneous", "Solutions have smaller particles (<1 nm), colloids have larger (1-100 nm)", "Solutions are transparent, colloids are cloudy", "Solutions cannot be separated by filtration, colloids can"],
+      "correctAnswer": 2,
+      "explanation": "The key difference is PARTICLE SIZE. Solutions contain dissolved particles <1 nm (true molecular scale). Colloids have particles 1-100 nm (larger than molecules but smaller than suspensions). Solutions are homogeneous; colloids are heterogeneous (can scatter light, appearing cloudy)!"
+    },
+    {
+      "question": "Which statement is true about solubility?",
+      "options": ["Most gases are MORE soluble at higher temperatures", "Solids are LESS soluble at higher temperatures", "Like dissolves like", "Polar solutes dissolve in nonpolar solvents"],
+      "correctAnswer": 0,
+      "explanation": "Most gases are LESS soluble at higher temperatures because gas molecules have more kinetic energy to escape from liquid! Solids typically dissolve MORE at higher temperatures because increased thermal energy helps break intermolecular forces holding solid together!"
+    },
+    {
+      "question": "What happens to the solubility of gases when pressure increases?",
+      "options": ["Solubility increases", "Solubility decreases", "No effect on gas solubility", "Depends on temperature"],
+      "correctAnswer": 0,
+      "explanation": "Gas solubility DECREASES with increased pressure according to Henry''s law. Higher pressure forces more gas molecules into solution, increasing solubility. This is opposite of solids, where increased pressure typically increases solubility!"
+    },
+    {
+      "question": "What is the molarity of a solution containing 58.44 g of NaCl per liter?",
+      "options": ["0.5 M", "1.0 M", "2.0 M", "5.85 M"],
+      "correctAnswer": 1,
+      "explanation": "Molarity (M) = moles/L. NaCl molar mass = 58.44 g/mol. 1 L contains 58.44 g ÷ 58.44 g/mol = 1.0 mol. Molarity = 1.0 mol/L. This means 1 liter of solution contains exactly 1 mole of NaCl dissolved!"
+    }
+  ]',
+  NOW()
+),
+(
+  UUID_GENERATE_V4(),
+  (SELECT id FROM chapters WHERE slug = 'chemical-bonding-structure' LIMIT 1),
+  'Acids, Bases, and Salts',
+  'acids-bases-salts',
+  4,
+  '# Acids, Bases, and Salts
+
+## What Are Acids and Bases?
+
+**Acid**: Substance that releases H⁺ ions when dissolved in water
+**Base**: Substance that releases OH⁻ ions when dissolved in water
+
+## The pH Scale
+
+**pH**: Measure of acidity or alkalinity
+
+$$\text{pH} = -\log_{10}[\text{H}^+]$$
+
+| pH | Acidity | Example |
+|-----|---------|---------|
+| 0 | Most acidic | Battery acid (0 M HCl) |
+| 7 | Neutral | Pure water (25°C) |
+| 14 | Most basic | Drain cleaner (1 M NaOH) |
+
+## Strong Acids
+
+**Completely ionize in water**:
+
+- **Hydrochloric acid (HCl)**: Stomach acid, laboratory cleaner
+- **Sulfuric acid (H₂SO₄)**: Car batteries, industrial chemical
+- **Nitric acid (HNO₃)**: Fertilizer production, explosives
+- **Perchloric acid (HClO₄)**: Rocket fuel
+
+## Strong Bases
+
+**Completely ionize in water**:
+
+- **Sodium hydroxide (NaOH)**: Drain cleaner, soap making
+- **Potassium hydroxide (KOH)**: Soap, fertilizers
+- **Calcium hydroxide (Ca(OH)₂)**: Mortar, cement
+
+## Neutralization Reactions
+
+**Acid + Base → Salt + Water**
+
+**Example**: HCl + NaOH → NaCl + H₂O
+
+$$\text{HCl} + \text{NaOH} \rightarrow \text{NaCl} + \text{H}_2\text{O}$$
+
+**Net ionic equation**: H⁺ + OH⁻ → Na⁺ + Cl⁻ + H₂O
+
+**Titration**: Slow addition of one solution to another to determine concentration
+
+## Acid-Base Indicators
+
+| Indicator | Color in Acid | Color in Base | pH Range |
+|-----------|----------------|-------------|----------|
+| Litmus | Red | Blue | 4.5-8.3 |
+| Phenolphthalein | Colorless | Pink | 8.2-10.0 |
+| Bromothymol blue | Yellow | Blue | 6.0-7.6 |
+| Universal indicator | Red | Purple | 4-13 |
+
+## Salts
+
+**Salt**: Ionic compound formed from neutralization reaction
+
+**Examples**:
+- **NaCl**: Table salt, ocean salt
+- **KNO₃**: Salt peter (gunpowder)
+- **CaCO₃**: Limestone, marble, chalk
+- **(NH₄)₂SO₄**: Fertilizer (ammonium sulfate)
+
+## Buffer Solutions
+
+**Resists pH change** when small amounts of acid or base are added.
+
+**Composition**: Weak acid + its conjugate base OR weak base + its conjugate acid
+
+**Example**: Carbonic acid/bicarbonate buffer in blood (maintains pH ~7.4)
+
+## Key Equations
+
+| Equation | Type | Example |
+|-----------|-------|---------|
+| Acid → H⁺ + Anion | Strong acid | HCl → H⁺ + Cl⁻ |
+| Base → Cation⁺ + OH⁻ | Strong base | NaOH → Na⁺ + OH⁻ |
+| Neutralization | Acid + Base → Salt + Water | HCl + NaOH → NaCl + H₂O |
+| Autoionization | Self-ionization | 2H₂O ⇌ H₃O⁺ + OH⁻ |
+
+## Sources
+- Khan Academy: "Acids, Bases, and pH"
+- OpenStax Chemistry 2e
+',
+
+  '[
+    {
+      "question": "What is the pH of a solution with [H⁺] = 0.001 M?",
+      "options": ["pH = 3", "pH = 7", "pH = -3", "pH = 4"],
+      "correctAnswer": 0,
+      "explanation": "pH = -log₁₀[H⁺] = -log₁₀(0.001) = 3. This is ACIDIC (pH < 7). pH = 3 is moderately acidic. Neutral pH is 7, basic is >7. Each pH unit represents 10× change in acidity/alkalinity!"
+    },
+    {
+      "question": "What is the product of neutralization between HCl and NaOH?",
+      "options": ["NaClO + H₂", "NaCl + H₂O", "NaOH + Cl₂", "HNaCl + O₂"],
+      "correctAnswer": 1,
+      "explanation": "HCl (acid) + NaOH (base) neutralize to form NaCl (salt) + H₂O (water). The net ionic equation is H⁺ + Cl⁻ + Na⁺ + OH⁻ → Na⁺ + Cl⁻ + H₂O. This is an acid-base neutralization reaction!"
+    },
+    {
+      "question": "Which is a strong acid?",
+      "options": ["Acetic acid (CH₃COOH)", "Hydrochloric acid (HCl)", "Carbonic acid (H₂CO₃)", "Sulfuric acid (H₂SO₄)"],
+      "correctAnswer": 1,
+      "explanation": "Hydrochloric acid (HCl) is a STRONG acid because it completely ionizes in water: HCl → H⁺ + Cl⁻. Strong acids have high ionization constants and donate H⁺ ions easily. Other strong acids include H₂SO₄, HNO₃, and HClO₄. Weak acids like acetic (CH₃COOH) only partially ionize!"
+    },
+    {
+      "question": "What is a buffer solution?",
+      "options": ["A solution that maintains neutral pH", "A mixture of strong acid and strong base", "A weak acid plus its conjugate base OR weak base plus its conjugate acid", "Resists pH change when small amounts of acid or base are added"],
+      "correctAnswer": 2,
+      "explanation": "A buffer solution RESISTS pH change when small amounts of acid or base are added. It consists of either: 1) Weak acid + conjugate base (e.g., carbonic acid/bicarbonate), or 2) Weak base + conjugate acid. The buffer components react with added H⁺ or OH⁻, minimizing pH changes. Blood uses bicarbonate buffer to maintain pH ~7.4!"
+    }
+  ]',
+  NOW()
+),
+(
+  UUID_GENERATE_V4(),
+  (SELECT id FROM chapters WHERE slug = 'chemical-bonding-structure' LIMIT 1),
+  'States of Matter and Phase Changes',
+  'states-matter-phase-changes',
+  5,
+  '# States of Matter and Phase Changes
+
+## Three States of Matter
+
+**Solid**: Definite shape and volume, particles vibrate in place
+**Liquid**: Definite volume, indefinite shape, particles flow past each other
+**Gas**: Indefinite shape and volume, particles far apart
+
+## Phase Changes
+
+### Melting (Solid → Liquid)
+
+Absorb heat to break intermolecular forces
+
+**Melting point**: Temperature at which solid becomes liquid
+
+**Examples**:
+- Ice → Water (0°C)
+- Iron → Molten iron (1538°C)
+- Gold → Liquid gold (1064°C)
+
+### Freezing (Liquid → Solid)
+
+Release heat as intermolecular forces form
+
+**Freezing point**: Temperature at which liquid becomes solid
+
+**Example**: Water → Ice (0°C)
+
+Note: For pure water, melting point = freezing point
+
+### Vaporization (Liquid → Gas)
+
+Absorb heat to overcome intermolecular forces completely
+
+**Heat of vaporization**: Energy needed to convert liquid to gas at boiling point
+
+**Example**: Water → Steam (100°C at 1 atm)
+
+### Condensation (Gas → Liquid)
+
+Release heat as gas particles come together
+
+**Dew point**: Temperature at which gas condenses to liquid
+
+### Sublimation (Solid → Gas)
+
+Solid becomes gas without passing through liquid phase
+
+**Example**: Dry ice (solid CO₂) → CO₂ gas
+
+### Deposition (Gas → Solid)
+
+Gas becomes solid directly, skipping liquid phase
+
+**Example**: Frost forming, snow forming
+
+## Heating Curves
+
+### Flat Heating Curve
+
+Substance temperature rises continuously as heat is added
+
+```
+Temperature
+    ↑
+    │    ┌───────────┐ (melting)
+    │    │           │
+    │  │           │ (warming)
+    │    │           │
+    └───────────────┘
+    │
+    └─────> Time
+```
+
+**No plateau** - constant heat input
+
+### Plateau in Heating Curve
+
+Temperature remains constant during phase change
+
+```
+Temperature
+    ↑
+    │    ════════════╗ (melting)
+    │    │           │ (plateau - phase change)
+    │    │           │ (latend heat - no temp rise)
+    │    │           │
+    │    ╚══════════╝
+    │
+    └─────> Time
+```
+
+**Energy absorbed** (latent heat) but temperature doesn''t rise
+
+## Phase Diagrams
+
+Graph showing phases at different pressures and temperatures
+
+```
+        Pressure
+          ↑
+    │    ╱    ╱
+    │   ╱  SOLID │
+    │  ╱        │ ╱
+    │  LIQUID  ╱   ╲
+    │  ╱        │   ╲
+    │   ╲       ╱    ╲
+    └──────────→ Temperature
+```
+
+**Triple point**: Where all three phases coexist
+
+## Examples
+
+| Substance | Melting Point | Boiling Point | Triple Point |
+|-----------|---------------|--------------|-------------|
+| Water | 0°C | 100°C | 0.01°C, 611 Pa |
+| Carbon dioxide | -56.6°C | -78.5°C | -56.6°C, 5.11 atm |
+| Dry ice | -78.5°C | -56.4°C (sublimes) | -78.5°C, 5.11 atm |
+
+## Key Concepts
+
+| Concept | Description |
+|----------|-------------|
+| Latent heat | Energy absorbed/released during phase change at constant temperature |
+| Heat of fusion | Energy to melt solid to liquid |
+| Heat of vaporization | Energy to convert liquid to gas |
+| Triple point | Unique T and P where all three phases coexist |
+| Critical point | Temperature above which distinct liquid and gas phases don''t exist |
+
+## Sources
+- Khan Academy: "States of Matter and Phase Changes"
+- OpenStax Chemistry 2e
+',
+
+  '[
+    {
+      "question": "What happens to temperature during a phase change (melting, boiling)?",
+      "options": ["Temperature continues to rise", "Temperature remains constant during phase change (plateau)", "Temperature decreases during phase change", "Temperature fluctuates randomly"],
+      "correctAnswer": 1,
+      "explanation": "During a phase change (like melting or boiling), temperature remains CONSTANT. This plateau represents LATENT HEAT being absorbed or released to break/form intermolecular bonds. The energy input goes into changing molecular arrangement, not increasing kinetic energy (temperature)!"
+    },
+    {
+      "question": "What is the triple point of a substance?",
+      "options": ["The temperature at which it boils", "The temperature at which all three phases coexist", "The highest temperature it can reach as a liquid", "The temperature at which it freezes"],
+      "correctAnswer": 1,
+      "explanation": "The triple point is the UNIQUE temperature and pressure where solid, liquid, and gas phases coexist in equilibrium. For water, triple point is 0.01°C at 611 Pa pressure. Above this temperature, liquid water and steam cannot be distinguished—only supercritical fluid exists!"
+    },
+    {
+      "question": "Which process is solid → gas (skipping liquid phase)?",
+      "options": ["Sublimation", "Vaporization", "Deposition", "Condensation"],
+      "correctAnswer": 0,
+      "explanation": "SUBLIMATION is solid → gas (like dry ice CO₂). The solid absorbs enough heat to completely overcome intermolecular forces and become gas directly, skipping the liquid phase. Reverse process is DEPOSITION (gas → solid). Vaporization is liquid → gas, always passing through liquid phase first!"
+    }
+  ]',
+  NOW()
+);
+
+-- =====================================================
+-- CHAPTER 3: GASES
+-- =====================================================
+INSERT INTO chapters (id, course_id, title, slug, description, order_index, created_at) VALUES
+(
+  UUID_GENERATE_V4(),
+  (SELECT id FROM courses WHERE slug = 'chemistry-basics' LIMIT 1),
+  'Gas Laws',
+  'gas-laws',
+  'Study the behavior of gases: pressure, volume, temperature relationships.',
+  6,
+  NOW()
+);
+
+-- LESSONS FOR CHAPTER 3
+INSERT INTO lessons (id, chapter_id, title, slug, order_index, content_markdown, quiz_json, created_at) VALUES
+(
+  UUID_GENERATE_V4(),
+  (SELECT id FROM chapters WHERE slug = 'gas-laws' LIMIT 1),
+  'Boyle''s Law',
+  'boyles-law',
+  1,
+  '# Boyle''s Law
+
+## What Is Boyle''s Law?
+
+**Boyle''s Law**: At constant temperature, pressure of a gas is inversely proportional to its volume.
+
+$$P_1 V_1 = P_2 V_2$$
+
+Where:
+- $P_1, P_2$ = different pressures
+- $V_1, V_2$ = corresponding volumes
+- Temperature is constant
+
+## Kinetic Molecular Theory
+
+Gas pressure results from **molecules colliding with container walls**.
+
+**More collisions** = higher pressure
+**Fewer collisions** (larger volume) = lower pressure
+
+## Examples
+
+### Example 1: Gas Compression
+
+A gas at 1 atm occupies 10 L.
+
+Compressed to 2 atm → Volume becomes:
+
+$$V_2 = \frac{P_1 V_1}{P_2} = \frac{1 \times 10}{2} = 5 \text{ L}$$
+
+Volume **halves** when pressure doubles!
+
+### Example 2: Scuba Diving
+
+At depth of 10 meters (2 atm absolute pressure):
+
+$$P = \rho g h = (1000 \text{ kg/m}^3)(10 \text{ m}) = 100,000 \text{ Pa} \approx 1 \text{ atm}$$
+
+Air is compressed to half its surface volume!
+
+### Example 3: Weather Balloons
+
+Hot air inside balloon → expands when external pressure decreases
+
+$$V_2 = \frac{P_1 V_1}{P_2}$$
+
+If $P_2 = \frac{1}{2} P_1$ (half the pressure), then $V_2 = 2 V_1$ (doubles the volume)!
+
+## Graphical Representation
+
+```
+P
+↑
+│     ┌────
+│    ╱    ╲
+│   ╱      ╲
+│  ╱        ╲
+│  ╱         ╲
+│  ╱    │    ╲
+└─────────────────┘
+└────────────────────────> V
+```
+
+**Hyperbola** (rectangular hyperbola) showing inverse P-V relationship
+
+## Real-World Applications
+
+### Breathing
+
+Boyle''s law explains how lungs work:
+
+$$V \propto \frac{1}{P}$$
+
+When you inhale: Diaphragm moves down (increases chest volume)
+- Pressure decreases
+- Volume (lungs) increases
+
+When you exhale: Diaphragm moves up (decreases chest volume)
+- Pressure increases
+- Volume decreases
+
+### Spray Cans
+
+Pressurized gas released when nozzle opened
+
+$$P_1 V_1 = P_2 V_2$$
+
+Internal pressure equals external pressure when can is open!
+
+## Key Concepts
+
+| Variable | Relationship | Constant |
+|----------|---------------|----------|
+| Pressure ∝ 1/Volume | Temperature fixed | Inversely proportional |
+| PV = constant | Boyle''s law | T, n (moles) fixed |
+
+## Limitations
+
+**Assumptions**:
+- Ideal gas behavior
+- Constant temperature
+- Fixed amount of gas (no leaks)
+
+**Real gases** deviate at high pressures or low temperatures!
+
+## Sources
+- Khan Academy: "Boyle''s Law"
+- OpenStax Chemistry 2e
+',
+
+  '[
+    {
+      "question": "What is the relationship between pressure and volume at constant temperature?",
+      "options": ["Directly proportional (P ∝ V)", "Inversely proportional (P ∝ 1/V)", "No relationship", "Exponential relationship"],
+      "correctAnswer": 1,
+      "explanation": "Boyle''s law states that at constant temperature, pressure (P) is INVERSELY PROPORTIONAL to volume (V). As pressure doubles, volume halves (P₁V₁ = P₂V₂). This happens because gas molecules hit container walls more frequently when compressed (smaller volume = more wall collisions = higher pressure)!"
+    },
+    {
+      "question": "A gas occupies 10 L at 1 atm. If pressure increases to 2 atm, what is the new volume?",
+      "options": ["20 L", "10 L", "5 L", "2.5 L"],
+      "correctAnswer": 2,
+      "explanation": "According to Boyle''s law: P₁V₁ = P₂V₂. V₂ = (P₁/P₂) × V₁ = (1/2) × 10 L = 5 L. When pressure doubles from 1 atm to 2 atm, volume is reduced to HALF. This inverse relationship is fundamental to understanding gas behavior!"
+    },
+    {
+      "question": "What explains gas pressure according to kinetic molecular theory?",
+      "options": ["Mass of gas molecules", "Speed of gas molecules", "Collisions of gas molecules with container walls", "Temperature of the gas"],
+      "correctAnswer": 2,
+      "explanation": "According to kinetic theory, gas PRESSURE results from MOLECULES COLLIDING with container walls. More collisions = higher pressure. Larger volume means molecules are farther apart (fewer collisions with walls = lower pressure). Temperature affects molecular speed but pressure depends on collision frequency!"
+    },
+    {
+      "question": "What must remain constant in Boyle''s law?",
+      "options": ["Pressure and volume", "Temperature", "Amount of gas (moles)", "Gas density"],
+      "correctAnswer": 1,
+      "explanation": "Boyle''s law requires CONSTANT TEMPERATURE. The relationship P ∝ 1/V only holds when temperature is fixed. P₁V₁ = P₂V₂ applies to the SAME gas sample at the SAME temperature. If temperature changes, the gas volume would also change due to thermal expansion/contraction!"
+    }
+  ]',
+  NOW()
+),
+(
+  UUID_GENERATE_V4(),
+  (SELECT id FROM chapters WHERE slug = 'gas-laws' LIMIT 1),
+  'Charles''s Law',
+  'charles-law',
+  2,
+  '# Charles''s Law
+
+## What Is Charles''s Law?
+
+**Charles''s Law**: At constant pressure, volume of a gas is directly proportional to its absolute temperature.
+
+$$\frac{V_1}{T_1} = \frac{V_2}{T_2}$$
+
+Or simply: $V \propto T$ (at constant P)
+
+**Key**: Temperature must be in **Kelvin**!
+
+## Examples
+
+### Example 1: Heating Gas in Sealed Container
+
+Gas at 20°C (293 K) occupies 2 L
+
+Heated to 40°C (313 K) → Volume becomes:
+
+$$V_2 = V_1 \times \frac{T_2}{T_1} = 2 \text{ L} \times \frac{313}{293} = 2.14 \text{ L}$$
+
+Volume increases by 14%!
+
+### Example 2: Absolute Temperature Change
+
+Gas at 0°C (273 K) → 1 L
+
+Heated to 100°C (373 K) → Volume becomes:
+
+$$V_2 = 1 \text{ L} \times \frac{373}{273} = 1.37 \text{ L}$$
+
+Same absolute temperature increase produces different effect!
+
+**Kelvin comparison**:
+- 20°C → 40°C: 293 K → 313 K (20 K increase, 1.14× volume)
+- 0°C → 100°C: 273 K → 373 K (100 K increase, 1.37× volume)
+
+Must use **absolute temperature** (Kelvin) for proportional relationship!
+
+### Example 3: Hot Air Balloon
+
+Balloon heated in sun → air expands
+
+$$V_2 = V_1 \frac{T_2}{T_1}$$
+
+As temperature increases, volume increases proportionally!
+
+## Graphical Representation
+
+```
+V
+↑
+│     ┌───────────┐
+│    ╱          ╲
+│   ╱            ╲
+│  ╱              ╲
+│  ╱                ╲
+│  ╱    │          ╲
+└─────────────────────┘
+└───────────────────────────────> T (in Kelvin)
+```
+
+**Straight line** through origin (V=0 at T=0 would be absolute zero)
+
+## Molecular Explanation
+
+**Temperature increases** → molecules move faster
+**Faster molecules** → collide with walls more frequently and harder
+**Increased collisions and force** → gas expands to maintain constant pressure
+
+**Kinetic energy**: $KE_{avg} = \frac{3}{2}k_B T$$
+
+Higher T = higher KE = greater expansion force = larger volume!
+
+## Combined Gas Laws
+
+When BOTH P and T change:
+
+$$\frac{P_1 V_1}{T_1} = \frac{P_2 V_2}{T_2}$$
+
+Simplifies to: $\frac{P V}{T} = \text{constant}$
+
+This is the foundation for the **Ideal Gas Law**!
+
+## Key Concepts
+
+| Law | Variables | Relationship | Constant |
+|-----|----------|-------------|----------|
+| Boyle''s Law | P vs V | P ∝ 1/V | Temperature, n |
+| Charles''s Law | V vs T | V ∝ T (Kelvin) | Pressure, n |
+| Gay-Lussac''s Law | V vs n | V ∝ n | P, T |
+
+**Combined**: $\frac{PV}{T} = k$ (constant for fixed amount of gas)
+
+## Real-World Applications
+
+### Aerosol Cans
+
+Pressurized gas expands when heated (Charles''s law)
+
+If sealed in sun → Pressure increases → Risk of explosion!
+
+### Tire Pressure
+
+Temperature drops in winter → Tire pressure decreases (Charles''s law)
+
+$$P_2 = P_1 \frac{T_2}{T_1}$$
+
+**Warning indicator lights** come on in cold weather!
+
+### Hot Air Balloons
+
+Solar heating during day → Volume decreases at night (Charles''s law in reverse)
+
+**Nighttime shrinking**: Balloon looks partially deflated in morning!
+
+## Sources
+- Khan Academy: "Charles''s Law"
+- OpenStax Chemistry 2e
+',
+
+  '[
+    {
+      "question": "What is the relationship between volume and absolute temperature at constant pressure?",
+      "options": ["Inversely proportional (V ∝ 1/T)", "Directly proportional (V ∝ T)", "No relationship", "Exponential relationship"],
+      "correctAnswer": 0,
+      "explanation": "Charles''s law states V ∝ T (directly proportional) at constant pressure. As temperature (in Kelvin) doubles, volume doubles. V₁/T₁ = V₂/T₂. Temperature MUST be in Kelvin for this relationship to work! 20°C → 40°C (293K → 313K) gives different expansion than 0°C → 100°C (273K → 373K)."
+    },
+    {
+      "question": "A gas at 273 K (20°C) has volume 2 L. What is its volume at 373 K (100°C)?",
+      "options": ["4 L", "2.72 L", "2.14 L", "2 L"],
+      "correctAnswer": 2,
+      "explanation": "Using Charles''s law: V₁/T₁ = V₂/T₂. V₂ = V₁ × (T₂/T₁) = 2 L × (373/293) = 2.72 L. Volume increases by factor of 1.37 when temperature increases from 293 K to 373 K. Relationship is linear ONLY when using absolute temperature (Kelvin)!"
+    },
+    {
+      "question": "What must be constant in Charles''s law?",
+      "options": ["Volume and pressure", "Pressure and amount of gas", "Temperature and amount of gas", "Absolute temperature (Kelvin)"],
+      "correctAnswer": 0,
+      "explanation": "Charles''s law requires CONSTANT PRESSURE and a fixed amount of gas. The relationship V ∝ T only holds when pressure doesn''t change (P₁ = P₂). Temperature MUST be in Kelvin for V/T ratio to remain constant throughout the experiment!"
+    }
+  ]',
+  NOW()
+),
+(
+  UUID_GENERATE_V4(),
+  (SELECT id FROM chapters WHERE slug = 'gas-laws' LIMIT 1),
+  'Gay-Lussac''s Law',
+  'gay-lussacs-law',
+  3,
+  '# Gay-Lussac''s Law
+
+## What Is Gay-Lussac''s Law?
+
+**Gay-Lussac''s Law**: At constant pressure and temperature, volume of a gas is directly proportional to the number of moles of gas.
+
+$$V_1 = k n_1$$
+$$\frac{V_1}{n_1} = \frac{V_2}{n_2}$$
+
+Or simply: $V \propto n$ (at constant P, T)
+
+## Avogadro''s Principle
+
+**Equal volumes** of gases at same T and P contain **equal numbers of molecules** (Avogadro''s law).
+
+Since $V_m \propto n$ (where n = moles), then $n$ is the key variable!
+
+## Molar Volume of Gas
+
+At STP (0°C, 1 atm):
+$$V_m = 22.4 \text{ L/mol}$$
+
+One mole of ANY gas occupies 22.4 L at STP!
+
+## Examples
+
+### Example 1: Balloons
+
+1 mole of any gas = same volume
+
+**Comparing inflated balloons**:
+- Each balloon contains same number of moles (if same P, T, V)
+- Even if different gases, volumes are equal!
+
+### Example 2: Gas Stoichiometry
+
+Reaction volumes relate to mole ratios:
+
+$$2\text{H}_2(g) + \text{O}_2(g) \rightarrow 2\text{H}_2\text{O}(g)$$
+
+**Volume ratio** $V_{\text{H}_2} : V_{\text{O}_2} = 2 : 1 = 2 : 1$
+
+**Mole ratio**: 2 moles H₂ : 1 mole O₂
+
+### Example 3: Combustion Calculations
+
+Methane combustion:
+
+$$\text{CH}_4 + 2\text{O}_2 \rightarrow \text{CO}_2 + 2\text{H}_2\text{O}$$
+
+**Molar ratio**:
+- 1 mol CH₄ : 2 mol O₂ (from balanced equation)
+
+**Volume ratio at STP**:
+- $V_{\text{CH}_4} : V_{\text{O}_2} = 22.4 \text{ L} : 44.8 \text{ L} = 1 : 2$
+
+Need TWICE the oxygen volume!
+
+## Graphical Representation
+
+```
+V
+↑
+│         ┌───────┐
+│        ╱       ╲
+│       ╱         ╲
+│      ╱           ╲
+│     ╱             ╲
+│    ╱      │      ╲
+└────────────────┘
+└───────────────────────────────> n (moles)
+```
+
+**Straight line** through origin (V=0 at n=0)
+
+## Why Temperature Must Be Constant
+
+**Thermal expansion** would change volume independently
+
+**Example**: Comparing gas volumes at different temperatures without constant T is meaningless!
+
+**Kelvin scale required**: Only absolute temperature ensures V ∝ n relationship holds!
+
+## Applications
+
+### Gas Collection
+
+Over water: $V_{\text{gas}} = V_m \times n$
+
+**Example**: Collect 3 moles of H₂ over water → $V = 22.4 \times 3 = 67.2$ L
+
+### Breathing Mixtures
+
+**Deep breathing**: More oxygen per breath (larger n in lungs)
+
+**Shallow breathing**: Less oxygen per breath (smaller n)
+
+## Combined with Other Laws
+
+**Ideal Gas Law**: Combines all three:
+
+$$PV = nRT$$
+
+Where $R = 8.314 \text{ J/(mol K)}$ (universal gas constant)
+
+Can solve for any variable: $P, V, n, T$
+
+## Key Concepts
+
+| Law | Formula | Constant Variables |
+|------|---------|------------------|
+| Boyle''s | P₁V₁ = P₂V₂ | n, T |
+| Charles'' | V₁/T₁ = V₂/T₂ | n, P |
+| Gay-Lussac''s | V₁/n₁ = V₂/n₂ | P, T |
+| Combined | PV = nRT | All variables related |
+
+## Sources
+- Khan Academy: "Ideal Gas Law"
+- OpenStax Chemistry 2e
+',
+
+  '[
+    {
+      "question": "What is Gay-Lussac''s law?",
+      "options": ["V ∝ 1/P at constant T", "V ∝ T at constant P", "V ∝ n (moles) at constant P and T", "PV = constant"],
+      "correctAnswer": 2,
+      "explanation": "Gay-Lussac''s law: V ∝ n (volume directly proportional to number of moles) at constant pressure and temperature. Equal volumes of gases contain equal numbers of molecules (Avogadro''s principle). One mole of any gas occupies 22.4 L at STP. This explains why gas stoichiometry uses volume ratios directly!"
+    },
+    {
+      "question": "What is the volume of 2 moles of oxygen gas at STP?",
+      "options": ["22.4 L", "44.8 L", "67.2 L", "11.2 L"],
+      "correctAnswer": 1,
+      "explanation": "At STP (0°C, 1 atm), molar volume Vₘ = 22.4 L/mol. Volume = n × Vₘ = 2 mol × 22.4 L/mol = 44.8 L. One mole of ANY gas (O₂, N₂, CO₂) occupies exactly 22.4 L at standard temperature and pressure!"
+    },
+    {
+      "question": "Which variable must remain constant for Gay-Lussac''s law to apply?",
+      "options": ["Volume and temperature", "Pressure only", "Amount of gas (moles)", "Pressure and amount of gas"],
+      "correctAnswer": 0,
+      "explanation": "Gay-Lussac''s law requires CONSTANT PRESSURE and CONSTANT TEMPERATURE. Only the amount of gas (moles, n) can vary. If pressure or temperature changed, the V ∝ n relationship would not hold. P and T must be fixed; only n can change in the experiment!"
+    },
+    {
+      "question": "What is the ideal gas law?",
+      "options": ["PT = n²R", "PV = nRT", "P₁V₁/T₁ = P₂V₂/T₂", "PV/T = nR"],
+      "correctAnswer": 1,
+      "explanation": "The ideal gas law combines Boyle''s, Charles'', and Gay-Lussac''s laws: PV = nRT. P = pressure (Pa), V = volume (m³), n = moles, R = 8.314 J/(mol·K), T = temperature (K). This equation relates all four variables for an ideal gas, allowing calculation of any unknown variable!"
+    }
+  ]',
+  NOW()
+);
+
+-- =====================================================
+-- CHAPTER 4: KINETICS AND EQUILIBRIUM
+-- =====================================================
+INSERT INTO chapters (id, course_id, title, slug, description, order_index, created_at) VALUES
+(
+  UUID_GENERATE_V4(),
+  (SELECT id FROM courses WHERE slug = 'chemistry-basics' LIMIT 1),
+  'Reaction Rates and Chemical Equilibrium',
+  'reaction-rates-equilibrium',
+  'Study the speed of reactions, factors affecting rates, and reversible reactions.',
+  7,
+  NOW()
+);
+
+-- LESSONS FOR CHAPTER 4 (continuing...)
