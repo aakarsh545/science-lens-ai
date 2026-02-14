@@ -26,51 +26,110 @@ interface CourseRecommendationsProps {
   userId: string;
 }
 
-// Topic to course mapping based on course content and categories
+// Topic to course mapping based on 17-course curriculum structure
 const topicCourseMapping: Record<string, string[]> = {
   // Physics topics
-  "physics": ["basic-physics", "thermodynamics", "quantum-mechanics", "astrophysics"],
-  "forces": ["basic-physics"],
-  "motion": ["basic-physics"],
-  "energy": ["basic-physics", "thermodynamics"],
-  "thermodynamics": ["thermodynamics", "basic-physics"],
-  "heat": ["thermodynamics", "basic-physics"],
-  "quantum": ["quantum-mechanics", "basic-physics"],
-  "quantum mechanics": ["quantum-mechanics", "basic-physics"],
-  "astrophysics": ["astrophysics", "astronomy"],
-  "space": ["astrophysics", "astronomy", "planetary-science"],
-  "stars": ["astrophysics", "astronomy"],
-
-  // Chemistry topics
-  "chemistry": ["chemistry-basics", "organic-chemistry", "biochemistry"],
-  "atoms": ["chemistry-basics", "basic-physics"],
-  "elements": ["chemistry-basics"],
-  "reactions": ["chemistry-basics", "organic-chemistry"],
-  "organic": ["organic-chemistry", "chemistry-basics"],
-  "molecules": ["chemistry-basics", "organic-chemistry", "biochemistry"],
-  "biochemistry": ["biochemistry", "chemistry-basics", "organic-chemistry"],
-
-  // Biology topics
-  "biology": ["cell-biology", "genetics", "ecology", "neurobiology", "biochemistry"],
-  "cell": ["cell-biology", "biochemistry"],
-  "cells": ["cell-biology", "biochemistry"],
-  "genetics": ["genetics", "cell-biology"],
-  "dna": ["genetics", "cell-biology", "biochemistry"],
-  "ecology": ["ecology", "environmental-science"],
-  "environment": ["environmental-science", "ecology"],
-  "neurobiology": ["neurobiology", "cell-biology"],
-  "brain": ["neurobiology", "cell-biology"],
+  "physics": ["classical-mechanics", "electromagnetism", "thermo-statistical-mechanics", "quantum-mechanics"],
+  "forces": ["classical-mechanics"],
+  "motion": ["classical-mechanics"],
+  "energy": ["classical-mechanics", "thermo-statistical-mechanics"],
+  "momentum": ["classical-mechanics"],
+  "rotation": ["classical-mechanics"],
+  "oscillation": ["classical-mechanics"],
+  "gravity": ["classical-mechanics", "astrophysics"],
+  "electricity": ["electromagnetism"],
+  "magnetism": ["electromagnetism"],
+  "electromagnetic": ["electromagnetism"],
+  "thermodynamics": ["thermo-statistical-mechanics", "classical-mechanics"],
+  "heat": ["thermo-statistical-mechanics"],
+  "entropy": ["thermo-statistical-mechanics"],
+  "statistical": ["thermo-statistical-mechanics"],
+  "quantum": ["quantum-mechanics"],
+  "quantum mechanics": ["quantum-mechanics"],
+  "wave function": ["quantum-mechanics"],
+  "schrodinger": ["quantum-mechanics"],
+  "heisenberg": ["quantum-mechanics"],
+  "astrophysics": ["astrophysics", "cosmology"],
+  "space": ["astrophysics", "planetary-science", "cosmology"],
+  "stars": ["astrophysics"],
+  "stellar": ["astrophysics"],
+  "black hole": ["astrophysics", "cosmology"],
+  "relativity": ["astrophysics"],
 
   // Astronomy topics
-  "astronomy": ["astronomy", "astrophysics", "planetary-science"],
-  "universe": ["astrophysics", "astronomy"],
-  "planets": ["planetary-science", "astronomy"],
-  "solar": ["astronomy", "planetary-science"],
+  "astronomy": ["astrophysics", "planetary-science", "cosmology"],
+  "universe": ["cosmology", "astrophysics"],
+  "cosmology": ["cosmology"],
+  "big bang": ["cosmology"],
+  "galaxy": ["cosmology", "astrophysics"],
+  "planets": ["planetary-science"],
+  "solar": ["planetary-science", "astrophysics"],
+  "telescope": ["astrophysics", "cosmology"],
+
+  // Chemistry topics
+  "chemistry": ["general-chemistry", "organic-chemistry", "physical-chemistry"],
+  "atoms": ["general-chemistry", "quantum-mechanics"],
+  "elements": ["general-chemistry"],
+  "periodic": ["general-chemistry"],
+  "reactions": ["general-chemistry", "physical-chemistry"],
+  "bonds": ["general-chemistry"],
+  "organic": ["organic-chemistry", "general-chemistry"],
+  "molecules": ["organic-chemistry", "general-chemistry", "physical-chemistry"],
+  "carbon": ["organic-chemistry"],
+  "hydrocarbons": ["organic-chemistry"],
+  "functional groups": ["organic-chemistry"],
+  "thermochemistry": ["physical-chemistry"],
+  "kinetics": ["physical-chemistry"],
+  "equilibrium": ["physical-chemistry"],
+  "electrochemistry": ["physical-chemistry"],
+
+  // Biology topics
+  "biology": ["cellular-molecular-biology", "genetics-evolution", "ecology-environment"],
+  "cell": ["cellular-molecular-biology"],
+  "cells": ["cellular-molecular-biology"],
+  "molecular biology": ["cellular-molecular-biology"],
+  "dna": ["cellular-molecular-biology", "genetics-evolution"],
+  "rna": ["cellular-molecular-biology"],
+  "proteins": ["cellular-molecular-biology"],
+  "genetics": ["genetics-evolution", "cellular-molecular-biology"],
+  "evolution": ["genetics-evolution"],
+  "natural selection": ["genetics-evolution"],
+  "ecology": ["ecology-environment"],
+  "ecosystem": ["ecology-environment"],
+  "environment": ["ecology-environment", "meteorology-climate-science"],
+  "biodiversity": ["ecology-environment"],
+  "climate": ["meteorology-climate-science", "ecology-environment"],
+  "weather": ["meteorology-climate-science"],
+  "atmosphere": ["meteorology-climate-science"],
+
+  // Technology topics
+  "technology": ["computer-science-fundamentals", "ai-machine-learning"],
+  "computers": ["computer-science-fundamentals"],
+  "programming": ["computer-science-fundamentals", "ai-machine-learning"],
+  "algorithms": ["computer-science-fundamentals"],
+  "data structures": ["computer-science-fundamentals"],
+  "artificial intelligence": ["ai-machine-learning"],
+  "ai": ["ai-machine-learning"],
+  "machine learning": ["ai-machine-learning"],
+  "neural networks": ["ai-machine-learning"],
+  "deep learning": ["ai-machine-learning"],
+
+  // Earth Science topics
+  "geology": ["geology-plate-tectonics"],
+  "plate tectonics": ["geology-plate-tectonics"],
+  "earthquakes": ["geology-plate-tectonics"],
+  "volcanoes": ["geology-plate-tectonics"],
+  "rocks": ["geology-plate-tectonics"],
+  "minerals": ["geology-plate-tectonics"],
+  "meteorology": ["meteorology-climate-science"],
+  "climate science": ["meteorology-climate-science"],
+  "global warming": ["meteorology-climate-science", "ecology-environment"],
 
   // General science
-  "science": ["general-science", "basic-physics", "chemistry-basics", "cell-biology"],
-  "evolution": ["origins", "cell-biology", "genetics"],
-  "origin": ["origins", "astronomy", "cell-biology"],
+  "science": ["classical-mechanics", "general-chemistry", "cellular-molecular-biology", "computer-science-fundamentals"],
+  "evolution": ["genetics-evolution", "cellular-molecular-biology"],
+  "origin": ["cosmology", "genetics-evolution", "geology-plate-tectonics"],
+  "earth": ["geology-plate-tectonics", "planetary-science"],
 };
 
 export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
@@ -266,7 +325,7 @@ export function CourseRecommendations({ userId }: CourseRecommendationsProps) {
 
       // 5. Beginner recommendations for new users with no activity
       if (completedCourses.length === 0 && inProgressCourses.length === 0 && topTopics.length === 0) {
-        const beginnerCourses = ["basic-physics", "chemistry-basics", "cell-biology", "general-science"];
+        const beginnerCourses = ["classical-mechanics", "general-chemistry", "cellular-molecular-biology", "computer-science-fundamentals"];
         beginnerCourses.forEach((slug) => {
           if (courseMap[slug] && !recommendedSlugs.has(slug)) {
             recs.push({

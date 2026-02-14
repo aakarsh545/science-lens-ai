@@ -17,12 +17,42 @@ import { BookOpen, Search, Filter, Loader2, CheckCircle2, Star } from "lucide-re
 import { calculateLevel, getXpForNextLevel, getXpRemainingToNextLevel, getProgressToNextLevel } from "@/utils/levelCalculations";
 import LessonOnboarding from "@/components/LessonOnboarding";
 
-// Course emoji mapping
+// Course emoji mapping for 17-course curriculum
 const getCourseEmoji = (slug: string): string => {
   const emojiMap: Record<string, string> = {
-    'basic-physics': '⚡',
+    // Physics courses (4)
+    'classical-mechanics': '⚙️',
+    'electromagnetism': '⚡',
+    'thermo-statistical-mechanics': '🔥',
     'quantum-mechanics': '🔮',
+
+    // Astronomy courses (3)
+    'astrophysics': '🌌',
+    'cosmology': '🌠',
+    'planetary-science': '🪐',
+
+    // Chemistry courses (3)
+    'general-chemistry': '🧪',
+    'organic-chemistry': '🧬',
+    'physical-chemistry': '⚗️',
+
+    // Biology courses (3)
+    'cellular-molecular-biology': '🦠',
+    'genetics-evolution': '🧬',
+    'ecology-environment': '🌿',
+
+    // Technology courses (2)
+    'computer-science-fundamentals': '💻',
+    'ai-machine-learning': '🤖',
+
+    // Earth Science courses (2)
+    'geology-plate-tectonics': '🪨',
+    'meteorology-climate-science': '🌍',
+
+    // Legacy course mappings for backward compatibility
+    'basic-physics': '⚡',
     'thermodynamics': '🔥',
+    'quantum-mechanics': '🔮',
     'astronomy': '🌟',
     'astrophysics': '🌌',
     'planetary-science': '🪐',
