@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import RiveMascot from "@/components/RiveMascot";
+import LottieReward from "@/components/LottieReward";
 import {
   Trophy,
   Target,
@@ -276,19 +277,30 @@ export default function QuizResults({
               {/* Rive Mascot Reward for Good Performance */}
               <AnimatePresence>
                 {results.accuracyPercentage >= 70 && (
-                  <motion.div
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                    className="mt-6 flex justify-center"
-                  >
-                    <RiveMascot
-                      size={150}
-                      mood={results.accuracyPercentage >= 90 ? 'celebrating' : 'excited'}
-                      className="mx-auto"
-                    />
-                  </motion.div>
+                  <div className="mt-6 flex justify-center gap-4 items-center">
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                    >
+                      <RiveMascot
+                        size={120}
+                        mood={results.accuracyPercentage >= 90 ? 'celebrating' : 'excited'}
+                      />
+                    </motion.div>
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                    >
+                      <LottieReward
+                        size={100}
+                        type={results.accuracyPercentage >= 90 ? 'trophy' : 'confetti'}
+                      />
+                    </motion.div>
+                  </div>
                 )}
               </AnimatePresence>
 
