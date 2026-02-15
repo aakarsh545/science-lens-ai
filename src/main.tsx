@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { StrictMode } from "react";
 
 // Debug: Log that main.tsx is executing
 console.log('[MAIN] main.tsx loaded successfully');
@@ -39,7 +40,11 @@ try {
   console.log('[MAIN] About to create React root...');
   const root = createRoot(rootElement!);
   console.log('[MAIN] React root created, about to render App...');
-  root.render(<App />);
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>
+  );
   console.log('[MAIN] App rendered successfully!');
 } catch (error) {
   console.error('[MAIN CRITICAL] Failed to render app:', error);
