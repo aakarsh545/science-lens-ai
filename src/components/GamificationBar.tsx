@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, Zap, Target, Loader2 } from "lucide-react";
+import { Trophy, Zap, Target } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { calculateLevel, getXpRemainingToNextLevel, getProgressToNextLevel, getTotalXpForLevel } from "@/utils/levelCalculations";
 import { createTimeout } from "@/utils/timeout";
@@ -243,7 +244,7 @@ export function GamificationBar({ userId }: GamificationBarProps) {
     return (
       <Card className="p-4 bg-gradient-to-r from-primary/10 to-purple-500/10 border-primary/20">
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <HelixLoader />
           <span>Loading stats...</span>
         </div>
       </Card>

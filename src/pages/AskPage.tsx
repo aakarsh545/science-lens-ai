@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { EnhancedChatView } from "@/components/EnhancedChatView";
 import CreditGuard from "@/components/CreditGuard";
 
@@ -37,7 +37,7 @@ export default function AskPage() {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <HelixLoader className="text-primary" />
       </div>
     );
   }

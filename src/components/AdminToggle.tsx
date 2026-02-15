@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, ShieldOff, Loader2 } from "lucide-react";
+import { Shield, ShieldOff } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -124,7 +125,7 @@ export function AdminToggle() {
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <HelixLoader className="mr-2" />
                 Processing...
               </>
             ) : (
@@ -141,7 +142,7 @@ export function AdminToggle() {
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <HelixLoader className="mr-2" />
                 Processing...
               </>
             ) : (

@@ -21,11 +21,11 @@ import {
   Lightbulb,
   CheckCircle2,
   Award,
-  Loader2,
   BookOpen,
   Trophy
 } from "lucide-react";
 import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { triggerLevelUpConfetti, triggerLessonCompleteConfetti } from "@/utils/confettiEffects";
 import { logLessonCompleted, logQuizCompleted, logLevelUp } from "@/utils/activityLogging";
 import { checkLessonAchievements, checkQuizAchievements, checkLevelAchievements } from "@/utils/achievements";
@@ -709,7 +709,7 @@ export default function LessonPlayer() {
   if (loading || checkingOnboarding) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <HelixLoader className="text-primary" />
       </div>
     );
   }
@@ -988,7 +988,7 @@ export default function LessonPlayer() {
                 >
                   {completingLesson ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <HelixLoader className="mr-2" />
                       Saving Results...
                     </>
                   ) : (
@@ -1041,7 +1041,7 @@ export default function LessonPlayer() {
           >
             {loadingHint ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <HelixLoader className="mr-2" />
                 Getting hint...
               </>
             ) : (
@@ -1081,7 +1081,7 @@ export default function LessonPlayer() {
           >
             {loadingAudio ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <HelixLoader className="mr-2" />
                 Generating audio...
               </>
             ) : (
@@ -1292,7 +1292,7 @@ export default function LessonPlayer() {
                   >
                     {completingLesson ? (
                       <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        <HelixLoader className="mr-2" />
                         Completing...
                       </>
                     ) : isCompleted ? (

@@ -5,7 +5,7 @@ import { CreditsBar } from "@/components/CreditsBar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Loader2 } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { OnboardingCutscene } from "@/components/OnboardingCutscene";
 
@@ -115,7 +115,7 @@ export default function AuthenticatedLayout() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <HelixLoader className="text-primary" />
       </div>
     );
   }
@@ -129,7 +129,7 @@ export default function AuthenticatedLayout() {
     // Still checking auth or loading
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <HelixLoader className="text-primary" />
       </div>
     );
   }

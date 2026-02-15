@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2, Trophy, Target, Flame, Star, Lock, BookOpen, AlertCircle, Coins } from "lucide-react";
+import { Trophy, Target, Flame, Star, Lock, BookOpen, AlertCircle, Coins } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -300,7 +301,7 @@ export default function ChallengesPage() {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <HelixLoader className="text-primary" />
       </div>
     );
   }

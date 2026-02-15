@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Sparkles, CheckCircle2 } from 'lucide-react';
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { supabase } from '@/integrations/supabase/client';
 import confetti from 'canvas-confetti';
 
@@ -400,7 +401,7 @@ function LessonQuiz({ userId, lessonId, lessonTitle, onComplete }: LessonQuizPro
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm">
         <Card className="w-full max-w-md p-8 text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <HelixLoader className="mx-auto mb-6" />
           <h2 className="text-xl font-bold mb-2">Loading Quiz</h2>
           <p className="text-muted-foreground">
             Preparing your placement quiz...

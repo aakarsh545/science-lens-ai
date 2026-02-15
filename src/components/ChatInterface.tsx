@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { User } from "@supabase/supabase-js";
-import { Send, Sparkles, Loader2, Bookmark, BookmarkCheck } from "lucide-react";
+import { Send, Sparkles, Bookmark, BookmarkCheck } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -412,7 +413,7 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
             size="icon"
             className="h-full aspect-square"
           >
-            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+            {isLoading ? <HelixLoader /> : <Send className="h-5 w-5" />}
           </Button>
         </div>
       </div>

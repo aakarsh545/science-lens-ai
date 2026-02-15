@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { TopBar } from "@/components/course/TopBar";
 import { PathLayout } from "@/components/course/PathLayout";
 import { UnitCard } from "@/components/course/UnitCard";
@@ -200,10 +200,24 @@ export default function CoursePage() {
   }, [groupedUnits]);
 
   const isUnitLocked = (index: number) => {
+    // First unit is never locked
     if (index === 0) return false;
-    const previousUnit = groupedUnits[index - 1];
-    if (!previousUnit) return true;
-    return previousUnit.progress.completed < previousUnit.progress.total;
+
+    // Lock if no lessons have been completed at all in the entire course
+    const totalCompletedLessons = progress.filter(p => p.status === 'completed').length;
+    if (totalCompletedLessons === 0) return index > 0;
+
+    // Unlock units sequentially - if you've completed at least one lesson overall,
+    // unlock up to the current unit you're working on
+    const currentUnitIndex = groupedUnits.findIndex(unit =>
+      unit.lessons.some(lesson => {
+        const lessonProgress = progress.find(p => p.lesson_id === lesson.id);
+        return lessonProgress?.status !== 'completed';
+      })
+    );
+
+    // Lock units beyond the current unit + 1
+    return index > currentUnitIndex + 1;
   };
 
   const isUnitCompleted = (index: number) => {
@@ -240,7 +254,7 @@ export default function CoursePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <HelixLoader className="text-primary" />
       </div>
     );
   }

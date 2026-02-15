@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Zap, Trophy, Flame, Target, BookOpen, MessageSquare, Clock } from "lucide-react";
+import { Zap, Trophy, Flame, Target, BookOpen, MessageSquare, Clock } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -118,7 +119,7 @@ export default function DashboardMainPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <HelixLoader className="text-primary mx-auto" />
           <p className="text-sm text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
@@ -147,7 +148,7 @@ export default function DashboardMainPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <HelixLoader className="text-primary mx-auto" />
           <p className="text-sm text-muted-foreground">Preparing your dashboard...</p>
         </div>
       </div>

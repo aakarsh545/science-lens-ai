@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -157,7 +158,7 @@ export function DummyPaymentCard({ onSuccess, amount, description }: DummyPaymen
         >
           {processing ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600 mr-2" />
+              <HelixLoader className="mr-2 text-yellow-600" />
               Processing Demo...
             </>
           ) : (

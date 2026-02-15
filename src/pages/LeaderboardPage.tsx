@@ -2,7 +2,9 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Trophy, Medal, Award, Flame, Target, Atom, Beaker, Leaf, Star } from "lucide-react";
+import { Trophy, Medal, Award, Flame, Target, Atom, Beaker, Leaf, Star } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
+import { Search } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -114,7 +116,7 @@ export default function LeaderboardPage() {
   if (loading && leaderboard.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <HelixLoader className="text-primary" />
       </div>
     );
   }
@@ -142,7 +144,7 @@ export default function LeaderboardPage() {
               size="icon"
               onClick={() => loadLeaderboard()}
             >
-              <Loader2 className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              {loading ? <HelixLoader /> : <RefreshCw className="h-4 w-4" />}
             </Button>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { getUserFriendlyMessage } from "@/utils/errorHandling";
 
 interface AuthModalProps {
@@ -267,7 +267,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <HelixLoader className="mr-2" />
                     Signing in...
                   </>
                 ) : (
@@ -306,7 +306,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                     className={usernameError ? "border-red-500" : ""}
                   />
                   {checkingUsername && (
-                    <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                    <HelixLoader className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                   )}
                 </div>
                 {usernameError && (
@@ -334,7 +334,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
               <Button type="submit" className="w-full" disabled={isLoading || !!usernameError || checkingUsername}>
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <HelixLoader className="mr-2" />
                     Creating account...
                   </>
                 ) : (

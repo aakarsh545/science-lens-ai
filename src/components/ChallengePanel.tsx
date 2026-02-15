@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Clock, Zap, Loader2 } from "lucide-react";
+import { Trophy, Clock, Zap } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { motion } from "framer-motion";
 import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
 import { triggerLevelUpConfetti, triggerSuccessConfetti } from "@/utils/confettiEffects";
@@ -248,7 +249,7 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
         <CardFooter>
           <Button onClick={() => navigate('/challenges')} className="w-full" disabled={loading}>
             {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <HelixLoader />
             ) : (
               "Start Challenge"
             )}
@@ -327,7 +328,7 @@ export function ChallengePanel({ userId }: ChallengePanelProps) {
               className="flex-1"
             >
               {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <HelixLoader />
               ) : (
                 "Submit"
               )}

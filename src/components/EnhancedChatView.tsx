@@ -3,7 +3,8 @@ import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Bookmark, BookmarkCheck, Sparkles, Download } from "lucide-react";
+import { Send, Bookmark, BookmarkCheck, Sparkles, Download } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
@@ -508,7 +509,7 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
             className="flex justify-start"
           >
             <div className="bg-muted rounded-lg p-4 flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <HelixLoader />
               <span className="text-sm">Thinking...</span>
             </div>
           </motion.div>
@@ -548,7 +549,7 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
             {input.length}/{LIMITS.MAX_MESSAGE_LENGTH}
           </div>
           <Button onClick={handleSend} disabled={loading || !input.trim()} size="icon" aria-label="Send message" className="mb-auto">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {loading ? <HelixLoader /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
       </div>

@@ -14,10 +14,10 @@ import {
   ArrowLeft,
   RotateCcw,
   Home,
-  Loader2,
   CheckCircle2,
   XCircle,
 } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { motion, AnimatePresence } from "framer-motion";
 import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
 import { triggerLevelUpConfetti, triggerSuccessConfetti } from "@/utils/confettiEffects";
@@ -465,7 +465,7 @@ export default function ChallengeSession() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
         <Card className="w-full max-w-2xl mx-4">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <HelixLoader className="mb-6" />
             <p className="text-muted-foreground">Loading challenge...</p>
           </CardContent>
         </Card>
@@ -617,7 +617,7 @@ export default function ChallengeSession() {
           >
             {submitting ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <HelixLoader className="mr-2" />
                 Checking...
               </>
             ) : (

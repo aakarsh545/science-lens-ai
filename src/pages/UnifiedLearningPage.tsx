@@ -13,7 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BookOpen, Search, Filter, Loader2, CheckCircle2, Star } from "lucide-react";
+import { BookOpen, Search, Filter, CheckCircle2, Star } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { calculateLevel, getXpForNextLevel, getXpRemainingToNextLevel, getProgressToNextLevel } from "@/utils/levelCalculations";
 import LessonOnboarding from "@/components/LessonOnboarding";
 
@@ -367,7 +368,7 @@ export default function UnifiedLearningPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <HelixLoader className="text-primary" />
       </div>
     );
   }

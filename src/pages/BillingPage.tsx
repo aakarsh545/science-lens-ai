@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Card } from "@/components/ui/card";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Coins, Crown as CrownIcon, Zap } from "lucide-react";
 import { DummyPaymentCard } from "@/components/DummyPaymentCard";
@@ -79,7 +80,7 @@ export default function BillingPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-primary/5 p-6 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <HelixLoader className="mx-auto mb-4" />
           <p className="text-muted-foreground">Loading billing details...</p>
         </div>
       </div>

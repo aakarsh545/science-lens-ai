@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Check, X } from "lucide-react";
+import { Check, X } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -163,7 +164,7 @@ export default function TestPage() {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <HelixLoader className="text-primary" />
       </div>
     );
   }
@@ -205,7 +206,7 @@ export default function TestPage() {
         >
           {testing ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <HelixLoader className="mr-2" />
               Testing...
             </>
           ) : (

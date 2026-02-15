@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Shield, ShieldOff, Loader2, User, Crown } from "lucide-react";
+import { Search, Shield, ShieldOff, User, Crown } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -155,7 +156,7 @@ export function SearchPeople() {
             onKeyDown={(e) => e.key === 'Enter' && searchUsers(searchQuery)}
           />
           <Button onClick={() => searchUsers(searchQuery)} disabled={searching}>
-            {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            {searching ? <HelixLoader /> : <Search className="w-4 h-4" />}
           </Button>
         </div>
 

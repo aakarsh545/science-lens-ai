@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, Camera } from "lucide-react";
+import { User, Camera } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 
@@ -294,7 +295,7 @@ export function EditProfileDialog({
             >
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <HelixLoader className="mr-2" />
                   Saving...
                 </>
               ) : (

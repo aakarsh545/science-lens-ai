@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertCircle, Zap, Crown } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -118,7 +119,7 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
 
   if (loading) {
     return <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <HelixLoader />
     </div>;
   }
 
