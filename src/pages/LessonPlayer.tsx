@@ -557,11 +557,6 @@ export default function LessonPlayer() {
   };
 
   const handleNextLesson = async () => {
-    // Refresh progress first to get latest completion status
-    if (userId) {
-      await loadProgress(userId);
-    }
-
     const nextLesson = getNextLesson();
     if (!nextLesson) {
       toast.success('🎉 This is the last lesson! Course complete!');
@@ -569,50 +564,16 @@ export default function LessonPlayer() {
       return;
     }
 
-    // If moving to a different chapter, verify current chapter is complete
-    if (lesson?.chapter && nextLesson.chapter && lesson.chapter !== nextLesson.chapter) {
-      const lessonsInCurrentChapter = courseLessons.filter(l => l.chapter === lesson.chapter);
-      const allInChapterCompleted = lessonsInCurrentChapter.every(l => {
-        const progress = userProgress.find(p => p.lesson_id === l.id);
-        return progress?.status === 'completed';
-      });
-
-      if (!allInChapterCompleted) {
-        toast.error(`Complete all lessons in Chapter ${lesson.chapter} first to unlock Chapter ${nextLesson.chapter}!`);
-        return;
-      }
-    }
-
     // Navigate to next lesson
-    console.log('[Next Lesson] Navigating to:', nextLesson.slug, 'in chapter:', nextLesson.chapter || 'none');
     navigate(`/learning/${courseSlug}/${nextLesson.slug}`);
   };
 
   const handleQuickNext = async () => {
-    // Refresh progress first to get latest completion status
-    if (userId) {
-      await loadProgress(userId);
-    }
-
     const nextLesson = getNextLesson();
     if (!nextLesson) {
       toast.success('🎉 This is the last lesson! Course complete!');
       navigate(`/learning/${courseSlug}`);
       return;
-    }
-
-    // If moving to a different chapter, verify current chapter is complete
-    if (lesson?.chapter && nextLesson.chapter && lesson.chapter !== nextLesson.chapter) {
-      const lessonsInCurrentChapter = courseLessons.filter(l => l.chapter === lesson.chapter);
-      const allInChapterCompleted = lessonsInCurrentChapter.every(l => {
-        const progress = userProgress.find(p => p.lesson_id === l.id);
-        return progress?.status === 'completed';
-      });
-
-      if (!allInChapterCompleted) {
-        toast.error(`Complete all lessons in Chapter ${lesson.chapter} first to unlock Chapter ${nextLesson.chapter}!`);
-        return;
-      }
     }
 
     // Navigate to next lesson
