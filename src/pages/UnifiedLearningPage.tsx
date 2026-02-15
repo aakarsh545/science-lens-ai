@@ -113,6 +113,7 @@ export default function UnifiedLearningPage() {
   // Course onboarding state
   const [showCourseOnboarding, setShowCourseOnboarding] = useState(false);
   const [pendingCourse, setPendingCourse] = useState<{ id: string; slug: string; title: string; firstLessonSlug?: string } | null>(null);
+  const [onboardingCompleted, setOnboardingCompleted] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     initPage();
@@ -129,7 +130,8 @@ export default function UnifiedLearningPage() {
     await Promise.all([
       loadCourses(),
       loadCourseProgress(session.user.id),
-      loadUserProfile(session.user.id)
+      loadUserProfile(session.user.id),
+      loadOnboardingStatus(session.user.id)
     ]);
     setLoading(false);
   };
@@ -168,6 +170,22 @@ export default function UnifiedLearningPage() {
         };
       });
       setCourseProgress(progressMap);
+    }
+  };
+
+  const loadOnboardingStatus = async (uid: string) => {
+    const { data: onboardingData } = await supabase
+      .from('user_progress')
+      .select('lesson_id, onboarding_completed')
+      .eq('user_id', uid)
+      .eq('onboarding_completed', true);
+
+    if (onboardingData) {
+      const onboardingMap: Record<string, boolean> = {};
+      onboardingData.forEach(record => {
+        onboardingMap[record.lesson_id] = true;
+      });
+      setOnboardingCompleted(onboardingMap);
     }
   };
 
@@ -465,7 +483,7 @@ export default function UnifiedLearningPage() {
             {/* Courses */}
             {items.courses.map((course) => {
               const progress = courseProgress[course.id] || { completed: 0, total: 0, percentage: 0 };
-              const isStarted = progress.completed > 0;
+              const isStarted = progress.completed > 0 || onboardingCompleted[course.id];
 
               return (
                 <Card
