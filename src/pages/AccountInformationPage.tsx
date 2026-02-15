@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -88,7 +89,7 @@ export default function AccountInformationPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <HelixLoader className="text-primary mx-auto" />
           <p className="text-muted-foreground">Loading account information...</p>
         </div>
       </div>

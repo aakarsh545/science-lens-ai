@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { Loader2, BookOpen, Sparkles, Trophy, Lock, Star } from "lucide-react";
+import { BookOpen, Sparkles, Trophy, Lock, Star } from "lucide-react";
+import { HelixLoader } from "@/components/ui/helix-loader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -143,7 +144,7 @@ export default function LearnSciencePage() {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <HelixLoader className="text-primary" />
       </div>
     );
   }
