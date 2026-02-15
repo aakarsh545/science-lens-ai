@@ -88,7 +88,7 @@ const Dashboard = ({ user }: DashboardProps) => {
     loadData();
 
     // Subscribe to profile changes for real-time username updates
-    const channel = supabase
+    const profileChannel = supabase
       .channel('dashboard-profile-changes')
       .on(
         'postgres_changes',
@@ -107,9 +107,58 @@ const Dashboard = ({ user }: DashboardProps) => {
       )
       .subscribe();
 
+    // Subscribe to user_stats changes for real-time XP and level updates
+    const statsChannel = supabase
+      .channel('dashboard-stats-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_stats',
+          filter: `user_id=eq.${user.id}`
+        },
+        async (payload) => {
+          console.log('[Dashboard] Stats updated, refreshing:', payload.new);
+          if (mounted) {
+            // Refresh profile to get updated XP and level
+            await loadProfile();
+            toast.success('XP updated! 🎉');
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to user_progress changes for real-time lesson completion updates
+    const progressChannel = supabase
+      .channel('dashboard-progress-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_progress',
+          filter: `user_id=eq.${user.id}`
+        },
+        async (payload) => {
+          console.log('[Dashboard] Progress updated, refreshing:', payload.new);
+          if (mounted) {
+            // Reload profile and achievements when progress changes
+            await Promise.all([
+              loadProfile(),
+              loadAchievements()
+            ]);
+            toast.success('Lesson completed! +XP earned! 🌟');
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       mounted = false;
-      channel.unsubscribe();
+      profileChannel.unsubscribe();
+      statsChannel.unsubscribe();
+      progressChannel.unsubscribe();
     };
   }, [user]);
 
