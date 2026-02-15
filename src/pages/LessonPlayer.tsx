@@ -100,6 +100,7 @@ export default function LessonPlayer() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [completingLesson, setCompletingLesson] = useState(false);
+  const [userProgress, setUserProgress] = useState<Array<{ lesson_id: string; status: string }>>([]);
 
   // Onboarding state
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -214,6 +215,9 @@ export default function LessonPlayer() {
           if (lessonData) {
             setLesson(lessonData);
 
+            // Load all user progress for this course
+            await loadProgress(uid);
+
             // Check onboarding status
             const { data: progressData } = await supabase
               .from('user_progress')
@@ -251,6 +255,21 @@ export default function LessonPlayer() {
     } finally {
       setLoading(false);
       setCheckingOnboarding(false);
+    }
+  };
+
+  const loadProgress = async (uid: string) => {
+    try {
+      const { data: progressData } = await supabase
+        .from('user_progress')
+        .select('lesson_id, status')
+        .eq('user_id', uid);
+
+      if (progressData) {
+        setUserProgress(progressData);
+      }
+    } catch (error) {
+      console.error('[LessonPlayer] Error loading progress:', error);
     }
   };
 
