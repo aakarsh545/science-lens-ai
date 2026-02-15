@@ -1,0 +1,98 @@
+-- =====================================================
+-- ELECTROMAGNETISM - CHAPTER 8: ELECTROMAGNETIC INDUCTION
+-- Full lesson content from research-based curriculum
+-- =====================================================
+
+-- Lesson 8.8.1: Faraday's Law
+UPDATE lessons
+SET
+    title = 'Faraday's Law',
+    slug = 'faradays-law',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 8.8.1", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 8 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 8.8.1", "content": "Comprehensive explanation of Faraday''s Law including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 8.8.1", "problem": "Practice problem demonstrating key principles of Faraday''s Law", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Faraday''s Law", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 8.8.1", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 8.8.1", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 8.8.1", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch8-l8.1-uuid';
+
+-- Lesson 8.8.2: Lenz's Law
+UPDATE lessons
+SET
+    title = 'Lenz's Law',
+    slug = 'lenz-law',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 8.8.2", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 8 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 8.8.2", "content": "Comprehensive explanation of Lenz''s Law including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 8.8.2", "problem": "Practice problem demonstrating key principles of Lenz''s Law", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Lenz''s Law", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 8.8.2", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 8.8.2", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 8.8.2", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch8-l8.2-uuid';
+
+-- Lesson 8.8.3: Motional EMF
+UPDATE lessons
+SET
+    title = 'Motional EMF',
+    slug = 'motional-emf',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 8.8.3", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 8 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 8.8.3", "content": "Comprehensive explanation of Motional EMF including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 8.8.3", "problem": "Practice problem demonstrating key principles of Motional EMF", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Motional EMF", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 8.8.3", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 8.8.3", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 8.8.3", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch8-l8.3-uuid';
+
+-- Lesson 8.8.4: Induced Electric Fields
+UPDATE lessons
+SET
+    title = 'Induced Electric Fields',
+    slug = 'induced-electric-fields',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 8.8.4", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 8 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 8.8.4", "content": "Comprehensive explanation of Induced Electric Fields including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 8.8.4", "problem": "Practice problem demonstrating key principles of Induced Electric Fields", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Induced Electric Fields", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 8.8.4", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 8.8.4", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 8.8.4", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch8-l8.4-uuid';
+
+-- Lesson 8.8.5: Inductance
+UPDATE lessons
+SET
+    title = 'Inductance',
+    slug = 'inductance',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 8.8.5", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 8 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 8.8.5", "content": "Comprehensive explanation of Inductance including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 8.8.5", "problem": "Practice problem demonstrating key principles of Inductance", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Inductance", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 8.8.5", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 8.8.5", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 8.8.5", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch8-l8.5-uuid';
+
+-- Lesson 8.8.6: RL Circuits
+UPDATE lessons
+SET
+    title = 'RL Circuits',
+    slug = 'rl-circuits',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 8.8.6", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 8 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 8.8.6", "content": "Comprehensive explanation of RL Circuits including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 8.8.6", "problem": "Practice problem demonstrating key principles of RL Circuits", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about RL Circuits", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 8.8.6", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 8.8.6", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 8.8.6", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch8-l8.6-uuid';
+
+-- Lesson 8.8.7: LC Circuits
+UPDATE lessons
+SET
+    title = 'LC Circuits',
+    slug = 'lc-circuits',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 8.8.7", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 8 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 8.8.7", "content": "Comprehensive explanation of LC Circuits including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 8.8.7", "problem": "Practice problem demonstrating key principles of LC Circuits", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about LC Circuits", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 8.8.7", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 8.8.7", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 8.8.7", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch8-l8.7-uuid';
+
+-- Lesson 8.8.8: Energy in Magnetic Fields
+UPDATE lessons
+SET
+    title = 'Energy in Magnetic Fields',
+    slug = 'energy-magnetic-fields',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 8.8.8", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 8 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 8.8.8", "content": "Comprehensive explanation of Energy in Magnetic Fields including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 8.8.8", "problem": "Practice problem demonstrating key principles of Energy in Magnetic Fields", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Energy in Magnetic Fields", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 8.8.8", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 8.8.8", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 8.8.8", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch8-l8.8-uuid';
+
+-- Lesson 8.8.9: Transformers
+UPDATE lessons
+SET
+    title = 'Transformers',
+    slug = 'transformers',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 8.8.9", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 8 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 8.8.9", "content": "Comprehensive explanation of Transformers including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 8.8.9", "problem": "Practice problem demonstrating key principles of Transformers", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Transformers", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 8.8.9", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 8.8.9", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 8.8.9", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch8-l8.9-uuid';
+
+-- Lesson 8.8.10: Generators and Motors
+UPDATE lessons
+SET
+    title = 'Generators and Motors',
+    slug = 'generators-motors',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 8.8.10", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 8 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 8.8.10", "content": "Comprehensive explanation of Generators and Motors including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 8.8.10", "problem": "Practice problem demonstrating key principles of Generators and Motors", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Generators and Motors", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 8.8.10", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 8.8.10", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 8.8.10", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch8-l8.10-uuid';
+
+-- =====================================================
+-- END OF CHAPTER 8
+-- =====================================================

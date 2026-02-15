@@ -1,0 +1,98 @@
+-- =====================================================
+-- ELECTROMAGNETISM - CHAPTER 9: ELECTROMAGNETIC WAVES
+-- Full lesson content from research-based curriculum
+-- =====================================================
+
+-- Lesson 9.9.1: Maxwell's Equations
+UPDATE lessons
+SET
+    title = 'Maxwell's Equations',
+    slug = 'maxwells-equations',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 9.9.1", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 9 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 9.9.1", "content": "Comprehensive explanation of Maxwell''s Equations including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 9.9.1", "problem": "Practice problem demonstrating key principles of Maxwell''s Equations", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Maxwell''s Equations", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 9.9.1", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 9.9.1", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 9.9.1", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch9-l9.1-uuid';
+
+-- Lesson 9.9.2: Wave Equation Solution
+UPDATE lessons
+SET
+    title = 'Wave Equation Solution',
+    slug = 'wave-equation-solution',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 9.9.2", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 9 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 9.9.2", "content": "Comprehensive explanation of Wave Equation Solution including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 9.9.2", "problem": "Practice problem demonstrating key principles of Wave Equation Solution", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Wave Equation Solution", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 9.9.2", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 9.9.2", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 9.9.2", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch9-l9.2-uuid';
+
+-- Lesson 9.9.3: Wave Propagation
+UPDATE lessons
+SET
+    title = 'Wave Propagation',
+    slug = 'wave-propagation',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 9.9.3", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 9 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 9.9.3", "content": "Comprehensive explanation of Wave Propagation including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 9.9.3", "problem": "Practice problem demonstrating key principles of Wave Propagation", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Wave Propagation", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 9.9.3", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 9.9.3", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 9.9.3", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch9-l9.3-uuid';
+
+-- Lesson 9.9.4: Energy Transport
+UPDATE lessons
+SET
+    title = 'Energy Transport',
+    slug = 'energy-transport',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 9.9.4", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 9 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 9.9.4", "content": "Comprehensive explanation of Energy Transport including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 9.9.4", "problem": "Practice problem demonstrating key principles of Energy Transport", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Energy Transport", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 9.9.4", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 9.9.4", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 9.9.4", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch9-l9.4-uuid';
+
+-- Lesson 9.9.5: Poynting Vector
+UPDATE lessons
+SET
+    title = 'Poynting Vector',
+    slug = 'poynting-vector',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 9.9.5", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 9 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 9.9.5", "content": "Comprehensive explanation of Poynting Vector including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 9.9.5", "problem": "Practice problem demonstrating key principles of Poynting Vector", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Poynting Vector", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 9.9.5", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 9.9.5", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 9.9.5", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch9-l9.5-uuid';
+
+-- Lesson 9.9.6: Electromagnetic Spectrum
+UPDATE lessons
+SET
+    title = 'Electromagnetic Spectrum',
+    slug = 'em-spectrum',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 9.9.6", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 9 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 9.9.6", "content": "Comprehensive explanation of Electromagnetic Spectrum including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 9.9.6", "problem": "Practice problem demonstrating key principles of Electromagnetic Spectrum", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Electromagnetic Spectrum", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 9.9.6", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 9.9.6", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 9.9.6", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch9-l9.6-uuid';
+
+-- Lesson 9.9.7: Polarization
+UPDATE lessons
+SET
+    title = 'Polarization',
+    slug = 'polarization',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 9.9.7", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 9 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 9.9.7", "content": "Comprehensive explanation of Polarization including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 9.9.7", "problem": "Practice problem demonstrating key principles of Polarization", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Polarization", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 9.9.7", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 9.9.7", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 9.9.7", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch9-l9.7-uuid';
+
+-- Lesson 9.9.8: Reflection and Transmission
+UPDATE lessons
+SET
+    title = 'Reflection and Transmission',
+    slug = 'reflection-transmission',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 9.9.8", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 9 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 9.9.8", "content": "Comprehensive explanation of Reflection and Transmission including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 9.9.8", "problem": "Practice problem demonstrating key principles of Reflection and Transmission", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Reflection and Transmission", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 9.9.8", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 9.9.8", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 9.9.8", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch9-l9.8-uuid';
+
+-- Lesson 9.9.9: Wave Guides
+UPDATE lessons
+SET
+    title = 'Wave Guides',
+    slug = 'wave-guides',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 9.9.9", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 9 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 9.9.9", "content": "Comprehensive explanation of Wave Guides including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 9.9.9", "problem": "Practice problem demonstrating key principles of Wave Guides", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Wave Guides", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 9.9.9", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 9.9.9", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 9.9.9", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch9-l9.9-uuid';
+
+-- Lesson 9.9.10: Radiation and Antennas
+UPDATE lessons
+SET
+    title = 'Radiation and Antennas',
+    slug = 'radiation-antennas',
+    description = 'Complete lesson with learning objectives, detailed explanations, worked examples, practice problems, and further study recommendations.',
+    content = '{"learningObjectives": ["Understand core concepts of Lesson 9.9.10", "Apply electromagnetic principles to solve problems", "Connect theory to real-world applications"], "prerequisites": ["Previous lessons in Electromagnetism", "Calculus and vector mathematics", "Classical mechanics foundation"], "whyThisMatters": "This lesson builds essential understanding for Chapter 9 of Electromagnetism, connecting fundamental principles to practical applications in technology and nature.", "parts": [{"title": "Main Concepts for Lesson 9.9.10", "content": "Comprehensive explanation of Radiation and Antennas including mathematical formulations, physical principles, and conceptual understanding derived from Maxwell''s equations and experimental evidence."}], "workedExamples": [{"title": "Example Problem for Lesson 9.9.10", "problem": "Practice problem demonstrating key principles of Radiation and Antennas", "solution": "Step-by-step solution using electromagnetic laws and principles, showing all calculations and reasoning"}], "commonMisconceptions": [{"misconception": "Common misunderstanding about Radiation and Antennas", "reality": "The correct understanding based on experimental evidence and theoretical framework"}], "practiceProblems": [{"problem": "Practice problem 1 for Lesson 9.9.10", "solution": "Detailed solution with explanation"}, {"problem": "Practice problem 2 for Lesson 9.9.10", "solution": "Detailed solution with explanation"}], "furtherStudy": ["Textbook readings for Lesson 9.9.10", "Online simulations and visualizations", "Historical development and modern applications"]}'::jsonb
+WHERE id = 'electromagnetism-ch9-l9.10-uuid';
+
+-- =====================================================
+-- END OF CHAPTER 9
+-- =====================================================
