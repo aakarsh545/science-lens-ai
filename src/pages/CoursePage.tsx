@@ -380,6 +380,18 @@ export default function CoursePage() {
                       const isLessonCompleted = lessonStatus === 'completed';
                       const isLessonCurrent = lessonStatus === 'in_progress';
 
+                      // Generate lesson title - if it's the chapter name or empty, create a better one
+                      const getLessonTitle = () => {
+                        // If lesson title exists and is different from chapter name, use it
+                        if (lesson.title && lesson.title !== unit.name) {
+                          return lesson.title;
+                        }
+                        // Otherwise, generate a sequential title
+                        return `${unit.name} - Lesson ${lessonIndex + 1}`;
+                      };
+
+                      const displayTitle = getLessonTitle();
+
                       return (
                         <motion.div
                           key={lesson.id}
@@ -422,7 +434,7 @@ export default function CoursePage() {
                               {/* Lesson info */}
                               <div className="flex-1 min-w-0">
                                 <h4 className={`font-semibold ${isLessonCurrent ? 'text-primary' : ''}`}>
-                                  {lesson.title}
+                                  {displayTitle}
                                 </h4>
                                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                                   <span className="flex items-center gap-1">
