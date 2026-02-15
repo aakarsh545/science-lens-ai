@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -125,7 +125,7 @@ export default function LessonPlayer() {
   const [hintType, setHintType] = useState<'ai' | 'wolfram' | 'grok'>('ai');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loadingAudio, setLoadingAudio] = useState(false);
-  const audioRef = React.useRef<HTMLAudioElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [isMathJaxLoaded, setIsMathJaxLoaded] = useState(false);
 
   // Load MathJax script dynamically when needed
