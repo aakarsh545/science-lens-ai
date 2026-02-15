@@ -1,0 +1,3 @@
+-- Course 7 of remaining 11 courses
+-- Full structure: 10 chapters, 100 lessons
+-- Placeholder for detailed lesson content

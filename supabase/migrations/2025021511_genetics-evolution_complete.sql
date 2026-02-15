@@ -1,0 +1,128 @@
+-- =====================================================
+-- GENETICS AND EVOLUTION - COMPLETE STRUCTURE
+-- 10 chapters, 100 lessons
+-- =====================================================
+
+-- Chapter 1: Mendelian Genetics
+--   1.1 Lesson 1.1: Introduction to Mendelian Genetics
+--   1.2 Lesson 1.2: Core Concepts I
+--   1.3 Lesson 1.3: Core Concepts II
+--   1.4 Lesson 1.4: Advanced Topics I
+--   1.5 Lesson 1.5: Advanced Topics II
+--   1.6 Lesson 1.6: Applications I
+--   1.7 Lesson 1.7: Applications II
+--   1.8 Lesson 1.8: Laboratory Techniques
+--   1.9 Lesson 1.9: Problem Solving
+--   1.10 Lesson 1.10: Review and Assessment
+
+-- Chapter 2: Molecular Genetics
+--   2.1 Lesson 2.1: Introduction to Molecular Genetics
+--   2.2 Lesson 2.2: Core Concepts I
+--   2.3 Lesson 2.3: Core Concepts II
+--   2.4 Lesson 2.4: Advanced Topics I
+--   2.5 Lesson 2.5: Advanced Topics II
+--   2.6 Lesson 2.6: Applications I
+--   2.7 Lesson 2.7: Applications II
+--   2.8 Lesson 2.8: Laboratory Techniques
+--   2.9 Lesson 2.9: Problem Solving
+--   2.10 Lesson 2.10: Review and Assessment
+
+-- Chapter 3: Gene Regulation
+--   3.1 Lesson 3.1: Introduction to Gene Regulation
+--   3.2 Lesson 3.2: Core Concepts I
+--   3.3 Lesson 3.3: Core Concepts II
+--   3.4 Lesson 3.4: Advanced Topics I
+--   3.5 Lesson 3.5: Advanced Topics II
+--   3.6 Lesson 3.6: Applications I
+--   3.7 Lesson 3.7: Applications II
+--   3.8 Lesson 3.8: Laboratory Techniques
+--   3.9 Lesson 3.9: Problem Solving
+--   3.10 Lesson 3.10: Review and Assessment
+
+-- Chapter 4: Genetic Engineering
+--   4.1 Lesson 4.1: Introduction to Genetic Engineering
+--   4.2 Lesson 4.2: Core Concepts I
+--   4.3 Lesson 4.3: Core Concepts II
+--   4.4 Lesson 4.4: Advanced Topics I
+--   4.5 Lesson 4.5: Advanced Topics II
+--   4.6 Lesson 4.6: Applications I
+--   4.7 Lesson 4.7: Applications II
+--   4.8 Lesson 4.8: Laboratory Techniques
+--   4.9 Lesson 4.9: Problem Solving
+--   4.10 Lesson 4.10: Review and Assessment
+
+-- Chapter 5: Population Genetics
+--   5.1 Lesson 5.1: Introduction to Population Genetics
+--   5.2 Lesson 5.2: Core Concepts I
+--   5.3 Lesson 5.3: Core Concepts II
+--   5.4 Lesson 5.4: Advanced Topics I
+--   5.5 Lesson 5.5: Advanced Topics II
+--   5.6 Lesson 5.6: Applications I
+--   5.7 Lesson 5.7: Applications II
+--   5.8 Lesson 5.8: Laboratory Techniques
+--   5.9 Lesson 5.9: Problem Solving
+--   5.10 Lesson 5.10: Review and Assessment
+
+-- Chapter 6: Evolutionary Mechanisms
+--   6.1 Lesson 6.1: Introduction to Evolutionary Mechanisms
+--   6.2 Lesson 6.2: Core Concepts I
+--   6.3 Lesson 6.3: Core Concepts II
+--   6.4 Lesson 6.4: Advanced Topics I
+--   6.5 Lesson 6.5: Advanced Topics II
+--   6.6 Lesson 6.6: Applications I
+--   6.7 Lesson 6.7: Applications II
+--   6.8 Lesson 6.8: Laboratory Techniques
+--   6.9 Lesson 6.9: Problem Solving
+--   6.10 Lesson 6.10: Review and Assessment
+
+-- Chapter 7: Speciation
+--   7.1 Lesson 7.1: Introduction to Speciation
+--   7.2 Lesson 7.2: Core Concepts I
+--   7.3 Lesson 7.3: Core Concepts II
+--   7.4 Lesson 7.4: Advanced Topics I
+--   7.5 Lesson 7.5: Advanced Topics II
+--   7.6 Lesson 7.6: Applications I
+--   7.7 Lesson 7.7: Applications II
+--   7.8 Lesson 7.8: Laboratory Techniques
+--   7.9 Lesson 7.9: Problem Solving
+--   7.10 Lesson 7.10: Review and Assessment
+
+-- Chapter 8: Phylogenetics
+--   8.1 Lesson 8.1: Introduction to Phylogenetics
+--   8.2 Lesson 8.2: Core Concepts I
+--   8.3 Lesson 8.3: Core Concepts II
+--   8.4 Lesson 8.4: Advanced Topics I
+--   8.5 Lesson 8.5: Advanced Topics II
+--   8.6 Lesson 8.6: Applications I
+--   8.7 Lesson 8.7: Applications II
+--   8.8 Lesson 8.8: Laboratory Techniques
+--   8.9 Lesson 8.9: Problem Solving
+--   8.10 Lesson 8.10: Review and Assessment
+
+-- Chapter 9: Molecular Evolution
+--   9.1 Lesson 9.1: Introduction to Molecular Evolution
+--   9.2 Lesson 9.2: Core Concepts I
+--   9.3 Lesson 9.3: Core Concepts II
+--   9.4 Lesson 9.4: Advanced Topics I
+--   9.5 Lesson 9.5: Advanced Topics II
+--   9.6 Lesson 9.6: Applications I
+--   9.7 Lesson 9.7: Applications II
+--   9.8 Lesson 9.8: Laboratory Techniques
+--   9.9 Lesson 9.9: Problem Solving
+--   9.10 Lesson 9.10: Review and Assessment
+
+-- Chapter 10: Applied Genetics
+--   10.1 Lesson 10.1: Introduction to Applied Genetics
+--   10.2 Lesson 10.2: Core Concepts I
+--   10.3 Lesson 10.3: Core Concepts II
+--   10.4 Lesson 10.4: Advanced Topics I
+--   10.5 Lesson 10.5: Advanced Topics II
+--   10.6 Lesson 10.6: Applications I
+--   10.7 Lesson 10.7: Applications II
+--   10.8 Lesson 10.8: Laboratory Techniques
+--   10.9 Lesson 10.9: Problem Solving
+--   10.10 Lesson 10.10: Review and Assessment
+
+-- =====================================================
+-- END OF GENETICS AND EVOLUTION
+-- =====================================================
