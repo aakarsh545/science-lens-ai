@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import RiveMascot from "@/components/RiveMascot";
 import {
   Trophy,
   Target,
@@ -271,6 +272,25 @@ export default function QuizResults({
                   <p className="text-sm text-muted-foreground mt-2">Accuracy</p>
                 </div>
               </div>
+
+              {/* Rive Mascot Reward for Good Performance */}
+              <AnimatePresence>
+                {results.accuracyPercentage >= 70 && (
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                    className="mt-6 flex justify-center"
+                  >
+                    <RiveMascot
+                      size={150}
+                      mood={results.accuracyPercentage >= 90 ? 'celebrating' : 'excited'}
+                      className="mx-auto"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Accuracy Progress Bar */}
               <div className="mt-6 px-8">

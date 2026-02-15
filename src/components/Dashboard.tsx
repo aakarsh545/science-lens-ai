@@ -11,6 +11,7 @@ import TopicSelector from "./TopicSelector";
 import ProgressRing from "./ProgressRing";
 import ThemeToggle from "./ThemeToggle";
 import Settings from "./Settings";
+import RiveMascot from "./RiveMascot";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createTimeout } from "@/utils/timeout";
@@ -271,15 +272,18 @@ const Dashboard = ({ user }: DashboardProps) => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between"
+          className="flex items-center justify-between gap-4"
         >
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-cosmic bg-clip-text text-transparent">
-              Welcome back, {profile?.username || profile?.display_name || profile?.full_name || user?.email?.split("@")[0] || "Explorer"}!
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Level {profile?.level || 1}
-            </p>
+          <div className="flex items-center gap-6">
+            <RiveMascot size={120} mood="happy" className="hidden md:block" />
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-cosmic bg-clip-text text-transparent">
+                Welcome back, {profile?.username || profile?.display_name || profile?.full_name || user?.email?.split("@")[0] || "Explorer"}!
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Level {profile?.level || 1}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle user={user} />
