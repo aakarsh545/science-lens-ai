@@ -15,6 +15,7 @@ import TopicVisual from "@/components/animations/TopicVisual";
 import RelatedConceptsDropdown from "@/components/lessons/RelatedConceptsDropdown";
 import QuizResults from "@/pages/QuizResults";
 import LessonOnboarding from "@/components/LessonOnboarding";
+import { ThreeJSSimulation } from "@/components/ThreeJSSimulation";
 import {
   ArrowLeft,
   ArrowRight,
