@@ -1023,62 +1023,6 @@ export default function LessonPlayer() {
         </Card>
       )}
 
-      {/* AI Hint Section */}
-      <Card className="border-primary/30">
-        <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Lightbulb className="w-5 h-5 text-achievement" />
-            Need Help?
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4 mb-4">
-            <label className="text-sm font-medium">Hint Type:</label>
-            <select
-              value={hintType}
-              onChange={(e) => setHintType(e.target.value as 'ai' | 'wolfram' | 'grok')}
-              className="p-2 border rounded-md bg-background"
-            >
-              <option value="ai">AI Hint (OpenAI)</option>
-              <option value="wolfram">Computational (Wolfram Alpha)</option>
-              <option value="grok">xAI Grok (Grok)</option>
-            </select>
-          </div>
-
-          <p className="text-muted-foreground text-sm">
-            {hintType === 'wolfram'
-              ? 'Get a computational hint from Wolfram Alpha for math and science questions'
-              : 'Get an AI-powered hint to better understand this lesson'
-            } (costs 1 credit)
-          </p>
-
-          <Button
-            onClick={handleGetHint}
-            disabled={loadingHint}
-            variant="outline"
-            className="border-primary/30"
-          >
-            {loadingHint ? (
-              <>
-                <HelixLoader className="mr-2" />
-                Getting hint...
-              </>
-            ) : (
-              <>
-                <Lightbulb className="w-4 h-4 mr-2" />
-                Get {hintType === 'wolfram' ? 'Wolfram' : 'AI'} Hint
-              </>
-            )}
-          </Button>
-
-          {aiHint && (
-            <Card className="border-achievement/30 bg-achievement/5">
-              <CardContent className="p-4">
-                <p className="text-sm whitespace-pre-wrap">{aiHint}</p>
-              </CardContent>
-            </Card>
-          )}
-
       {/* Text-to-Speech Section */}
       <Card className="border-primary/30">
         <CardHeader>
@@ -1122,9 +1066,6 @@ export default function LessonPlayer() {
               />
             </div>
           )}
-        </CardContent>
-      </Card>
-
         </CardContent>
       </Card>
 
@@ -1302,30 +1243,6 @@ export default function LessonPlayer() {
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   )}
-
-                  <Button
-                    onClick={handleMarkComplete}
-                    disabled={completingLesson || (!allQuizzesAnswered() && !isCompleted)}
-                    className="btn-achievement"
-                    title={!allQuizzesAnswered() && !isCompleted ? "Complete the required quizzes first" : ""}
-                  >
-                    {completingLesson ? (
-                      <>
-                        <HelixLoader className="mr-2" />
-                        Completing...
-                      </>
-                    ) : isCompleted ? (
-                      <>
-                        <CheckCircle2 className="w-4 h-4 mr-2" />
-                        Completed
-                      </>
-                    ) : (
-                      <>
-                        <Award className="w-4 h-4 mr-2" />
-                        Mark Complete
-                      </>
-                    )}
-                  </Button>
                 </div>
               </div>
 
