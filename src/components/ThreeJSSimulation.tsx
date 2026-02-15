@@ -34,11 +34,11 @@ export const ThreeJSSimulation: React.FC<ThreeJSSimulationProps> = ({ type, titl
   const getSimulation = () => {
     switch (type) {
       case 'physics':
-        return <physicsSimulation />;
+        return <PhysicsSimulation />;
       case 'astronomy':
-        return <astronomySimulation />;
+        return <AstronomySimulation />;
       case 'chemistry':
-        return <chemistrySimulation />;
+        return <ChemistrySimulation />;
       default:
         return null;
     }
@@ -107,7 +107,7 @@ export const ThreeJSSimulation: React.FC<ThreeJSSimulationProps> = ({ type, titl
 };
 
 // Placeholder components for different simulation types
-const physicsSimulation = () => (
+const PhysicsSimulation = () => (
   <group>
     <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
       <boxGeometry args={[2, 2, 2]} />
@@ -116,22 +116,23 @@ const physicsSimulation = () => (
   </group>
 );
 
-const astronomySimulation = () => (
+const AstronomySimulation = () => (
   <group>
-    <sphereGeometry args={[1, 32, 32]} position={[0, 0, 0]}>
+    <mesh position={[0, 0, 0]}>
+      <sphereGeometry args={[1, 32, 32]} />
       <meshStandardMaterial color="blue" />
     </mesh>
     <mesh position={[2, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-      <meshBasicMaterial color="green" />
       <sphereGeometry args={[0.5, 32, 32]} />
+      <meshStandardMaterial color="green" />
     </mesh>
   </group>
 );
 
-const chemistrySimulation = () => (
+const ChemistrySimulation = () => (
   <group>
     <mesh position={[0, 0, 0]}>
-      <icosahedronGeometry args={[0, 0, 0]} detail={0} />
+      <icosahedronGeometry args={[1, 0]} />
       <meshStandardMaterial color="purple" />
     </mesh>
   </group>
