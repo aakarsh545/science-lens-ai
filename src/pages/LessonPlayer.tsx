@@ -553,6 +553,74 @@ export default function LessonPlayer() {
   const examples = Array.isArray(lesson.examples) ? lesson.examples : [];
   const processedContent = (lesson.content || '').replace(/\\n/g, '\n');
 
+  // Parse lesson content for simulations
+  const parseLessonContent = (content: string): Array<{
+    type: 'phet' | 'spline' | 'rive' | 'lottie';
+    url?: string;
+    title?: string;
+  }> => {
+    if (!content) return [];
+
+    // Try to parse as JSON first
+    try {
+      const parsed = JSON.parse(content);
+      if (parsed.simulation) {
+        return [{
+          type: parsed.simulation.type || 'phet',
+          url: parsed.simulation.url,
+          title: parsed.simulation.title,
+        }];
+      }
+      if (parsed.parts && Array.isArray(parsed.parts)) {
+        return parsed.parts
+          .filter((part: any) => {
+            const partContent = typeof part.content === 'string' ? part.content : JSON.stringify(part.content);
+            return partContent.includes('sim:') || partContent.includes('simulation');
+          })
+          .map((part: any, index: number) => {
+            const partContent = typeof part.content === 'string' ? part.content : JSON.stringify(part.content);
+            return {
+              type: (part.simulation?.type || 'phet') as any,
+              url: part.simulation?.url,
+              title: part.title || `Simulation ${index + 1}`,
+            };
+          });
+      }
+    } catch {
+      // If JSON parsing fails, look for simulation markers in plain text
+      const simulationMarkers = [
+        /\\sim\{([^}]+)\}/gi,
+        /\[Simulator:([^\]]+)\]/gi,
+        /(?:simulation|sim)\s*[:=]\s*([^\]]+)\}/gi
+      ];
+
+      const simulations: Array<{
+        type: 'phet' | 'spline' | 'rive' | 'lottie';
+        url?: string;
+        title?: string;
+      }> = [];
+      let match: RegExpExecArray | null;
+
+      for (const marker of simulationMarkers) {
+        const regex = new RegExp(marker, 'gi');
+        while ((match = regex.exec(content)) !== null) {
+          const simType = match[1]?.toLowerCase() || 'phet';
+          const simTitle = match[2]?.trim() || `Simulation ${simulations.length + 1}`;
+          const simUrl = match[3]?.trim() || '';
+
+          simulations.push({
+            type: simType as any,
+            title: simTitle,
+            url: simUrl,
+          });
+        }
+      }
+
+      return simulations;
+    }
+    return [];
+  };
+
   return (
     <>
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
@@ -600,6 +668,16 @@ export default function LessonPlayer() {
           </ReactMarkdown>
         </CardContent>
       </Card>
+
+      {/* Interactive Simulations */}
+      {lesson && lesson.content && parseLessonContent(lesson.content).map((sim, idx) => (
+        <PhETSimulation
+          key={idx}
+          type={sim.type}
+          url={sim.url}
+          title={sim.title}
+        />
+      ))}
 
       {/* Visual Concepts */}
       <Card>
