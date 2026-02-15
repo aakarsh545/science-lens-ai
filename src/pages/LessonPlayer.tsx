@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Volume2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import TopicVisual from "@/components/animations/TopicVisual";
@@ -115,6 +116,9 @@ export default function LessonPlayer() {
   const [aiHint, setAiHint] = useState<string | null>(null);
   const [loadingHint, setLoadingHint] = useState(false);
   const [hintType, setHintType] = useState<'ai' | 'wolfram'>('ai');
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [loadingAudio, setLoadingAudio] = useState(false);
+  const audioRef = React.useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -526,6 +530,49 @@ export default function LessonPlayer() {
     }
   };
 
+  const handleReadAloud = async () => {
+    if (!lesson) return;
+
+    // If audio is already playing, stop it
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
+    // If we already have the audio URL and it's loaded, just play it
+    if (audioUrl && audioRef.current && audioRef.current.src) {
+      audioRef.current.play();
+      return;
+    }
+
+    setLoadingAudio(true);
+    try {
+      // Prepare text content for TTS
+      const lessonText = `${lesson.title}. ${typeof lesson.content === 'string'
+        ? lesson.content
+        : JSON.stringify(lesson.content).substring(0, 2000)}`;
+
+      const { data: audioBlob, error } = await supabase.functions.invoke('elevenlabs-tts', {
+        body: {
+          text: lessonText
+        }
+      });
+
+      if (error) throw error;
+
+      // Create blob URL from audio blob
+      const url = URL.createObjectURL(audioBlob as Blob);
+      setAudioUrl(url);
+
+      toast.success('Audio generated successfully!');
+    } catch (error) {
+      console.error('Error generating audio:', error);
+      toast.error('Failed to generate lesson audio');
+    } finally {
+      setLoadingAudio(false);
+    }
+  };
+
   const handleOnboardingComplete = (startingSection?: string) => {
     setShowOnboarding(false);
     setRecommendedSection(startingSection);
@@ -888,6 +935,53 @@ export default function LessonPlayer() {
               </CardContent>
             </Card>
           )}
+
+      {/* Text-to-Speech Section */}
+      <Card className="border-primary/30">
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Volume2 className="w-5 h-5 text-achievement" />
+            Read Aloud
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground text-sm">
+            Listen to the lesson content being read aloud (costs 1 credit)
+          </p>
+
+          <Button
+            onClick={handleReadAloud}
+            disabled={loadingAudio}
+            variant="outline"
+            className="border-primary/30"
+          >
+            {loadingAudio ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Generating audio...
+              </>
+            ) : (
+              <>
+                <Volume2 className="w-4 h-4 mr-2" />
+                {audioUrl ? 'Play Audio' : 'Generate Audio'}
+              </>
+            )}
+          </Button>
+
+          {audioUrl && (
+            <div className="mt-4">
+              <audio
+                ref={audioRef}
+                src={audioUrl}
+                controls
+                className="w-full"
+                onEnded={() => setAudioUrl(null)}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
         </CardContent>
       </Card>
 
