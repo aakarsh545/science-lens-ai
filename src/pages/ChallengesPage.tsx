@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Loader2, Trophy, Target, Flame, Star, Lock, BookOpen, AlertCircle, Coins } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -236,14 +237,21 @@ export default function ChallengesPage() {
                     </div>
                   </div>
 
-                  <Button
-                    onClick={() => startChallenge(topic, difficulty, courseId)}
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                     className="w-full"
-                    size="sm"
                   >
-                    <Star className="w-4 h-4 mr-2" />
-                    Start {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Challenge
-                  </Button>
+                    <Button
+                      onClick={() => startChallenge(topic, difficulty, courseId)}
+                      className="w-full shadow-[0_0_20px_var(--glow)]"
+                      size="sm"
+                    >
+                      <Star className="w-4 h-4 mr-2" />
+                      Start {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Challenge
+                    </Button>
+                  </motion.div>
                 </div>
               );
             })}
@@ -271,14 +279,20 @@ export default function ChallengesPage() {
       </CardHeader>
 
       <CardContent>
-        <Button
-          onClick={() => startCourseChallenge(course)}
-          className="w-full"
-          variant="default"
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
-          <Star className="w-4 h-4 mr-2" />
-          Start Challenge
-        </Button>
+          <Button
+            onClick={() => startCourseChallenge(course)}
+            className="w-full shadow-[0_0_20px_var(--glow)]"
+            variant="default"
+          >
+            <Star className="w-4 h-4 mr-2" />
+            Start Challenge
+          </Button>
+        </motion.div>
       </CardContent>
     </Card>
   );
@@ -326,11 +340,24 @@ export default function ChallengesPage() {
               <div className="space-y-3 pt-4">
                 <div className="flex items-center justify-between text-sm font-medium">
                   <span className="text-muted-foreground">Lessons Completed</span>
-                  <span className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                  <motion.span
+                    key={completedLessonsCount}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                    className="text-lg font-bold text-yellow-600 dark:text-yellow-400"
+                  >
                     {completedLessonsCount} / 1
-                  </span>
+                  </motion.span>
                 </div>
-                <Progress value={completedLessonsCount * 100} className="h-3" />
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  style={{ originX: 0 }}
+                >
+                  <Progress value={completedLessonsCount * 100} className="h-3 shadow-[0_0_10px_var(--glow)]" />
+                </motion.div>
               </div>
             </CardHeader>
 

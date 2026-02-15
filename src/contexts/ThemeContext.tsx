@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { generateThemeTokens, parseThemeConfig, ThemeConfig } from "@/utils/themeTokens";
 
@@ -232,7 +233,16 @@ export function ThemeProvider({ children, userId }: { children: ReactNode; userI
 
   return (
     <ThemeContext.Provider value={{ theme, loading, refreshTheme, equipTheme }}>
-      {children}
+      <motion.div
+        key={theme?.id || 'default'}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        style={{ minHeight: '100vh' }}
+      >
+        {children}
+      </motion.div>
     </ThemeContext.Provider>
   );
 }
