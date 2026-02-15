@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Volume2 } from "lucide-react";
+import { MathJax, MathJaxContext } from "better-react-mathjax";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import TopicVisual from "@/components/animations/TopicVisual";
@@ -119,6 +120,28 @@ export default function LessonPlayer() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loadingAudio, setLoadingAudio] = useState(false);
   const audioRef = React.useRef<HTMLAudioElement>(null);
+  const [isMathJaxLoaded, setIsMathJaxLoaded] = useState(false);
+
+  // Load MathJax script dynamically when needed
+  useEffect(() => {
+    if (lesson && lesson.content && (lesson.content.includes('math') || lesson.content.includes('formula'))) {
+      const script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.async = true;
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.onload = () => setIsMathJaxLoaded(true);
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      // Cleanup MathJax script when component unmounts
+      const mathjaxScript = document.querySelector('script[src*="https://cdn.jsdelivr.net/npm/mathjax@3"]');
+      if (mathjaxScript && mathjaxScript.parentNode) {
+        mathjaxScript.parentNode.removeChild(mathjaxScript);
+      }
+      setIsMathJaxLoaded(false);
+    };
+  }, [lesson?.id, lesson?.content]);
 
   useEffect(() => {
     const init = async () => {
@@ -728,9 +751,18 @@ export default function LessonPlayer() {
       {/* Content */}
       <Card>
         <CardContent className="p-6 prose prose-invert max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {processedContent}
-          </ReactMarkdown>
+          {isMathJaxLoaded && (
+            <MathJaxContext>
+              <MathJax dynamic>
+                {processedContent}
+              </MathJax>
+            </MathJaxContext>
+          )}
+          {!isMathJaxLoaded && (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {processedContent}
+            </ReactMarkdown>
+          )}
         </CardContent>
       </Card>
 
