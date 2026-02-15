@@ -114,6 +114,7 @@ export default function LessonPlayer() {
   // AI hint state
   const [aiHint, setAiHint] = useState<string | null>(null);
   const [loadingHint, setLoadingHint] = useState(false);
+  const [hintType, setHintType] = useState<'ai' | 'wolfram'>('ai');
 
   useEffect(() => {
     const init = async () => {
@@ -483,12 +484,29 @@ export default function LessonPlayer() {
 
     setLoadingHint(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-hint', {
-        body: {
-          question: `I need help understanding: ${lesson.title}`,
-          context: lesson.content?.substring(0, 500)
-        }
-      });
+      let data, error;
+
+      if (hintType === 'wolfram') {
+        // Use Wolfram Alpha for computational hints
+        const response = await supabase.functions.invoke('wolfram-hint', {
+          body: {
+            question: lesson.title,
+            context: lesson.content?.substring(0, 300)
+          }
+        });
+        data = response.data;
+        error = response.error;
+      } else {
+        // Use OpenAI for general hints
+        const response = await supabase.functions.invoke('ai-hint', {
+          body: {
+            question: `I need help understanding: ${lesson.title}`,
+            context: lesson.content?.substring(0, 500)
+          }
+        });
+        data = response.data;
+        error = response.error;
+      }
 
       if (error) {
         if (error.message?.includes('credits_exhausted')) {
@@ -499,10 +517,10 @@ export default function LessonPlayer() {
       }
 
       setAiHint(data.hint);
-      toast.success('AI hint generated!');
+      toast.success(`${hintType === 'wolfram' ? 'Wolfram Alpha' : 'AI'} hint generated!`);
     } catch (error) {
       console.error('Error getting hint:', error);
-      toast.error('Failed to get AI hint');
+      toast.error(`Failed to get ${hintType === 'wolfram' ? 'Wolfram Alpha' : 'AI'} hint`);
     } finally {
       setLoadingHint(false);
     }
@@ -825,11 +843,26 @@ export default function LessonPlayer() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex items-center gap-4 mb-4">
+            <label className="text-sm font-medium">Hint Type:</label>
+            <select
+              value={hintType}
+              onChange={(e) => setHintType(e.target.value as 'ai' | 'wolfram')}
+              className="p-2 border rounded-md bg-background"
+            >
+              <option value="ai">AI Hint (OpenAI)</option>
+              <option value="wolfram">Computational (Wolfram Alpha)</option>
+            </select>
+          </div>
+
           <p className="text-muted-foreground text-sm">
-            Get an AI-powered hint to better understand this lesson (costs 1 credit)
+            {hintType === 'wolfram'
+              ? 'Get a computational hint from Wolfram Alpha for math and science questions'
+              : 'Get an AI-powered hint to better understand this lesson'
+            } (costs 1 credit)
           </p>
-          
-          <Button 
+
+          <Button
             onClick={handleGetHint}
             disabled={loadingHint}
             variant="outline"
@@ -843,7 +876,7 @@ export default function LessonPlayer() {
             ) : (
               <>
                 <Lightbulb className="w-4 h-4 mr-2" />
-                Get AI Hint
+                Get {hintType === 'wolfram' ? 'Wolfram' : 'AI'} Hint
               </>
             )}
           </Button>
