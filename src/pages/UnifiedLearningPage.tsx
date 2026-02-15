@@ -235,24 +235,20 @@ export default function UnifiedLearningPage() {
           return progress?.status !== 'completed';
         });
 
-        // Navigate to next incomplete lesson or course page if all completed
-        if (nextLesson) {
-          navigate(`/learning/${course.slug}/${nextLesson.slug}`);
-        } else {
-          navigate(`/learning/${course.slug}`);
-        }
+        // Navigate to course page (not directly to lesson)
+        navigate(`/learning/${course.slug}`);
         return;
       }
 
       // New course - check if onboarding is completed
-      const { data: profile } = await supabase
-        .from('profiles')
+      const { data: progressData } = await supabase
+        .from('user_progress')
         .select('onboarding_completed')
         .eq('user_id', userId)
-        .single();
+        .eq('lesson_id', course.id)
+        .maybeSingle();
 
-      const courseOnboarding = profile?.onboarding_completed as Record<string, boolean> | null;
-      const isOnboardingCompleted = courseOnboarding?.[course.id] ?? false;
+      const isOnboardingCompleted = progressData?.onboarding_completed ?? false;
 
       // Get first lesson slug
       const { data: lessonsData } = await supabase
@@ -292,32 +288,10 @@ export default function UnifiedLearningPage() {
     if (!userId || !pendingCourse) return;
 
     try {
-      // Mark course as completed in profiles.onboarding_completed jsonb
-      const { data: currentProfile } = await supabase
-        .from('profiles')
-        .select('onboarding_completed')
-        .eq('user_id', userId)
-        .single();
-
-      const currentOnboarding = (currentProfile?.onboarding_completed as Record<string, boolean> | null) || {};
-      const updatedOnboarding = {
-        ...currentOnboarding,
-        [pendingCourse.id]: true,
-      };
-
-      await supabase
-        .from('profiles')
-        .update({ onboarding_completed: updatedOnboarding })
-        .eq('user_id', userId);
-
       setShowCourseOnboarding(false);
 
-      // Navigate to first lesson or course page
-      if (pendingCourse.firstLessonSlug) {
-        navigate(`/learning/${pendingCourse.slug}/${pendingCourse.firstLessonSlug}`);
-      } else {
-        navigate(`/learning/${pendingCourse.slug}`);
-      }
+      // Navigate to course page (not first lesson)
+      navigate(`/learning/${pendingCourse.slug}`);
     } catch (error) {
       console.error('Error completing course onboarding:', error);
       setShowCourseOnboarding(false);

@@ -82,12 +82,15 @@ export default function LessonOnboarding({
     try {
       const { error } = await supabase
         .from('user_progress')
-        .update({
+        .upsert({
+          user_id: userId,
+          lesson_id: lessonId,
           onboarding_completed: true,
           onboarding_data: onboardingData,
-        })
-        .eq('user_id', userId)
-        .eq('lesson_id', lessonId);
+          status: 'in_progress',
+        }, {
+          onConflict: 'user_id,lesson_id'
+        });
 
       if (error) throw error;
 
