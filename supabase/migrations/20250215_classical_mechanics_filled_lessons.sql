@@ -3,7 +3,6 @@
 
 -- Update Chapter 1 lessons with proper content
 UPDATE lessons SET
-  description = 'Understand Newtons First Law - inertia, reference frames, equilibrium, and the true nature of friction.',
   content = '{
     "learningObjectives": [
       "State and explain Newtons First Law of Motion",
@@ -65,7 +64,6 @@ WHERE slug = 'newtons-first-law';
 
 -- Lesson 1.5
 UPDATE lessons SET
-  description = 'Apply F = ma to solve problems involving multiple forces, weight, normal force, connected objects, and inclined planes.',
   content = '{
     "learningObjectives": [
       "State and apply Newtons Second Law in its vector form",
@@ -119,10 +117,5 @@ UPDATE lessons SET
     ]
   }'::jsonb
 WHERE slug = 'newtons-second-law';
-
--- Update first few chapters to show course is active
-UPDATE chapters
-SET description = 'Kinematics, Newtons Laws, Forces, Energy, Momentum - The foundations for all of mechanics.'
-WHERE course_id = 'classical-mechanics-uuid' AND order_index = 1;
 
 COMMIT;
