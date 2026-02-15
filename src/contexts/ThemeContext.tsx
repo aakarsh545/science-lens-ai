@@ -75,6 +75,7 @@ function applyThemeTokens(tokens: Record<string, string>) {
 export function ThemeProvider({ children, userId }: { children: ReactNode; userId: string }) {
   const [theme, setTheme] = useState<Theme>(COSMIC_THEME);
   const [loading, setLoading] = useState(true);
+  const hasLoadedForUser = useRef<Record<string, boolean>>({});
 
   const loadTheme = async () => {
     if (!userId) {
@@ -83,6 +84,12 @@ export function ThemeProvider({ children, userId }: { children: ReactNode; userI
       const tokens = generateThemeTokens(COSMIC_THEME.config);
       applyThemeTokens(tokens);
       setLoading(false);
+      return;
+    }
+
+    // Skip if already loaded for this user
+    if (hasLoadedForUser.current[userId]) {
+      console.log('[ThemeContext] Theme already loaded for user:', userId, 'skipping reload');
       return;
     }
 

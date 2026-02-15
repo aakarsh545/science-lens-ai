@@ -167,9 +167,15 @@ export default function LessonPlayer() {
             }
           }
 
-          const { data: lessonData } = await supabase.functions.invoke('lessons', {
+          const { data: lessonData, error: lessonError } = await supabase.functions.invoke('lessons', {
             body: { id: foundLesson.id }
           });
+
+          if (lessonError) {
+            console.error('[LessonPlayer] Error loading lesson:', lessonError);
+            toast.error('Failed to load lesson content');
+            return;
+          }
 
           if (lessonData) {
             setLesson(lessonData);
@@ -377,19 +383,21 @@ export default function LessonPlayer() {
 
       const oldXp = currentStats?.xp_total || 0;
 
-      const { data, error } = await supabase.functions.invoke('lessons', {
+      const { data, error: completeError } = await supabase.functions.invoke('lessons', {
         body: {
           id: lesson.id,
           action: 'complete'
         }
       });
 
-      if (error) {
-        if (error.message?.includes('credits')) {
+      if (completeError) {
+        if (completeError.message?.includes('credits')) {
           toast.error('Not enough credits');
           return;
         }
-        throw error;
+        console.error('[LessonPlayer] Error completing lesson:', completeError);
+        toast.error('Failed to mark lesson complete');
+        throw completeError;
       }
 
       const newXp = data?.stats?.xp_total || oldXp;
@@ -451,6 +459,16 @@ export default function LessonPlayer() {
   };
 
   const handleNextLesson = () => {
+    const nextLesson = getNextLesson();
+    if (nextLesson) {
+      navigate(`/learning/${courseSlug}/${nextLesson.slug}`);
+    } else {
+      toast.success('🎉 This is the last lesson! Course complete!');
+      navigate(`/learning/${courseSlug}`);
+    }
+  };
+
+  const handleQuickNext = () => {
     const nextLesson = getNextLesson();
     if (nextLesson) {
       navigate(`/learning/${courseSlug}/${nextLesson.slug}`);
@@ -582,13 +600,6 @@ export default function LessonPlayer() {
           </ReactMarkdown>
         </CardContent>
       </Card>
-
-      {/* Related Concepts */}
-      <RelatedConceptsDropdown
-        lessonTitle={lesson.title}
-        courseSlug={courseSlug}
-        chapter={lesson.chapter as string}
-      />
 
       {/* Visual Concepts */}
       <Card>
@@ -870,6 +881,20 @@ export default function LessonPlayer() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Next Lesson Button - Always visible */}
+      {lesson && getNextLesson() && (
+        <div className="fixed bottom-6 right-6 z-50 no-print">
+          <Button
+            onClick={handleQuickNext}
+            size="lg"
+            className="shadow-lg"
+          >
+            Next Lesson
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
+        </div>
       )}
     </div>
 
