@@ -799,14 +799,11 @@ export default function LessonPlayer() {
       {/* Content */}
       <Card>
         <CardContent className="p-6 prose prose-invert max-w-none">
-          {isMathJaxLoaded && (
+          {isMathJaxLoaded ? (
             <MathJaxContext>
-              <MathJax dynamic>
-                {processedContent}
-              </MathJax>
+              <MathJax dynamic>{processedContent}</MathJax>
             </MathJaxContext>
-          )}
-          {!isMathJaxLoaded && (
+          ) : (
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {processedContent}
             </ReactMarkdown>

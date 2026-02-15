@@ -22,4 +22,7 @@ export default defineConfig(({ mode }) => ({
     minify: 'esbuild',
     target: 'es2020',
   },
+  optimizeDeps: {
+    include: ['better-react-mathjax'],
+  },
 }));

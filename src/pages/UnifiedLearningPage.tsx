@@ -52,12 +52,8 @@ const getCourseEmoji = (slug: string): string => {
     // Legacy course mappings for backward compatibility
     'basic-physics': '⚡',
     'thermodynamics': '🔥',
-    'quantum-mechanics': '🔮',
     'astronomy': '🌟',
-    'astrophysics': '🌌',
-    'planetary-science': '🪐',
     'chemistry-basics': '🧪',
-    'organic-chemistry': '🧬',
     'biochemistry': '🔬',
     'cell-biology': '🦠',
     'genetics': '🧬',
