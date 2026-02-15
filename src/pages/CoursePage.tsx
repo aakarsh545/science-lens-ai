@@ -7,6 +7,7 @@ import { PathLayout } from "@/components/course/PathLayout";
 import { UnitCard } from "@/components/course/UnitCard";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { Play, Lock, CheckCircle2, BookOpen } from "lucide-react";
 import { calculateLevel, getProgressToNextLevel, getXpRemainingToNextLevel } from "@/utils/levelCalculations";
 
 interface Lesson {
@@ -199,51 +200,68 @@ export default function CoursePage() {
     return groupedUnits.findIndex(unit => unit.progress.completed < unit.progress.total);
   }, [groupedUnits]);
 
-  const isUnitLocked = (index: number) => {
-    // First unit is never locked
-    if (index === 0) return false;
+  // Check if a chapter is locked
+  const isChapterLocked = (chapterIndex: number) => {
+    if (chapterIndex === 0) return false; // First chapter never locked
 
-    // Lock if no lessons have been completed at all in the entire course
-    const totalCompletedLessons = progress.filter(p => p.status === 'completed').length;
-    if (totalCompletedLessons === 0) return index > 0;
+    // Check if all lessons in all previous chapters are completed
+    for (let i = 0; i < chapterIndex; i++) {
+      const chapter = groupedUnits[i];
+      if (!chapter) return true;
+      if (chapter.progress.completed < chapter.progress.total) {
+        return true; // Lock if previous chapter not fully complete
+      }
+    }
+    return false;
+  };
 
-    // Unlock units sequentially - if you've completed at least one lesson overall,
-    // unlock up to the current unit you're working on
-    const currentUnitIndex = groupedUnits.findIndex(unit =>
-      unit.lessons.some(lesson => {
-        const lessonProgress = progress.find(p => p.lesson_id === lesson.id);
-        return lessonProgress?.status !== 'completed';
-      })
-    );
+  // Check if an individual lesson is locked
+  const isLessonLocked = (lesson: Lesson, chapterIndex: number) => {
+    // First check if chapter is locked
+    if (isChapterLocked(chapterIndex)) return true;
 
-    // Lock units beyond the current unit + 1
-    return index > currentUnitIndex + 1;
+    // Within an unlocked chapter, check if previous lesson is completed
+    const chapter = groupedUnits[chapterIndex];
+    if (!chapter) return false;
+
+    const lessonIndex = chapter.lessons.findIndex(l => l.id === lesson.id);
+    if (lessonIndex === 0) return false; // First lesson in chapter never locked
+
+    // Check if previous lesson is completed
+    const previousLesson = chapter.lessons[lessonIndex - 1];
+    if (!previousLesson) return false;
+
+    const previousProgress = progress.find(p => p.lesson_id === previousLesson.id);
+    return previousProgress?.status !== 'completed';
+  };
+
+  const handleLessonClick = (lesson: Lesson) => {
+    const lessonProgress = progress.find(p => p.lesson_id === lesson.id);
+
+    // If lesson is not started yet, mark as in_progress
+    if (!lessonProgress) {
+      supabase
+        .from('user_progress')
+        .insert({
+          user_id: userId,
+          lesson_id: lesson.id,
+          status: 'in_progress',
+        })
+        .then(() => {
+          navigate(`/learning/${courseSlug}/${lesson.slug}`);
+        })
+        .catch(() => {
+          navigate(`/learning/${courseSlug}/${lesson.slug}`);
+        });
+    } else {
+      navigate(`/learning/${courseSlug}/${lesson.slug}`);
+    }
   };
 
   const isUnitCompleted = (index: number) => {
     const unit = groupedUnits[index];
     if (!unit) return false;
     return unit.progress.completed >= unit.progress.total;
-  };
-
-  const handleUnitStart = (unit: LessonGroup, index: number) => {
-    if (isUnitLocked(index) && userId) {
-      toast.error('Complete the previous unit first to unlock this one.');
-      return;
-    }
-
-    // Find first incomplete lesson in this unit
-    const incompleteLesson = unit.lessons.find(l => {
-      const lessonProgress = progress.find(p => p.lesson_id === l.id);
-      return lessonProgress?.status !== 'completed';
-    });
-
-    if (incompleteLesson) {
-      navigate(`/learning/${courseSlug}/${incompleteLesson.slug}`);
-    } else {
-      // All lessons completed, navigate to first lesson
-      navigate(`/learning/${courseSlug}/${unit.lessons[0].slug}`);
-    }
   };
 
   const getLessonStatus = (lessonId: string) => {
@@ -306,22 +324,140 @@ export default function CoursePage() {
         {/* Learning Path */}
         <PathLayout>
           <AnimatePresence mode="popLayout">
-            {groupedUnits.map((unit, index) => {
-              const isCurrent = index === currentUnitIndex;
-              const isLocked = isUnitLocked(index);
-              const isCompleted = isUnitCompleted(index);
+            {groupedUnits.map((unit, unitIndex) => {
+              const chapterLocked = isChapterLocked(unitIndex);
+              const chapterCompleted = isUnitCompleted(unitIndex);
 
               return (
-                <UnitCard
-                  key={unit.name}
-                  unit={unit}
-                  index={index}
-                  isCurrent={isCurrent}
-                  isLocked={isLocked}
-                  isCompleted={isCompleted}
-                  onStart={() => handleUnitStart(unit, index)}
-                  totalXP={unit.totalXP}
-                />
+                <div key={unit.name} className="mb-8">
+                  {/* Chapter Header */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6"
+                  >
+                    <div className={`p-4 rounded-xl border-2 ${
+                      chapterLocked
+                        ? 'bg-muted/30 border-muted opacity-50'
+                        : chapterCompleted
+                        ? 'bg-success/10 border-success/50'
+                        : 'bg-primary/10 border-primary/50'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-bold flex items-center gap-2">
+                            {chapterLocked && <Lock className="w-5 h-5" />}
+                            {unit.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {unit.progress.completed} / {unit.progress.total} lessons completed
+                          </p>
+                        </div>
+                        {chapterCompleted && (
+                          <CheckCircle2 className="w-8 h-8 text-success" />
+                        )}
+                      </div>
+                      {!chapterLocked && (
+                        <div className="mt-2">
+                          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${(unit.progress.completed / unit.progress.total) * 100}%` }}
+                              transition={{ duration: 0.6 }}
+                              className={chapterCompleted ? 'h-full bg-success' : 'h-full bg-gradient-to-r from-primary to-purple-600'}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+
+                  {/* Lessons in this chapter */}
+                  <div className="flex flex-col gap-3">
+                    {unit.lessons.map((lesson, lessonIndex) => {
+                      const lessonLocked = isLessonLocked(lesson, unitIndex);
+                      const lessonStatus = getLessonStatus(lesson.id);
+                      const isLessonCompleted = lessonStatus === 'completed';
+                      const isLessonCurrent = lessonStatus === 'in_progress';
+
+                      return (
+                        <motion.div
+                          key={lesson.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: lessonIndex * 0.1 }}
+                        >
+                          <div
+                            onClick={() => !lessonLocked && handleLessonClick(lesson)}
+                            className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                              lessonLocked
+                                ? 'bg-muted/30 border-muted opacity-50 cursor-not-allowed'
+                                : isLessonCompleted
+                                ? 'bg-success/10 border-success/50 hover:border-success'
+                                : isLessonCurrent
+                                ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20'
+                                : 'bg-card hover:border-primary/50 hover:bg-primary/5'
+                            }`}
+                          >
+                            <div className="flex items-center gap-4">
+                              {/* Lesson icon/bubble */}
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0 ${
+                                lessonLocked
+                                  ? 'bg-muted text-muted-foreground'
+                                  : isLessonCompleted
+                                  ? 'bg-success text-white'
+                                  : isLessonCurrent
+                                  ? 'bg-gradient-to-br from-primary to-purple-600 text-white'
+                                  : 'bg-primary/20 text-primary'
+                              }`}>
+                                {lessonLocked ? (
+                                  <Lock className="w-5 h-5" />
+                                ) : isLessonCompleted ? (
+                                  <CheckCircle2 className="w-6 h-6" />
+                                ) : (
+                                  lessonIndex + 1
+                                )}
+                              </div>
+
+                              {/* Lesson info */}
+                              <div className="flex-1 min-w-0">
+                                <h4 className={`font-semibold ${isLessonCurrent ? 'text-primary' : ''}`}>
+                                  {lesson.title}
+                                </h4>
+                                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                  <span className="flex items-center gap-1">
+                                    <BookOpen className="w-3 h-3" />
+                                    {lesson.xp_reward || 10} XP
+                                  </span>
+                                  {isLessonCompleted && (
+                                    <span className="text-success">Completed</span>
+                                  )}
+                                  {isLessonCurrent && (
+                                    <span className="text-primary">In Progress</span>
+                                  )}
+                                  {lessonLocked && (
+                                    <span className="text-muted-foreground">Locked</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Action icon */}
+                              {!lessonLocked && (
+                                <div className="flex-shrink-0">
+                                  {isLessonCompleted ? (
+                                    <CheckCircle2 className="w-6 h-6 text-success" />
+                                  ) : (
+                                    <Play className="w-6 h-6 text-primary" />
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
               );
             })}
           </AnimatePresence>
