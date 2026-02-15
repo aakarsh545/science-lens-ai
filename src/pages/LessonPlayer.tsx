@@ -116,7 +116,7 @@ export default function LessonPlayer() {
   // AI hint state
   const [aiHint, setAiHint] = useState<string | null>(null);
   const [loadingHint, setLoadingHint] = useState(false);
-  const [hintType, setHintType] = useState<'ai' | 'wolfram'>('ai');
+  const [hintType, setHintType] = useState<'ai' | 'wolfram' | 'grok'>('ai');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loadingAudio, setLoadingAudio] = useState(false);
   const audioRef = React.useRef<HTMLAudioElement>(null);
@@ -926,11 +926,12 @@ export default function LessonPlayer() {
             <label className="text-sm font-medium">Hint Type:</label>
             <select
               value={hintType}
-              onChange={(e) => setHintType(e.target.value as 'ai' | 'wolfram')}
+              onChange={(e) => setHintType(e.target.value as 'ai' | 'wolfram' | 'grok')}
               className="p-2 border rounded-md bg-background"
             >
               <option value="ai">AI Hint (OpenAI)</option>
               <option value="wolfram">Computational (Wolfram Alpha)</option>
+              <option value="grok">xAI Grok (Grok)</option>
             </select>
           </div>
 
