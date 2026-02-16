@@ -32,7 +32,6 @@ interface Course {
 interface UserProgress {
   lesson_id: string;
   status: string;
-  chapter_quiz_completed?: boolean;
 }
 
 interface UserProfile {
@@ -112,7 +111,7 @@ export default function CoursePage() {
   const loadProgress = async (uid: string) => {
     const { data } = await supabase
       .from('user_progress')
-      .select('lesson_id, status, chapter_quiz_completed')
+      .select('lesson_id, status')
       .eq('user_id', uid);
 
     if (data) {
@@ -201,84 +200,19 @@ export default function CoursePage() {
     return groupedUnits.findIndex(unit => unit.progress.completed < unit.progress.total);
   }, [groupedUnits]);
 
-  // Check if a chapter is locked
+  // No locking - always return false (chapters are never locked)
   const isChapterLocked = (chapterIndex: number) => {
-    if (chapterIndex === 0) return false; // First chapter never locked
-
-    // Check if all lessons in all previous chapters are completed AND chapter quiz is passed
-    for (let i = 0; i < chapterIndex; i++) {
-      const chapter = groupedUnits[i];
-      if (!chapter) return true;
-
-      // Check if all lessons in previous chapter are completed
-      if (chapter.progress.completed < chapter.progress.total) {
-        return true; // Lock if previous chapter not fully complete
-      }
-
-      // Check if chapter quiz was completed (for the last lesson in the chapter)
-      const lastLessonInChapter = chapter.lessons[chapter.lessons.length - 1];
-      if (lastLessonInChapter) {
-        const lastLessonProgress = progress.find(p => p.lesson_id === lastLessonInChapter.id);
-
-        // Check if chapter quiz was completed
-        const chapterQuizCompleted = lastLessonProgress?.chapter_quiz_completed;
-
-        if (!chapterQuizCompleted) {
-          return true; // Lock if previous chapter quiz not passed
-        }
-      }
-    }
-    return false;
+    return false; // No chapter locking
   };
 
-  // Check if an individual lesson is locked
+  // No locking - always return false (lessons are never locked)
   const isLessonLocked = (lesson: Lesson, chapterIndex: number) => {
-    // First check if chapter is locked
-    if (isChapterLocked(chapterIndex)) return true;
-
-    // Within an unlocked chapter, check if previous lesson is completed
-    const chapter = groupedUnits[chapterIndex];
-    if (!chapter) return false;
-
-    const lessonIndex = chapter.lessons.findIndex(l => l.id === lesson.id);
-    if (lessonIndex === 0) return false; // First lesson in chapter never locked
-
-    // Check if previous lesson is completed
-    const previousLesson = chapter.lessons[lessonIndex - 1];
-    if (!previousLesson) return false;
-
-    const previousProgress = progress.find(p => p.lesson_id === previousLesson.id);
-    return previousProgress?.status !== 'completed';
+    return false; // No lesson locking
   };
 
   const handleLessonClick = async (lesson: Lesson) => {
-    // Always check server-side if previous lesson is completed before navigating
-    const lessonIndex = course.lessons.findIndex(l => l.id === lesson.id);
-
-    // Only check previous lesson if this isn't the first lesson
-    if (lessonIndex > 0) {
-      const previousLesson = course.lessons[lessonIndex - 1];
-
-      // Check if previous lesson is completed in the database
-      const { data: previousProgress } = await supabase
-        .from('user_progress')
-        .select('status')
-        .eq('user_id', userId)
-        .eq('lesson_id', previousLesson.id)
-        .maybeSingle();
-
-      const isPreviousCompleted = previousProgress?.status === 'completed';
-
-      if (!isPreviousCompleted) {
-        toast.error(
-          `Please complete "${previousLesson.title}" before starting this lesson.`
-        );
-        return;
-      }
-    }
-
-    // Previous lesson is completed, navigate to this lesson
-    // Also create an in_progress record if one doesn't exist
+    // Navigate directly to the lesson - no blocking
+    // Create an in_progress record if one doesn't exist
     const { data: existingProgress } = await supabase
       .from('user_progress')
       .select('status')

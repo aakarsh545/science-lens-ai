@@ -152,30 +152,6 @@ export default function LessonPlayer() {
         if (foundLesson) {
           const lessonIndex = sortedLessons.findIndex((l: Lesson) => l.id === foundLesson.id);
 
-          if (lessonIndex > 0) {
-            const previousLesson = sortedLessons[lessonIndex - 1];
-
-            if (previousLesson) {
-              const { data: prevProgress } = await supabase
-                .from('user_progress')
-                .select('status')
-                .eq('user_id', uid)
-                .eq('lesson_id', previousLesson.id)
-                .maybeSingle();
-
-              const isPreviousCompleted = prevProgress?.status === 'completed';
-
-              if (!isPreviousCompleted) {
-                toast.error(
-                  `🔒 Lesson Locked! Please complete "${previousLesson.title || 'the previous lesson'}" first to unlock this lesson.`,
-                  { duration: 5000 }
-                );
-                navigate(`/learning/${courseSlug}`);
-                return;
-              }
-            }
-          }
-
           const { data: lessonData, error: lessonError } = await supabase.functions.invoke('lessons', {
             body: { id: foundLesson.id }
           });
