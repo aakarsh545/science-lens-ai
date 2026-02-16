@@ -9,32 +9,37 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle OPTIONS preflight request
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
+
+  // Helper function to create JSON responses with CORS
+  const jsonResponse = (data: any, status = 200) => {
+    return new Response(JSON.stringify(data), {
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  };
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify authentication for all requests
+    // Verify authentication for all requests except OPTIONS (handled above)
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Authentication required' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.error('[lessons] Missing authorization header');
+      return jsonResponse({ error: 'Authentication required' }, 401);
     }
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid authentication token' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.error('[lessons] Invalid token:', userError?.message);
+      return jsonResponse({ error: 'Invalid authentication token' }, 401);
     }
 
     // Parse body once and reuse
@@ -80,13 +85,10 @@ serve(async (req) => {
 
           const currentCredits = stats?.credits || 0;
           if (currentCredits < 1) {
-            return new Response(JSON.stringify({
+            return jsonResponse({
               error: 'credits_exhausted',
               message: 'No credits remaining. Daily credits refresh at midnight.'
-            }), {
-              status: 402,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            });
+            }, 402);
           }
 
           // Deduct 1 credit for lesson completion
@@ -119,11 +121,9 @@ serve(async (req) => {
             .eq('user_id', user.id)
             .single();
 
-          return new Response(JSON.stringify({ 
-            alreadyCompleted: true, 
-            stats: existingStats 
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          return jsonResponse({
+            alreadyCompleted: true,
+            stats: existingStats
           });
         }
 
@@ -177,12 +177,10 @@ serve(async (req) => {
           .update({ credits: (currentStats?.credits || 0) + coinReward })
           .eq('user_id', user.id);
 
-        return new Response(JSON.stringify({ 
-          success: true, 
+        return jsonResponse({
+          success: true,
           xpEarned,
-          stats: updatedStats 
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          stats: updatedStats
         });
       }
 
@@ -199,15 +197,10 @@ serve(async (req) => {
       }
 
       if (!lesson) {
-        return new Response(JSON.stringify({ error: 'Lesson not found' }), {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return jsonResponse({ error: 'Lesson not found' }, 404);
       }
 
-      return new Response(JSON.stringify(lesson), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse(lesson);
     }
 
     const lessonId = path[0];
@@ -226,21 +219,13 @@ serve(async (req) => {
       }
 
       if (!lesson) {
-        return new Response(JSON.stringify({ error: 'Lesson not found' }), {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return jsonResponse({ error: 'Lesson not found' }, 404);
       }
 
-      return new Response(JSON.stringify(lesson), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse(lesson);
     }
 
-    return new Response(JSON.stringify({ error: 'Not found' }), {
-      status: 404,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: 'Not found' }, 404);
 
   } catch (error: unknown) {
     // Log detailed error server-side only
@@ -256,11 +241,8 @@ serve(async (req) => {
     });
 
     // Return generic error to client (hide internals)
-    return new Response(JSON.stringify({
+    return jsonResponse({
       error: 'An error occurred. Please try again.',
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    }, 500);
   }
 });
