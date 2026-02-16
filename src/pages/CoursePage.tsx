@@ -235,27 +235,52 @@ export default function CoursePage() {
     return previousProgress?.status !== 'completed';
   };
 
-  const handleLessonClick = (lesson: Lesson) => {
-    const lessonProgress = progress.find(p => p.lesson_id === lesson.id);
+  const handleLessonClick = async (lesson: Lesson) => {
+    // Always check server-side if previous lesson is completed before navigating
+    const lessonIndex = course.lessons.findIndex(l => l.id === lesson.id);
 
-    // If lesson is not started yet, mark as in_progress
-    if (!lessonProgress) {
-      supabase
+    // Only check previous lesson if this isn't the first lesson
+    if (lessonIndex > 0) {
+      const previousLesson = course.lessons[lessonIndex - 1];
+
+      // Check if previous lesson is completed in the database
+      const { data: previousProgress } = await supabase
+        .from('user_progress')
+        .select('status')
+        .eq('user_id', userId)
+        .eq('lesson_id', previousLesson.id)
+        .maybeSingle();
+
+      const isPreviousCompleted = previousProgress?.status === 'completed';
+
+      if (!isPreviousCompleted) {
+        toast.error(
+          `Please complete "${previousLesson.title}" before starting this lesson.`
+        );
+        return;
+      }
+    }
+
+    // Previous lesson is completed, navigate to this lesson
+    // Also create an in_progress record if one doesn't exist
+    const { data: existingProgress } = await supabase
+      .from('user_progress')
+      .select('status')
+      .eq('user_id', userId)
+      .eq('lesson_id', lesson.id)
+      .maybeSingle();
+
+    if (!existingProgress) {
+      await supabase
         .from('user_progress')
         .insert({
           user_id: userId,
           lesson_id: lesson.id,
           status: 'in_progress',
-        })
-        .then(() => {
-          navigate(`/learning/${courseSlug}/${lesson.slug}`);
-        })
-        .catch(() => {
-          navigate(`/learning/${courseSlug}/${lesson.slug}`);
         });
-    } else {
-      navigate(`/learning/${courseSlug}/${lesson.slug}`);
     }
+
+    navigate(`/learning/${courseSlug}/${lesson.slug}`);
   };
 
   const isUnitCompleted = (index: number) => {

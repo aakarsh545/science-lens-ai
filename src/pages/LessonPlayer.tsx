@@ -557,6 +557,32 @@ export default function LessonPlayer() {
   };
 
   const handleNextLesson = async () => {
+    // First, ensure current lesson is marked as completed
+    if (!isCompleted && userId && lesson) {
+      toast.info('Please complete the quiz first before continuing!');
+      return;
+    }
+
+    // Check database to confirm current lesson is completed
+    const { data: currentProgress } = await supabase
+      .from('user_progress')
+      .select('status')
+      .eq('user_id', userId)
+      .eq('lesson_id', lesson.id)
+      .maybeSingle();
+
+    const isActuallyCompleted = currentProgress?.status === 'completed';
+
+    if (!isActuallyCompleted) {
+      toast.info('Please complete the quiz first before continuing!');
+      // Scroll to quiz section
+      const quizSection = document.getElementById('quiz-section');
+      if (quizSection) {
+        quizSection.scrollIntoView({ behavior: 'smooth' });
+      }
+      return;
+    }
+
     const nextLesson = getNextLesson();
     if (!nextLesson) {
       toast.success('🎉 This is the last lesson! Course complete!');
@@ -569,6 +595,26 @@ export default function LessonPlayer() {
   };
 
   const handleQuickNext = async () => {
+    // Check database to confirm current lesson is completed
+    const { data: currentProgress } = await supabase
+      .from('user_progress')
+      .select('status')
+      .eq('user_id', userId)
+      .eq('lesson_id', lesson?.id)
+      .maybeSingle();
+
+    const isActuallyCompleted = currentProgress?.status === 'completed';
+
+    if (!isActuallyCompleted) {
+      toast.info('Please complete the quiz first before continuing!');
+      // Scroll to quiz section
+      const quizSection = document.getElementById('quiz-section');
+      if (quizSection) {
+        quizSection.scrollIntoView({ behavior: 'smooth' });
+      }
+      return;
+    }
+
     const nextLesson = getNextLesson();
     if (!nextLesson) {
       toast.success('🎉 This is the last lesson! Course complete!');
@@ -876,7 +922,7 @@ export default function LessonPlayer() {
 
       {/* Quiz */}
       {quizQuestions.length > 0 && !showQuizResults && (
-        <Card>
+        <Card id="quiz-section">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
