@@ -32,6 +32,7 @@ interface Course {
 interface UserProgress {
   lesson_id: string;
   status: string;
+  chapter_quiz_completed?: boolean;
 }
 
 interface UserProfile {
@@ -111,7 +112,7 @@ export default function CoursePage() {
   const loadProgress = async (uid: string) => {
     const { data } = await supabase
       .from('user_progress')
-      .select('lesson_id, status')
+      .select('lesson_id, status, chapter_quiz_completed')
       .eq('user_id', uid);
 
     if (data) {
@@ -204,12 +205,27 @@ export default function CoursePage() {
   const isChapterLocked = (chapterIndex: number) => {
     if (chapterIndex === 0) return false; // First chapter never locked
 
-    // Check if all lessons in all previous chapters are completed
+    // Check if all lessons in all previous chapters are completed AND chapter quiz is passed
     for (let i = 0; i < chapterIndex; i++) {
       const chapter = groupedUnits[i];
       if (!chapter) return true;
+
+      // Check if all lessons in previous chapter are completed
       if (chapter.progress.completed < chapter.progress.total) {
         return true; // Lock if previous chapter not fully complete
+      }
+
+      // Check if chapter quiz was completed (for the last lesson in the chapter)
+      const lastLessonInChapter = chapter.lessons[chapter.lessons.length - 1];
+      if (lastLessonInChapter) {
+        const lastLessonProgress = progress.find(p => p.lesson_id === lastLessonInChapter.id);
+
+        // Check if chapter quiz was completed
+        const chapterQuizCompleted = lastLessonProgress?.chapter_quiz_completed;
+
+        if (!chapterQuizCompleted) {
+          return true; // Lock if previous chapter quiz not passed
+        }
       }
     }
     return false;

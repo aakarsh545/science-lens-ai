@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,6 @@ import { MathJax, MathJaxContext } from "better-react-mathjax";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import TopicVisual from "@/components/animations/TopicVisual";
-import QuizResults from "@/pages/QuizResults";
 import LessonOnboarding from "@/components/LessonOnboarding";
 import { ThreeJSSimulation } from "@/components/ThreeJSSimulation";
 import {
@@ -107,18 +107,13 @@ export default function LessonPlayer() {
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [recommendedSection, setRecommendedSection] = useState<string | undefined>();
 
-  // Quiz state
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
-  const [showResults, setShowResults] = useState<Record<number, boolean>>({});
-  const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
-  const [showQuizResults, setShowQuizResults] = useState(false);
-  const [quizResultsData, setQuizResultsData] = useState<LessonQuizResults | null>(null);
-
-  // Chapter quiz state
+  // Chapter quiz state (multi-step quiz at end of chapter)
   const [showChapterQuiz, setShowChapterQuiz] = useState(false);
   const [chapterQuizCompleted, setChapterQuizCompleted] = useState<Set<string>>(new Set());
+  const [currentChapterQuizQuestion, setCurrentChapterQuizQuestion] = useState(0);
   const [chapterQuizAnswers, setChapterQuizAnswers] = useState<Record<number, number>>({});
   const [chapterQuizResults, setChapterQuizResults] = useState<Record<number, boolean>>({});
+  const [chapterQuizQuestions, setChapterQuizQuestions] = useState<QuizQuestion[]>([]);
 
   // AI hint state
   const [aiHint, setAiHint] = useState<string | null>(null);
@@ -149,6 +144,20 @@ export default function LessonPlayer() {
       setIsMathJaxLoaded(false);
     };
   }, [lesson?.id, lesson?.content]);
+
+  // Load chapter quiz questions when quiz is shown
+  useEffect(() => {
+    if (showChapterQuiz && lesson?.chapter && courseLessons.length > 0) {
+      const loadChapterQuiz = async () => {
+        const questions = await getChapterQuiz();
+        setChapterQuizQuestions(questions);
+        setCurrentChapterQuizQuestion(0);
+        setChapterQuizAnswers({});
+        setChapterQuizResults({});
+      };
+      loadChapterQuiz();
+    }
+  }, [showChapterQuiz, lesson?.chapter]);
 
   useEffect(() => {
     const init = async () => {
@@ -273,25 +282,11 @@ export default function LessonPlayer() {
     }
   };
 
-  // Helper: get quiz questions array (quiz field IS the array)
-  const getQuizQuestions = (): QuizQuestion[] => {
-    if (!lesson?.quiz) return [];
-    return Array.isArray(lesson.quiz) ? lesson.quiz : [];
-  };
-
   const getNextLesson = () => {
     if (!lesson || courseLessons.length === 0) return null;
     const currentIndex = courseLessons.findIndex(l => l.id === lesson.id);
     if (currentIndex === -1 || currentIndex === courseLessons.length - 1) return null;
     return courseLessons[currentIndex + 1];
-  };
-
-  const allQuizzesAnswered = () => {
-    const questions = getQuizQuestions();
-    if (questions.length === 0) return true;
-    const requiredQuizzes = Math.min(2, questions.length);
-    const answeredQuizzes = Object.keys(showResults).length;
-    return answeredQuizzes >= requiredQuizzes;
   };
 
   const isLastLessonInChapter = () => {
@@ -310,163 +305,107 @@ export default function LessonPlayer() {
   const getChapterQuiz = async () => {
     if (!lesson?.chapter) return [];
 
-    // Try to get chapter quiz from a quiz table or generate one
-    // For now, we'll create a simple chapter quiz based on the chapter content
-    const questions: QuizQuestion[] = [
-      {
-        question: `Chapter ${lesson.chapter} Review: Which topic did you find most challenging?`,
-        options: ['Concept A', 'Concept B', 'Concept C', 'Concept D'],
-        correctAnswer: 0,
-        explanation: 'This helps identify which topics need more review.'
-      },
-      {
-        question: `Chapter ${lesson.chapter} Review: What key concept connects all lessons in this chapter?`,
-        options: ['Theme 1', 'Theme 2', 'Theme 3', 'Theme 4'],
-        correctAnswer: 0,
-        explanation: 'Understanding the overarching theme is crucial for mastery.'
+    // Collect all quiz questions from all lessons in this chapter
+    const lessonsInChapter = courseLessons.filter(l => l.chapter === lesson.chapter);
+    const allQuestions: QuizQuestion[] = [];
+
+    for (const chapterLesson of lessonsInChapter) {
+      if (chapterLesson.quiz && Array.isArray(chapterLesson.quiz)) {
+        // Add questions from this lesson
+        allQuestions.push(...chapterLesson.quiz.map((q, idx) => ({
+          ...q,
+          explanation: q.explanation || `From: ${chapterLesson.title}`
+        })));
       }
-    ];
-
-    return questions;
-  };
-
-  const handleChapterQuizComplete = async (chapter: string) => {
-    setChapterQuizCompleted(prev => new Set([...prev, chapter]));
-    setShowChapterQuiz(false);
-    toast.success(`Chapter ${chapter} quiz completed! +50 XP`);
-  };
-
-  const getQuizProgress = () => {
-    const questions = getQuizQuestions();
-    if (questions.length === 0) return null;
-    const answeredQuizzes = Object.keys(showResults).length;
-    const requiredQuizzes = Math.min(2, questions.length);
-    return `${answeredQuizzes}/${requiredQuizzes} quizzes completed`;
-  };
-
-  const handleQuizSubmit = (questionIndex: number) => {
-    if (!quizStartTime) {
-      setQuizStartTime(Date.now());
     }
 
-    setShowResults(prev => ({ ...prev, [questionIndex]: true }));
+    // If no questions found, create generic chapter review questions
+    if (allQuestions.length === 0) {
+      allQuestions.push(
+        {
+          question: `Chapter ${lesson.chapter} Review: What was the most interesting topic you learned?`,
+          options: ['First Lesson Topic', 'Second Lesson Topic', 'Third Lesson Topic', 'All of them'],
+          correctAnswer: 3,
+          explanation: 'All topics contribute to your understanding of the chapter.'
+        },
+        {
+          question: `Chapter ${lesson.chapter} Review: Are you ready to move to the next chapter?`,
+          options: ['Yes, I understand everything', 'Need more review', 'Not sure yet', 'Skip for now'],
+          correctAnswer: 0,
+          explanation: 'Confidence in your understanding is key to progression.'
+        }
+      );
+    }
 
-    const questions = getQuizQuestions();
-    if (questions[questionIndex]) {
-      const q = questions[questionIndex];
-      const correctIdx = q.correct ?? q.correctAnswer ?? 0;
-      const isCorrect = selectedAnswers[questionIndex] === correctIdx;
+    return allQuestions;
+  };
 
-      if (isCorrect) {
-        toast.success('Correct! Well done! 🎉');
-      } else {
-        toast.error('Not quite right. Review the explanation below.');
-      }
+  const handleChapterQuizAnswer = (questionIndex: number, answerIndex: number) => {
+    setChapterQuizAnswers(prev => ({ ...prev, [questionIndex]: answerIndex }));
+    setChapterQuizResults(prev => ({ ...prev, [questionIndex]: true }));
 
-      const answeredQuizzes = Object.keys({ ...showResults, [questionIndex]: true }).length;
-      const requiredQuizzes = Math.min(2, questions.length);
+    const question = chapterQuizQuestions[questionIndex];
+    const correctIdx = question.correct ?? question.correctAnswer ?? 0;
+    const isCorrect = answerIndex === correctIdx;
 
-      if (answeredQuizzes === requiredQuizzes) {
-        toast.success(`Great! You've completed ${requiredQuizzes} quizzes. You can now mark this lesson complete! 🌟`);
-      }
+    if (isCorrect) {
+      toast.success('Correct! 🎉');
+    } else {
+      toast.error('Not quite. Review and try again!');
     }
   };
 
-  const saveQuizResults = async () => {
-    if (!userId || !lesson) return;
+  const handleChapterQuizComplete = async () => {
+    if (!lesson?.chapter) return;
 
-    const questions = getQuizQuestions();
-    if (questions.length === 0) return;
-
-    const totalQuestions = questions.length;
+    // Calculate score
     let correctCount = 0;
-    const answers: QuizAnswer[] = [];
-    const topicsToReview: string[] = [];
-
-    questions.forEach((q: QuizQuestion, idx: number) => {
-      const correctIdx = q.correct ?? q.correctAnswer ?? 0;
-      const isCorrect = selectedAnswers[idx] === correctIdx;
-
-      if (isCorrect) {
-        correctCount++;
-      } else {
-        topicsToReview.push(`Question ${idx + 1}: ${q.question.substring(0, 50)}...`);
-      }
-
-      answers.push({
-        question: q.question,
-        userAnswer: q.options[selectedAnswers[idx]] || 'Not answered',
-        correctAnswer: q.options[correctIdx],
-        isCorrect,
-        explanation: q.explanation,
-      });
-    });
-
-    const timeTaken = quizStartTime ? Math.floor((Date.now() - quizStartTime) / 1000) : 0;
-    const accuracyPercentage = Math.round((correctCount / totalQuestions) * 100);
-    const averageTimePerQuestion = totalQuestions > 0 ? timeTaken / totalQuestions : 0;
-    const questionsPerMinute = timeTaken > 0 ? (totalQuestions / timeTaken) * 60 : 0;
-
-    let perfectStreaks = 0;
-    let currentStreak = 0;
-    answers.forEach((answer) => {
-      if (answer.isCorrect) {
-        currentStreak++;
-        if (currentStreak >= 3) perfectStreaks++;
-      } else {
-        currentStreak = 0;
+    Object.entries(chapterQuizAnswers).forEach(([qIdx, answerIdx]) => {
+      const question = chapterQuizQuestions[parseInt(qIdx)];
+      if (question) {
+        const correctIdx = question.correct ?? question.correctAnswer ?? 0;
+        if (answerIdx === correctIdx) {
+          correctCount++;
+        }
       }
     });
 
-    // Log quiz activity
-    await logQuizCompleted(
-      userId,
-      lesson.id,
-      lesson.title,
-      correctCount,
-      totalQuestions,
-      0
-    );
+    const percentage = (correctCount / chapterQuizQuestions.length) * 100;
 
-    // Check quiz achievements
-    await checkQuizAchievements(userId, accuracyPercentage);
+    // Require 70% to pass
+    if (percentage >= 70) {
+      // Mark chapter quiz as completed
+      await supabase
+        .from('user_progress')
+        .update({
+          chapter_quiz_completed: true,
+          chapter_quiz_score: percentage,
+          chapter_quiz_completed_at: new Date().toISOString()
+        })
+        .eq('user_id', userId)
+        .eq('lesson_id', lesson.id);
 
-    // Set quiz results data
-    setQuizResultsData({
-      id: crypto.randomUUID(),
-      quizType: 'lesson',
-      lessonId: lesson.id,
-      totalQuestions,
-      correctAnswers: correctCount,
-      incorrectAnswers: totalQuestions - correctCount,
-      accuracyPercentage,
-      timeTakenSeconds: timeTaken,
-      averageTimePerQuestion,
-      xpEarned: 0,
-      streakBonus: 0,
-      answers,
-      difficultyLevel: 'intermediate',
-      completedAt: new Date().toISOString(),
-      questionsPerMinute,
-      perfectStreaks,
-      topicsToReview,
-      lessonTitle: lesson.title,
-    });
+      setChapterQuizCompleted(prev => new Set([...prev, lesson.chapter]));
+      setShowChapterQuiz(false);
+      setCurrentChapterQuizQuestion(0);
+      setChapterQuizAnswers({});
+      setChapterQuizResults({});
+      toast.success(`Chapter ${lesson.chapter} completed! Score: ${Math.round(percentage)}%. Moving to next chapter...`);
 
-    setShowQuizResults(true);
+      // Navigate to first lesson of next chapter
+      const nextLesson = getNextLesson();
+      if (nextLesson) {
+        setTimeout(() => {
+          navigate(`/learning/${courseSlug}/${nextLesson.slug}`);
+        }, 2000);
+      }
+    } else {
+      toast.error(`You need ${70 - Math.round(percentage)}% more to pass. Review the chapter and try again!`);
+    }
   };
 
   const handleMarkComplete = async () => {
     if (!userId || !lesson) return;
-
-    if (!allQuizzesAnswered()) {
-      const questions = getQuizQuestions();
-      const requiredQuizzes = Math.min(2, questions.length);
-      toast.error(
-        `Please complete at least ${requiredQuizzes} quiz questions before marking this lesson complete.`
-      );
-      return;
-    }
 
     setCompletingLesson(true);
     try {
@@ -533,20 +472,18 @@ export default function LessonPlayer() {
 
       setIsCompleted(true);
 
-      // Refresh user progress to get the latest completion status
-      await loadProgress(userId);
-
-      const nextLesson = getNextLesson();
-      if (nextLesson) {
-        setTimeout(() => {
-          toast.info(`Moving to next lesson: "${nextLesson.title}"...`);
-          navigate(`/learning/${courseSlug}/${nextLesson.slug}`);
-        }, 2000);
+      // Check if this is the last lesson in the chapter
+      if (isLastLessonInChapter() && lesson?.chapter) {
+        // Show chapter quiz prompt
+        toast.info(`Chapter ${lesson.chapter} complete! Take the chapter quiz to continue.`);
       } else {
-        setTimeout(() => {
-          toast.success('🎉 Congratulations! You have completed all lessons in this course!');
-          navigate(`/learning/${courseSlug}`);
-        }, 2000);
+        // Navigate to next lesson
+        const nextLesson = getNextLesson();
+        if (nextLesson) {
+          setTimeout(() => {
+            navigate(`/learning/${courseSlug}/${nextLesson.slug}`);
+          }, 2000);
+        }
       }
     } catch (error) {
       console.error('Error completing lesson:', error);
@@ -757,7 +694,6 @@ export default function LessonPlayer() {
     );
   }
 
-  const quizQuestions = getQuizQuestions();
   const examples = Array.isArray(lesson.examples) ? lesson.examples : [];
   const processedContent = (lesson.content || '').replace(/\\n/g, '\n');
 
@@ -920,116 +856,6 @@ export default function LessonPlayer() {
         </Card>
       )}
 
-      {/* Quiz */}
-      {quizQuestions.length > 0 && !showQuizResults && (
-        <Card id="quiz-section">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl">Test Your Knowledge</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Complete at least 2 quizzes to finish this lesson
-                </p>
-              </div>
-              <Badge variant={allQuizzesAnswered() ? "default" : "secondary"} className="text-sm">
-                {getQuizProgress()}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {quizQuestions.map((q: QuizQuestion, qIdx: number) => {
-              const correctIdx = q.correct ?? q.correctAnswer ?? 0;
-
-              return (
-                <div key={qIdx} className="space-y-4">
-                  <div className="flex items-start gap-2">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-sm flex items-center justify-center font-semibold">
-                      {qIdx + 1}
-                    </span>
-                    <h4 className="font-semibold text-lg flex-1">{q.question}</h4>
-                    {showResults[qIdx] && (
-                      <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
-                    )}
-                  </div>
-
-                  <RadioGroup
-                    value={selectedAnswers[qIdx]?.toString() ?? ''}
-                    onValueChange={(val) => setSelectedAnswers(prev => ({ ...prev, [qIdx]: parseInt(val) }))}
-                    disabled={showResults[qIdx]}
-                  >
-                    {q.options.map((option, optIdx) => {
-                      const isSelected = selectedAnswers[qIdx] === optIdx;
-                      const isCorrectOpt = optIdx === correctIdx;
-                      const showFeedback = showResults[qIdx];
-
-                      return (
-                        <div
-                          key={optIdx}
-                          className={`
-                            flex items-center space-x-2 p-3 rounded-lg border transition-colors
-                            ${showFeedback && isCorrectOpt ? 'border-success bg-success/10' : ''}
-                            ${showFeedback && isSelected && !isCorrectOpt ? 'border-destructive bg-destructive/10' : ''}
-                            ${!showFeedback ? 'hover:bg-muted/50' : ''}
-                          `}
-                        >
-                          <RadioGroupItem value={optIdx.toString()} id={`q${qIdx}-opt${optIdx}`} />
-                          <Label htmlFor={`q${qIdx}-opt${optIdx}`} className="flex-1 cursor-pointer">
-                            {option}
-                          </Label>
-                          {showFeedback && isCorrectOpt && (
-                            <CheckCircle2 className="w-5 h-5 text-success" />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </RadioGroup>
-
-                  {!showResults[qIdx] && selectedAnswers[qIdx] !== undefined && (
-                    <Button onClick={() => handleQuizSubmit(qIdx)} size="sm">
-                      Submit Answer
-                    </Button>
-                  )}
-
-                  {showResults[qIdx] && (
-                    <Card className="border-primary/20 bg-primary/5">
-                      <CardContent className="p-4">
-                        <p className="text-sm">
-                          <strong>Explanation:</strong> {q.explanation || `The correct answer is "${q.options[correctIdx]}".`}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Submit Quiz Button */}
-            {Object.keys(showResults).length === quizQuestions.length && (
-              <div className="pt-4 border-t">
-                <Button
-                  size="lg"
-                  className="w-full"
-                  onClick={saveQuizResults}
-                  disabled={completingLesson}
-                >
-                  {completingLesson ? (
-                    <>
-                      <HelixLoader className="mr-2" />
-                      Saving Results...
-                    </>
-                  ) : (
-                    <>
-                      <Trophy className="w-4 h-4 mr-2" />
-                      View Quiz Results
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
       {/* Text-to-Speech Section */}
       <Card className="border-primary/30">
         <CardHeader>
@@ -1076,29 +902,6 @@ export default function LessonPlayer() {
         </CardContent>
       </Card>
 
-      {/* Quiz Results */}
-      {showQuizResults && quizResultsData && (
-        <QuizResults
-          results={quizResultsData}
-          onReturn={() => {
-            setShowQuizResults(false);
-            setQuizResultsData(null);
-          }}
-          onRetry={() => {
-            setShowQuizResults(false);
-            setQuizResultsData(null);
-            setSelectedAnswers({});
-            setShowResults({});
-            setQuizStartTime(null);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          onContinue={async () => {
-            await handleMarkComplete();
-          }}
-          showReviewButton={true}
-        />
-      )}
-
       {/* Chapter Quiz */}
       {shouldShowChapterQuiz() && (
         <Card className="border-purple-500/30 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
@@ -1125,113 +928,151 @@ export default function LessonPlayer() {
         </Card>
       )}
 
-      {showChapterQuiz && lesson?.chapter && (
-        <Card className="border-purple-500/30">
+      {showChapterQuiz && lesson?.chapter && chapterQuizQuestions.length > 0 && (
+        <Card className="border-purple-500/30 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
           <CardHeader>
-            <CardTitle className="text-xl">Chapter {lesson.chapter} Quiz</CardTitle>
+            <div className="flex items-center justify-between mb-2">
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Trophy className="w-6 h-6 text-purple-600" />
+                Chapter {lesson.chapter} Quiz
+              </CardTitle>
+              <Badge variant="secondary" className="text-sm">
+                {currentChapterQuizQuestion + 1} / {chapterQuizQuestions.length}
+              </Badge>
+            </div>
             <p className="text-sm text-muted-foreground">
-              Review what you've learned in this chapter
+              Test your knowledge of all lessons in this chapter
             </p>
+            {/* Progress Bar */}
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden mt-3">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${((currentChapterQuizQuestion + 1) / chapterQuizQuestions.length) * 100}%` }}
+                transition={{ duration: 0.5 }}
+                className="h-full bg-gradient-to-r from-primary to-purple-600"
+              />
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {Array.isArray(lesson.quiz) && lesson.quiz.slice(0, 3).map((q: QuizQuestion, qIdx: number) => {
-              const correctIdx = q.correct ?? q.correctAnswer ?? 0;
+            {/* Current Question */}
+            <motion.div
+              key={currentChapterQuizQuestion}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-4"
+            >
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600/20 text-purple-600 text-sm flex items-center justify-center font-bold">
+                  {currentChapterQuizQuestion + 1}
+                </span>
+                <h4 className="font-semibold text-lg flex-1 pt-1">
+                  {chapterQuizQuestions[currentChapterQuizQuestion].question}
+                </h4>
+              </div>
 
-              return (
-                <div key={qIdx} className="space-y-4">
-                  <div className="flex items-start gap-2">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-600/10 text-purple-600 text-sm flex items-center justify-center font-semibold">
-                      {qIdx + 1}
-                    </span>
-                    <h4 className="font-semibold text-lg flex-1">{q.question}</h4>
-                    {chapterQuizResults[qIdx] && (
-                      <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
-                    )}
+              <RadioGroup
+                value={chapterQuizAnswers[currentChapterQuizQuestion]?.toString() ?? ''}
+                onValueChange={(value) => {
+                  if (!chapterQuizResults[currentChapterQuizQuestion]) {
+                    handleChapterQuizAnswer(currentChapterQuizQuestion, parseInt(value));
+                  }
+                }}
+              >
+                {chapterQuizQuestions[currentChapterQuizQuestion].options.map((option: string, optIdx: number) => (
+                  <div key={optIdx} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value={optIdx.toString()} id={`chapter-q${currentChapterQuizQuestion}-opt${optIdx}`} />
+                    <Label
+                      htmlFor={`chapter-q${currentChapterQuizQuestion}-opt${optIdx}`}
+                      className="flex-1 cursor-pointer"
+                    >
+                      {option}
+                    </Label>
                   </div>
+                ))}
+              </RadioGroup>
 
-                  <RadioGroup
-                    value={chapterQuizAnswers[qIdx]?.toString()}
-                    onValueChange={(value) => {
-                      if (!chapterQuizResults[qIdx]) {
-                        setChapterQuizAnswers(prev => ({ ...prev, [qIdx]: parseInt(value) }));
-                        setChapterQuizResults(prev => ({ ...prev, [qIdx]: true }));
+              {chapterQuizResults[currentChapterQuizQuestion] && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 rounded-lg bg-purple-100 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800"
+                >
+                  <p className="text-sm">
+                    <strong>Explanation:</strong> {chapterQuizQuestions[currentChapterQuizQuestion].explanation || 'Great job on this question!'}
+                  </p>
+                </motion.div>
+              )}
+            </motion.div>
 
-                        const isCorrect = parseInt(value) === correctIdx;
-                        if (isCorrect) {
-                          toast.success('Correct! 🎉');
-                        } else {
-                          toast.error('Not quite right. Keep learning!');
-                        }
-                      }
-                    }}
-                  >
-                    {q.options.map((option: string, oIdx: number) => (
-                      <div key={oIdx} className="flex items-center space-x-2">
-                        <RadioGroupItem value={oIdx.toString()} id={`chapter-q${qIdx}-o${oIdx}`} />
-                        <Label
-                          htmlFor={`chapter-q${qIdx}-o${oIdx}`}
-                          className="flex-1 cursor-pointer p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          {option}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
+            {/* Navigation Buttons */}
+            <div className="flex items-center justify-between pt-4 border-t">
+              <Button
+                onClick={() => setCurrentChapterQuizQuestion(Math.max(0, currentChapterQuizQuestion - 1))}
+                disabled={currentChapterQuizQuestion === 0}
+                variant="outline"
+              >
+                Previous
+              </Button>
 
-                  {chapterQuizResults[qIdx] && (
-                    <Card className="border-purple-200 bg-purple-50 dark:bg-purple-950/20">
-                      <CardContent className="p-4">
-                        <p className="text-sm">
-                          <strong>Explanation:</strong> {q.explanation || `The correct answer is "${q.options[correctIdx]}".`}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              );
-            })}
-
-            {Object.keys(chapterQuizResults).length >= 2 && (
-              <div className="pt-4 border-t">
+              {currentChapterQuizQuestion === chapterQuizQuestions.length - 1 ? (
                 <Button
-                  size="lg"
-                  className="w-full bg-purple-600 hover:bg-purple-700"
                   onClick={() => handleChapterQuizComplete(lesson.chapter)}
+                  disabled={Object.keys(chapterQuizAnswers).length < chapterQuizQuestions.length}
+                  className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                 >
                   <Trophy className="w-4 h-4 mr-2" />
-                  Complete Chapter Quiz
+                  Submit Chapter Quiz
                 </Button>
-              </div>
-            )}
+              ) : (
+                <Button
+                  onClick={() => setCurrentChapterQuizQuestion(currentChapterQuizQuestion + 1)}
+                  disabled={!chapterQuizResults[currentChapterQuizQuestion]}
+                  className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                >
+                  Next
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              )}
+            </div>
+
+            {/* Question Indicators */}
+            <div className="flex items-center justify-center gap-2 pt-4">
+              {chapterQuizQuestions.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    // Only allow navigation to answered questions or the next unanswered one
+                    if (idx < currentChapterQuizQuestion || (idx === currentChapterQuizQuestion + 1 && chapterQuizResults[currentChapterQuizQuestion])) {
+                      setCurrentChapterQuizQuestion(idx);
+                    }
+                  }}
+                  disabled={idx > currentChapterQuizQuestion + 1 || !chapterQuizResults[idx - 1]}
+                  className={`w-3 h-3 rounded-full transition-all ${
+                    idx === currentChapterQuizQuestion
+                      ? 'bg-purple-600 scale-125'
+                      : chapterQuizResults[idx]
+                      ? 'bg-purple-400'
+                      : 'bg-muted'
+                  } ${idx > currentChapterQuizQuestion + 1 || !chapterQuizResults[idx - 1] ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-purple-300'}`}
+                  aria-label={`Question ${idx + 1}`}
+                />
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Action Buttons */}
-      {!showQuizResults && (
-        <Card className="border-primary/20">
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              {quizQuestions.length > 0 && !allQuizzesAnswered() && (
-                <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                  <Lightbulb className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="font-semibold text-amber-700 dark:text-amber-400">
-                      Complete the quizzes first
-                    </p>
-                    <p className="text-sm text-amber-600 dark:text-amber-500 mt-1">
-                      Answer at least {Math.min(2, quizQuestions.length)} quiz questions to unlock the Mark Complete button.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {isCompleted && (
-                <div className="flex items-center gap-2 p-4 bg-success/10 border border-success/30 rounded-lg">
-                  <CheckCircle2 className="w-5 h-5 text-success" />
-                  <p className="text-success font-semibold">You've already completed this lesson! Review mode active.</p>
-                </div>
-              )}
+      <Card className="border-primary/20">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            {isCompleted && (
+              <div className="flex items-center gap-2 p-4 bg-success/10 border border-success/30 rounded-lg">
+                <CheckCircle2 className="w-5 h-5 text-success" />
+                <p className="text-success font-semibold">You've already completed this lesson! Review mode active.</p>
+              </div>
+            )}
 
               <div className="flex items-center justify-between gap-4">
                 <Button
@@ -1261,7 +1102,6 @@ export default function LessonPlayer() {
             </div>
           </CardContent>
         </Card>
-      )}
 
       {/* Next Lesson Button - Always visible */}
       {lesson && getNextLesson() && (
