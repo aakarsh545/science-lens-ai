@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Bug, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { X, Bug, AlertCircle, CheckCircle, Clock, Play, SkipForward } from 'lucide-react';
 
 interface DebugLog {
   id: string;
@@ -232,6 +232,134 @@ export function DebugPanel({ enabled, onClose }: DebugPanelProps) {
     }
   }, [logs]);
 
+  // Automated testing functionality
+  const [isTesting, setIsTesting] = useState(false);
+  const [testProgress, setTestProgress] = useState({ current: 0, total: 0 });
+  const [testStatus, setTestStatus] = useState('');
+  const testingRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const findTestableButtons = (): HTMLElement[] => {
+    // Find all buttons, links, and clickable elements
+    const buttons = Array.from(document.querySelectorAll(
+      'button:not([disabled]), a[href], [role="button"]:not([disabled])'
+    )) as HTMLElement[];
+
+    // Filter out debug panel buttons and hidden elements
+    return buttons.filter(btn => {
+      // Skip debug panel buttons
+      if (btn.closest('.debug-panel')) return false;
+
+      // Skip hidden elements
+      const rect = btn.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return false;
+
+      // Skip elements with display: none or visibility: hidden
+      const style = window.getComputedStyle(btn);
+      if (style.display === 'none' || style.visibility === 'hidden') return false;
+
+      return true;
+    });
+  };
+
+  const testAllButtons = async () => {
+    if (isTesting) {
+      // Stop testing
+      abortControllerRef.current?.abort();
+      testingRef.current = false;
+      setIsTesting(false);
+      setTestStatus('');
+      return;
+    }
+
+    const buttons = findTestableButtons();
+    if (buttons.length === 0) {
+      logDebugEvent(
+        'error',
+        'Test All Buttons',
+        'No clickable buttons found on current page',
+        window.location.href
+      );
+      return;
+    }
+
+    testingRef.current = true;
+    setIsTesting(true);
+    abortControllerRef.current = new AbortController();
+
+    setTestProgress({ current: 0, total: buttons.length });
+    setTestStatus('Starting automated button testing...');
+
+    logDebugEvent(
+      'click',
+      'Test All Buttons',
+      `Starting automated test of ${buttons.length} buttons`,
+      window.location.href
+    );
+
+    // Test buttons one by one
+    for (let i = 0; i < buttons.length; i++) {
+      if (!testingRef.current) break;
+
+      const button = buttons[i];
+      setTestProgress({ current: i + 1, total: buttons.length });
+      setTestStatus(`Testing button ${i + 1}/${buttons.length}...`);
+
+      const { name, description, location } = identifyButton(button);
+
+      // Scroll button into view
+      button.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Wait a bit for scroll
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Highlight the button
+      button.style.outline = '3px solid orange';
+      button.style.outlineOffset = '2px';
+
+      try {
+        // Click the button
+        const clickEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        });
+        button.dispatchEvent(clickEvent);
+
+        logDebugEvent('click', name, description, location, undefined, button);
+
+        // Wait to observe effects
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } catch (error) {
+        logDebugEvent(
+          'error',
+          name,
+          `Error clicking button: ${error}`,
+          location,
+          error instanceof Error ? error.stack : String(error)
+        );
+      } finally {
+        // Remove highlight
+        button.style.outline = '';
+        button.style.outlineOffset = '';
+      }
+    }
+
+    testingRef.current = false;
+    setIsTesting(false);
+    setTestStatus(`Completed testing ${buttons.length} buttons!`);
+
+    logDebugEvent(
+      'success',
+      'Test All Buttons',
+      `Successfully completed automated test of ${buttons.length} buttons`,
+      window.location.href
+    );
+
+    // Clear status after 3 seconds
+    setTimeout(() => setTestStatus(''), 3000);
+  };
+
   if (!enabled) return null;
 
   const getLogIcon = (type: DebugLog['type']) => {
@@ -301,19 +429,63 @@ export function DebugPanel({ enabled, onClose }: DebugPanelProps) {
             </div>
           </div>
 
-          {/* Testing Checklist */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h4 className="font-semibold mb-2 text-sm">Quick Testing Checklist</h4>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <TestingCheckbox label="Dashboard buttons" />
-              <TestingCheckbox label="Learning page" />
-              <TestingCheckbox label="Lesson navigation" />
-              <TestingCheckbox label="Chapter quizzes" />
-              <TestingCheckbox label="Shop themes" />
-              <TestingCheckbox label="Challenges" />
-              <TestingCheckbox label="Profile/Settings" />
-              <TestingCheckbox label="Sidebar nav" />
-            </div>
+          {/* Testing Controls */}
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 debug-panel">
+            <h4 className="font-semibold mb-2 text-sm">Automated Testing</h4>
+
+            <button
+              onClick={testAllButtons}
+              disabled={isTesting}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium text-sm transition-colors ${
+                isTesting
+                  ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                  : 'bg-purple-600 hover:bg-purple-700 text-white'
+              }`}
+            >
+              {isTesting ? (
+                <>
+                  <SkipForward className="w-4 h-4" />
+                  Stop Testing
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4" />
+                  Test All Buttons
+                </>
+              )}
+            </button>
+
+            {isTesting && (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Progress: {testProgress.current} / {testProgress.total}
+                  </span>
+                  <span className="font-medium">
+                    {Math.round((testProgress.current / testProgress.total) * 100)}%
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all duration-300"
+                    style={{ width: `${(testProgress.current / testProgress.total) * 100}%` }}
+                  />
+                </div>
+                {testStatus && (
+                  <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
+                    {testStatus}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {!isTesting && testStatus && (
+              <div className="mt-2 p-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded">
+                <p className="text-xs text-green-800 dark:text-green-200 text-center">
+                  ✓ {testStatus}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Logs */}
@@ -381,22 +553,6 @@ export function DebugPanel({ enabled, onClose }: DebugPanelProps) {
         </div>
       )}
     </div>
-  );
-}
-
-function TestingCheckbox({ label }: { label: string }) {
-  const [checked, setChecked] = useState(false);
-
-  return (
-    <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-1 rounded">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => setChecked(e.target.checked)}
-        className="rounded"
-      />
-      <span>{label}</span>
-    </label>
   );
 }
 
