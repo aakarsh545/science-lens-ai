@@ -27,47 +27,12 @@ import {
 import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
 import { HelixLoader } from "@/components/ui/helix-loader";
 import { triggerLevelUpConfetti, triggerLessonCompleteConfetti } from "@/utils/confettiEffects";
-import { logLessonCompleted, logQuizCompleted, logLevelUp } from "@/utils/activityLogging";
-import { checkLessonAchievements, checkQuizAchievements, checkLevelAchievements } from "@/utils/achievements";
+import { logLessonCompleted, logLevelUp } from "@/utils/activityLogging";
+import { checkLessonAchievements, checkLevelAchievements } from "@/utils/achievements";
 
 interface LessonExample {
   title: string;
   description: string;
-}
-
-interface QuizAnswer {
-  question: string;
-  userAnswer: string;
-  correctAnswer: string;
-  isCorrect: boolean;
-  explanation?: string;
-}
-
-interface LessonQuizResults {
-  id: string;
-  quizType: 'lesson';
-  lessonId?: string;
-  totalQuestions: number;
-  correctAnswers: number;
-  incorrectAnswers: number;
-  accuracyPercentage: number;
-  timeTakenSeconds: number;
-  averageTimePerQuestion: number;
-  xpEarned: number;
-  streakBonus: number;
-  answers: QuizAnswer[];
-  previousAttempt?: {
-    id: string;
-    accuracyPercentage: number;
-    completedAt: string;
-  };
-  improvementPercentage?: number;
-  difficultyLevel: string;
-  completedAt: string;
-  questionsPerMinute: number;
-  perfectStreaks: number;
-  topicsToReview: string[];
-  lessonTitle?: string;
 }
 
 interface Lesson {
@@ -494,12 +459,6 @@ export default function LessonPlayer() {
   };
 
   const handleNextLesson = async () => {
-    // First, ensure current lesson is marked as completed
-    if (!isCompleted && userId && lesson) {
-      toast.info('Please complete the quiz first before continuing!');
-      return;
-    }
-
     // Check database to confirm current lesson is completed
     const { data: currentProgress } = await supabase
       .from('user_progress')
@@ -510,14 +469,11 @@ export default function LessonPlayer() {
 
     const isActuallyCompleted = currentProgress?.status === 'completed';
 
-    if (!isActuallyCompleted) {
-      toast.info('Please complete the quiz first before continuing!');
-      // Scroll to quiz section
-      const quizSection = document.getElementById('quiz-section');
-      if (quizSection) {
-        quizSection.scrollIntoView({ behavior: 'smooth' });
-      }
-      return;
+    // If not completed, auto-complete it
+    if (!isActuallyCompleted && userId && lesson) {
+      await handleMarkComplete();
+      // Wait a moment for the completion to process
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     const nextLesson = getNextLesson();
@@ -542,14 +498,11 @@ export default function LessonPlayer() {
 
     const isActuallyCompleted = currentProgress?.status === 'completed';
 
-    if (!isActuallyCompleted) {
-      toast.info('Please complete the quiz first before continuing!');
-      // Scroll to quiz section
-      const quizSection = document.getElementById('quiz-section');
-      if (quizSection) {
-        quizSection.scrollIntoView({ behavior: 'smooth' });
-      }
-      return;
+    // If not completed, auto-complete it
+    if (!isActuallyCompleted && userId && lesson) {
+      await handleMarkComplete();
+      // Wait a moment for the completion to process
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     const nextLesson = getNextLesson();
