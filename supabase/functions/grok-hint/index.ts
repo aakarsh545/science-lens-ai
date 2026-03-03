@@ -73,7 +73,8 @@ serve(async (req) => {
             content: `You are a helpful AI assistant for a science learning platform called Science Lens AI. A user is asking for help understanding this lesson topic: "${question}". ${context ? `Lesson context: ${context}` : ''} Provide a clear, educational hint that helps them understand the concept better. Keep your response concise (under 150 words) and focus on the key scientific concepts.`
           }
         ]
-      });
+      })
+    );
 
     if (!response.ok) {
       console.error('[grok-hint] API error:', response.status, await response.text());

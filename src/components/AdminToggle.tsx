@@ -34,7 +34,6 @@ export function AdminToggle() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not logged in');
 
-<<<<<<< HEAD
       // SERVER-SIDE: Call Edge Function to grant admin
       // This ensures proper server-side authorization and logging
       const { data, error } = await supabase.functions.invoke('grant-admin', {
@@ -70,7 +69,7 @@ export function AdminToggle() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not logged in');
 
-<<<<<<< HEAD
+
       // SERVER-SIDE: Call Edge Function to revoke admin
       // This ensures proper server-side authorization and logging
       const { data, error } = await supabase.functions.invoke('revoke-admin', {
