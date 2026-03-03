@@ -18,7 +18,7 @@ import SpaceBackground from './SpaceBackground';
 import AuthModal from './AuthModal';
 import { Suspense } from 'react';
 import { OnboardingCutscene } from './OnboardingCutscene';
-import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 const features = [
   {
@@ -133,42 +133,28 @@ export default function LandingPage() {
       root.style.setProperty(key, value);
     });
 
-    // Check initial session immediately on mount (only if Supabase is configured)
-    if (isSupabaseConfigured) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!mounted) return;
+    // Check initial session immediately on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
 
-        if (session) {
-          // User is already logged in, redirect to dashboard immediately
-          navigate('/dashboard', { replace: true });
-        } else {
-          setInitialAuthCheck(false);
-        }
-      });
+      if (session) {
+        // User is already logged in, redirect to dashboard immediately
+        navigate('/dashboard', { replace: true });
+      } else {
+        setInitialAuthCheck(false);
+      }
+    });
 
-      // Listen for authentication state changes (for when user signs in through the form)
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (!mounted) return;
+    // Listen for authentication state changes (for when user signs in through the form)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
 
-        // Only handle SIGNED_IN event (user just signed in through form)
-        // INITIAL_SESSION is handled by getSession() above
-        if (event === 'SIGNED_IN' && session) {
-          navigate('/dashboard', { replace: true });
-        }
-      });
-
-      return () => {
-        mounted = false;
-        subscription.unsubscribe();
-      };
-    } else {
-      // Supabase not configured - just mark auth check as complete
-      console.warn('[LANDING PAGE] Supabase not configured, skipping auth check');
-      setInitialAuthCheck(false);
-      return () => {
-        mounted = false;
-      };
-    }
+      // Only handle SIGNED_IN event (user just signed in through form)
+      // INITIAL_SESSION is handled by getSession() above
+      if (event === 'SIGNED_IN' && session) {
+        navigate('/dashboard', { replace: true });
+      }
+    });
 
     return () => {
       mounted = false;
@@ -358,18 +344,9 @@ export default function LandingPage() {
           </span>
         </div>
 
-        <div className="flex gap-4 items-center">
-          {!isSupabaseConfigured && (
-            <div className="hidden md:block text-xs text-yellow-500 bg-yellow-500/10 border border-yellow-500/30 px-3 py-1 rounded-full">
-              ⚠️ Supabase not configured
-            </div>
-          )}
-          <Button variant="ghostCosmic" onClick={() => setShowAuthModal(true)} disabled={!isSupabaseConfigured}>
-            Sign In
-          </Button>
-          <Button variant="cosmic" onClick={handleGetStarted} disabled={!isSupabaseConfigured}>
-            Get Started
-          </Button>
+        <div className="flex gap-4">
+          <Button variant="ghostCosmic" onClick={() => setShowAuthModal(true)}>Sign In</Button>
+          <Button variant="cosmic" onClick={handleGetStarted}>Get Started</Button>
         </div>
       </motion.nav>
 
@@ -397,7 +374,7 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="xl" className="group" onClick={handleGetStarted} disabled={!isSupabaseConfigured}>
+            <Button variant="hero" size="xl" className="group" onClick={handleGetStarted}>
               <Zap className="w-5 h-5 group-hover:animate-pulse" />
               Start Learning
             </Button>
@@ -418,18 +395,6 @@ export default function LandingPage() {
               <Sparkles className="w-5 h-5" />
             </Button>
           </div>
-
-          {!isSupabaseConfigured && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg max-w-md mx-auto"
-            >
-              <p className="text-sm text-yellow-200">
-                ⚠️ <strong>Authentication is not configured</strong>. Please set up valid Supabase credentials in your .env file to enable sign-in and registration.
-              </p>
-            </motion.div>
-          )}
         </motion.div>
       </section>
 

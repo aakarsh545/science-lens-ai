@@ -5,42 +5,27 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// Helper to check if URL is a placeholder/fake
-const isValidSupabaseUrl = (url: string | undefined): boolean => {
-  if (!url) return false;
-  // Check for common placeholder patterns
-  const placeholders = ['your-project', 'kljndbehjwfdyewgxgaw', 'localhost'];
-  return !placeholders.some(p => url.includes(p));
-};
-
-const isValid = isValidSupabaseUrl(SUPABASE_URL);
-
 // Debug: Log Supabase client initialization
 console.log('[DEBUG] Supabase Client Init:', {
   url: SUPABASE_URL ? 'SET' : 'MISSING',
   key: SUPABASE_PUBLISHABLE_KEY ? 'SET' : 'MISSING',
   urlPreview: SUPABASE_URL,
-  isValid,
 });
 
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY || !isValid) {
-  console.error('[CRITICAL] Missing or invalid Supabase environment variables!', {
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  console.error('[CRITICAL] Missing Supabase environment variables!', {
     hasUrl: !!SUPABASE_URL,
     hasKey: !!SUPABASE_PUBLISHABLE_KEY,
-    isValid,
   });
 }
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL || '', SUPABASE_PUBLISHABLE_KEY || '', {
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
-    persistSession: isValid, // Only persist session if credentials are valid
-    autoRefreshToken: isValid, // Only auto-refresh if credentials are valid
+    persistSession: true,
+    autoRefreshToken: true,
   }
 });
-
-// Export a flag to check if Supabase is properly configured
-export const isSupabaseConfigured = isValid && !!SUPABASE_PUBLISHABLE_KEY;
