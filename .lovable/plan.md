@@ -1,25 +1,22 @@
 
 
-## Problem
+## Fix Build Errors
 
-The app shows a blank dark screen because the `.env` file is missing from the project. This file provides the critical environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) that the Supabase client needs to initialize. Without them, the app crashes immediately with "supabaseUrl is required."
+Two fixes to restore the build:
 
-The `.env` file is auto-managed by Lovable Cloud, but previous edits accidentally created/deleted it, leaving it in a broken state.
+### Fix 1: Remove merge conflict markers in `AdminToggle.tsx`
+- **Line 37**: Delete `<<<<<<< HEAD` — the code below it (edge function calls) is the correct implementation
+- **Line 73**: Delete `<<<<<<< HEAD` — same situation
 
-## Fix
+### Fix 2: Fix `fetch()` syntax in `grok-hint/index.ts`
+- **Line 76**: Change `});` to `})` — closes `JSON.stringify()` 
+- Add `);` on a new line after — closes the `fetch()` call
 
-Recreate the `.env` file with the correct Lovable Cloud credentials:
-
+So lines 76-77 become:
 ```
-VITE_SUPABASE_PROJECT_ID="pfrmkmlstzjexccmdkoc"
-VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmcm1rbWxzdHpqZXhjY21ka29jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE2MzksImV4cCI6MjA3NDc0NzYzOX0.b0mjj8CS604Y38Pf1iQefrBz59pV0yEl3sCewGe4DmA"
-VITE_SUPABASE_URL="https://pfrmkmlstzjexccmdkoc.supabase.co"
+      })
+    );
 ```
 
-This is a single-file fix that will restore the app immediately.
+No other changes. No UI, functionality, or environment variable modifications.
 
-## Technical Details
-
-- **File**: `.env` (recreate)
-- **Root cause**: The file was lost during previous edit cycles that kept recreating it
-- **No other code changes needed** -- the client code in `src/integrations/supabase/client.ts` is correct and reads these variables properly
