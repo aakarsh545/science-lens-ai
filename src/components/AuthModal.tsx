@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { HelixLoader } from "@/components/ui/helix-loader";
 import { getUserFriendlyMessage } from "@/utils/errorHandling";
@@ -15,6 +15,41 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
+  // If Supabase is not configured, show a warning instead of the auth form
+  if (!isSupabaseConfigured) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-red-500">
+              Authentication Not Configured
+            </DialogTitle>
+            <DialogDescription>
+              Please set up valid Supabase credentials to enable authentication.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+            <p className="text-sm text-yellow-200 mb-2">
+              <strong>Missing Configuration:</strong>
+            </p>
+            <p className="text-sm text-muted-foreground mb-3">
+              The app requires valid Supabase credentials in the .env file:
+            </p>
+            <ul className="text-xs text-muted-foreground space-y-1 ml-4">
+              <li>• VITE_SUPABASE_URL - Your Supabase project URL</li>
+              <li>• VITE_SUPABASE_PUBLISHABLE_KEY - Your Supabase anon key</li>
+            </ul>
+            <p className="text-sm text-muted-foreground mt-3">
+              Get these from <a href="https://app.supabase.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">app.supabase.com</a> → Project Settings → API
+            </p>
+          </div>
+          <Button onClick={() => onOpenChange(false)} className="w-full">
+            Close
+          </Button>
+        </DialogContent>
+      </Dialog>
+    );
+  }
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
