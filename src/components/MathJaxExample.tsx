@@ -73,7 +73,7 @@ export const MathJaxExample: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {(Object.entries(mathExamples) as [keyof typeof mathExamples, string][]).map(([key, example]) => (
+          {Object.entries(mathExamples).map(([key, example]) => (
             <div key={key} className="border-l-4 border-purple-500 pl-4 py-2">
               <h3 className="text-lg font-semibold mb-2">{example.title}</h3>
               <p className="text-sm text-gray-600 mb-2">{example.description}</p>
@@ -110,8 +110,8 @@ export const MathJaxExample: React.FC = () => {
             <ul className="text-sm space-y-1">
               <li><code className="bg-blue-100 px-1 rounded">x^2</code> → superscript (x²)</li>
               <li><code className="bg-blue-100 px-1 rounded">x_2</code> → subscript (x₂)</li>
-              <li><code className="bg-blue-100 px-1 rounded">\\frac{a}{b}</code> → fraction (a/b)</li>
-              <li><code className="bg-blue-100 px-1 rounded">\\sqrt{x}</code> → square root (√x)</li>
+              <li><code className="bg-blue-100 px-1 rounded">{'\\frac{a}{b}'}</code> → fraction (a/b)</li>
+              <li><code className="bg-blue-100 px-1 rounded">{'\\sqrt{x}'}</code> → square root (√x)</li>
               <li><code className="bg-blue-100 px-1 rounded">\\int</code> → integral (∫)</li>
               <li><code className="bg-blue-100 px-1 rounded">\\sum</code> → summation (Σ)</li>
             </ul>

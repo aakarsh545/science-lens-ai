@@ -1,6 +1,6 @@
 import React from 'react';
 import Spline from '@splinetool/react-spline';
-import { Rive } from '@rive-app/react-canvas';
+import { useRive } from '@rive-app/react-canvas';
 import Lottie from 'lottie-react';
 
 interface PhETSimulationProps {
@@ -9,6 +9,15 @@ interface PhETSimulationProps {
   title?: string;
   config?: any;
 }
+
+const RiveWrapper: React.FC<{ url: string; stateMachine?: string }> = ({ url, stateMachine }) => {
+  const { RiveComponent } = useRive({
+    src: url,
+    stateMachines: stateMachine || 'bouncing-drive',
+    autoplay: true,
+  });
+  return <RiveComponent style={{ width: '100%', height: '100%' }} />;
+};
 
 export const PhETSimulation: React.FC<PhETSimulationProps> = ({ type, url, title, config }) => {
   const renderSimulation = () => {
@@ -39,11 +48,7 @@ export const PhETSimulation: React.FC<PhETSimulationProps> = ({ type, url, title
       case 'rive':
         return (
           <div className="w-full h-[600px] rounded-lg border-2 border-orange-200 bg-orange-50">
-            <Rive
-              src={url || ''}
-              stateMachine={config?.stateMachine || 'bouncing-drive'}
-              style={{ width: '100%', height: '100%' }}
-            />
+            <RiveWrapper url={url || ''} stateMachine={config?.stateMachine} />
           </div>
         );
 

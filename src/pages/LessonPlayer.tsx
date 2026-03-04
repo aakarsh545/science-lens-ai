@@ -15,6 +15,7 @@ import remarkGfm from "remark-gfm";
 import TopicVisual from "@/components/animations/TopicVisual";
 import LessonOnboarding from "@/components/LessonOnboarding";
 import { ThreeJSSimulation } from "@/components/ThreeJSSimulation";
+import { PhETSimulation } from "@/components/lessons/PhETSimulation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -169,7 +170,7 @@ export default function LessonPlayer() {
             await loadProgress(uid);
 
             // Check onboarding status
-            const { data: progressData } = await supabase
+            const { data: progressData } = await (supabase as any)
               .from('user_progress')
               .select('status, onboarding_completed, recommended_starting_section')
               .eq('user_id', uid)
@@ -186,7 +187,7 @@ export default function LessonPlayer() {
               setRecommendedSection(progressData.recommended_starting_section || undefined);
             } else {
               // No progress record yet, create one and show onboarding
-              await supabase
+              await (supabase as any)
                 .from('user_progress')
                 .insert({
                   user_id: uid,
@@ -316,7 +317,7 @@ export default function LessonPlayer() {
     // Require 70% to pass
     if (percentage >= 70) {
       // Mark chapter quiz as completed
-      await supabase
+      await (supabase as any)
         .from('user_progress')
         .update({
           chapter_quiz_completed: true,
@@ -946,7 +947,7 @@ export default function LessonPlayer() {
 
               {currentChapterQuizQuestion === chapterQuizQuestions.length - 1 ? (
                 <Button
-                  onClick={() => handleChapterQuizComplete(lesson.chapter)}
+                  onClick={() => handleChapterQuizComplete()}
                   disabled={Object.keys(chapterQuizAnswers).length < chapterQuizQuestions.length}
                   className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                 >

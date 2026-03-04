@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Spline from '@splinetool/react-spline';
-import { Rive, useStateMachine } from '@rive-app/react-canvas';
+import { useRive, useStateMachineInput } from '@rive-app/react-canvas';
 import Lottie from 'lottie-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -60,20 +60,17 @@ const SplineScene: React.FC = () => {
   );
 };
 
-// Rive Animation Component (example with a public URL)
+// Rive Animation Component using useRive hook
 const RiveAnimation: React.FC = () => {
-  const { riveInstance } = useStateMachine();
+  const { RiveComponent } = useRive({
+    src: 'https://cdn.rive.app/animations/vehicles.riv',
+    stateMachines: 'bouncing-drive',
+    autoplay: true,
+  });
 
   return (
     <div className="w-full h-[300px] rounded-lg overflow-hidden border-2 border-orange-200 bg-orange-50">
-      <Rive
-        src="https://cdn.rive.app/animations/vehicles.riv"
-        stateMachine="bouncing-drive"
-        onLoad={(rive) => {
-          riveInstance(rive);
-        }}
-        style={{ width: '100%', height: '100%' }}
-      />
+      <RiveComponent style={{ width: '100%', height: '100%' }} />
     </div>
   );
 };
