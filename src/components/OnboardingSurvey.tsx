@@ -90,7 +90,6 @@ const DAILY_GOAL_OPTIONS = [
 
 const STARTING_POINT_OPTIONS = [
   { value: 'basics', label: 'Start from basics', subtitle: 'Intro lessons', icon: '📖' },
-  { value: 'find_my_level', label: 'Find my level', subtitle: 'Placement quiz coming soon', icon: '🎯' },
 ];
 
 const FEATURES = [
