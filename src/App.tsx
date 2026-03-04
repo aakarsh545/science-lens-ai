@@ -11,7 +11,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
 import CourseLayout from "./layouts/CourseLayout";
-import TestPage from "./pages/TestPage";
 import AchievementsPage from "./pages/AchievementsPage";
 import SettingsPage from "./pages/SettingsPage";
 import AccountInformationPage from "./pages/AccountInformationPage";
@@ -71,9 +70,6 @@ function AppContent() {
           </Route>
           <Route path="ask" element={<AuthenticatedLayout />}>
             <Route index element={<AskPage />} />
-          </Route>
-          <Route path="api-test" element={<AuthenticatedLayout />}>
-            <Route index element={<TestPage />} />
           </Route>
           <Route path="shop" element={<AuthenticatedLayout />}>
             <Route index element={<ShopPage />} />
