@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "lottie-web": "lottie-web/build/player/lottie_light",
     },
   },
   define: {
@@ -24,6 +25,7 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true,
     minify: 'esbuild',
     target: 'es2020',
+    chunkSizeWarningLimit: 6000,
   },
   optimizeDeps: {
     include: ['better-react-mathjax'],

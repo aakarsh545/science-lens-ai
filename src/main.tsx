@@ -36,30 +36,32 @@ window.addEventListener('unhandledrejection', (e) => {
   console.error('[MAIN UNHANDLED]', e.reason);
 });
 
-try {
-  console.log('[MAIN] About to create React root...');
-  const root = createRoot(rootElement!);
-  console.log('[MAIN] React root created, about to render App...');
-  root.render(
-    <StrictMode>
-      <App />
-    </StrictMode>
-  );
-  console.log('[MAIN] App rendered successfully!');
-} catch (error) {
-  console.error('[MAIN CRITICAL] Failed to render app:', error);
-  rootElement!.innerHTML = `
-    <div style="padding: 40px; color: white; font-family: sans-serif; background: #1a1a1a;">
-      <h1 style="color: #ff6b6b;">Application Error</h1>
-      <details>
-        <summary style="cursor: pointer; padding: 10px; background: #333; margin: 10px 0;">
-          Click to view error details
-        </summary>
-        <pre style="padding: 20px; background: #2a2a2a; overflow: auto; white-space: pre-wrap;">
+if (rootElement) {
+  try {
+    console.log('[MAIN] About to create React root...');
+    const root = createRoot(rootElement);
+    console.log('[MAIN] React root created, about to render App...');
+    root.render(
+      <StrictMode>
+        <App />
+      </StrictMode>
+    );
+    console.log('[MAIN] App rendered successfully!');
+  } catch (error) {
+    console.error('[MAIN CRITICAL] Failed to render app:', error);
+    rootElement.innerHTML = `
+      <div style="padding: 40px; color: white; font-family: sans-serif; background: #1a1a1a;">
+        <h1 style="color: #ff6b6b;">Application Error</h1>
+        <details>
+          <summary style="cursor: pointer; padding: 10px; background: #333; margin: 10px 0;">
+            Click to view error details
+          </summary>
+          <pre style="padding: 20px; background: #2a2a2a; overflow: auto; white-space: pre-wrap;">
 ${JSON.stringify(error, null, 2)}
-        </pre>
-      </details>
-      <p style="margin-top: 20px;">Check browser console for more details.</p>
-    </div>
-  `;
+          </pre>
+        </details>
+        <p style="margin-top: 20px;">Check browser console for more details.</p>
+      </div>
+    `;
+  }
 }
