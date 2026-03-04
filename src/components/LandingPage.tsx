@@ -19,6 +19,7 @@ import AuthModal from './AuthModal';
 import { Suspense } from 'react';
 import { OnboardingCutscene } from './OnboardingCutscene';
 import { supabase } from '@/integrations/supabase/client';
+import { getHasSeenOnboarding, setHasSeenOnboarding, getHasSeenIntro, setHasSeenIntro } from '@/utils/userStorage';
 
 const features = [
   {

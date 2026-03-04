@@ -5,6 +5,7 @@ import { User } from "@supabase/supabase-js";
 import { HelixLoader } from "@/components/ui/helix-loader";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { OnboardingCutscene } from "@/components/OnboardingCutscene";
+import { getHasSeenOnboarding, setHasSeenOnboarding } from "@/utils/userStorage";
 
 export default function CourseLayout() {
   const [user, setUser] = useState<User | null>(null);
@@ -24,7 +25,7 @@ export default function CourseLayout() {
 
         // Safely check if user has seen visual onboarding cutscene
         try {
-          const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+          const hasSeenOnboarding = getHasSeenOnboarding(session.user.id);
           if (!hasSeenOnboarding) {
             setShowOnboardingCutscene(true);
           }
@@ -51,7 +52,7 @@ export default function CourseLayout() {
         setUser(session.user);
         // Safely check if user has seen onboarding
         try {
-          const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+          const hasSeenOnboarding = getHasSeenOnboarding(session.user.id);
           if (!hasSeenOnboarding) {
             setShowOnboardingCutscene(true);
           }
@@ -70,19 +71,15 @@ export default function CourseLayout() {
   }, []);
 
   const handleOnboardingComplete = () => {
-    try {
-      localStorage.setItem('hasSeenOnboarding', 'true');
-    } catch (error) {
-      console.warn('localStorage not available:', error);
+    if (user) {
+      setHasSeenOnboarding(user.id, true);
     }
     setShowOnboardingCutscene(false);
   };
 
   const handleOnboardingClose = () => {
-    try {
-      localStorage.setItem('hasSeenOnboarding', 'true');
-    } catch (error) {
-      console.warn('localStorage not available:', error);
+    if (user) {
+      setHasSeenOnboarding(user.id, true);
     }
     setShowOnboardingCutscene(false);
   };

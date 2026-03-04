@@ -67,6 +67,8 @@ export function clearUserData(user: User | null): void {
     // List of user-scoped localStorage keys to clear
     const userKeys = [
       'theme',           // Light/dark mode preference
+      'hasSeenOnboarding', // Onboarding completion flag
+      'hasSeenIntro',     // Intro completion flag
       // Add more keys here as needed
     ];
 
@@ -76,6 +78,8 @@ export function clearUserData(user: User | null): void {
 
     // Also clear any old-format generic keys (migration)
     localStorage.removeItem('theme');
+    localStorage.removeItem('hasSeenOnboarding');
+    localStorage.removeItem('hasSeenIntro');
 
     console.log(`[userStorage] Cleared data for user ${user.id}`);
   } catch (error) {
@@ -94,6 +98,8 @@ export function clearUserDataById(userId: string): void {
     // List of user-scoped localStorage keys to clear
     const userKeys = [
       'theme',           // Light/dark mode preference
+      'hasSeenOnboarding', // Onboarding completion flag
+      'hasSeenIntro',     // Intro completion flag
       // Add more keys here as needed
     ];
 
@@ -104,6 +110,8 @@ export function clearUserDataById(userId: string): void {
 
     // Also clear any old-format generic keys (migration)
     localStorage.removeItem('theme');
+    localStorage.removeItem('hasSeenOnboarding');
+    localStorage.removeItem('hasSeenIntro');
 
     console.log(`[userStorage] Cleared data for user ${userId}`);
   } catch (error) {
@@ -119,7 +127,7 @@ export function migrateUserData(user: User | null): void {
   if (!user) return;
 
   try {
-    const keysToMigrate = ['theme'];
+    const keysToMigrate = ['theme', 'hasSeenOnboarding', 'hasSeenIntro'];
 
     keysToMigrate.forEach(key => {
       const genericValue = localStorage.getItem(key);
@@ -133,5 +141,55 @@ export function migrateUserData(user: User | null): void {
     });
   } catch (error) {
     console.warn('localStorage not available, migration skipped:', error);
+  }
+}
+
+/**
+ * Get onboarding flag for a specific user
+ */
+export function getHasSeenOnboarding(userId: string): boolean {
+  try {
+    const key = getUserKeyById('hasSeenOnboarding', userId);
+    return localStorage.getItem(key) === 'true';
+  } catch (error) {
+    console.warn('localStorage not available:', error);
+    return false;
+  }
+}
+
+/**
+ * Set onboarding flag for a specific user
+ */
+export function setHasSeenOnboarding(userId: string, value: boolean): void {
+  try {
+    const key = getUserKeyById('hasSeenOnboarding', userId);
+    localStorage.setItem(key, value ? 'true' : 'false');
+  } catch (error) {
+    console.warn('localStorage not available:', error);
+  }
+}
+
+/**
+ * Get intro flag for a specific user
+ */
+export function getHasSeenIntro(userId: string): boolean {
+  try {
+    const key = getUserKeyById('hasSeenIntro', userId);
+    return localStorage.getItem(key) === 'true';
+  } catch (error) {
+    console.warn('localStorage not available:', error);
+    return false;
+  }
+}
+
+/**
+ * Set intro flag for a specific user
+ */
+export function setHasSeenIntro(userId: string, value: boolean): void {
+  try {
+    const key = getUserKeyById('hasSeenIntro', userId);
+    localStorage.setItem(key, value ? 'true' : 'false');
+  } catch (error) {
+    console.warn('localStorage not available:', error);
   }
 }
