@@ -98,7 +98,7 @@ export function ThemeProvider({ children, userId }: { children: ReactNode; userI
       console.log('[ThemeContext] Loading theme for user:', userId);
 
       // Load equipped theme with shop item details using foreign key join
-      const { data, error, status, statusText } = await supabase
+      const { data, error, status, statusText } = await (supabase as any)
         .from('profiles')
         .select(`
           equipped_theme,
@@ -195,7 +195,7 @@ export function ThemeProvider({ children, userId }: { children: ReactNode; userI
     try {
       console.log('[ThemeContext] Equipping theme:', themeId);
 
-      const { error, status, statusText } = await supabase
+      const { error, status, statusText } = await (supabase as any)
         .from('profiles')
         .update({ equipped_theme: themeId })
         .eq('user_id', userId);

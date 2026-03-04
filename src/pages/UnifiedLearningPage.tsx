@@ -175,7 +175,7 @@ export default function UnifiedLearningPage() {
   };
 
   const loadOnboardingStatus = async (uid: string) => {
-    const { data: onboardingData } = await supabase
+    const { data: onboardingData } = await (supabase as any)
       .from('user_progress')
       .select('lesson_id, onboarding_completed')
       .eq('user_id', uid)
@@ -183,7 +183,7 @@ export default function UnifiedLearningPage() {
 
     if (onboardingData) {
       const onboardingMap: Record<string, boolean> = {};
-      onboardingData.forEach(record => {
+      onboardingData.forEach((record: any) => {
         onboardingMap[record.lesson_id] = true;
       });
       setOnboardingCompleted(onboardingMap);
@@ -260,7 +260,7 @@ export default function UnifiedLearningPage() {
       }
 
       // New course - check if onboarding is completed
-      const { data: progressData } = await supabase
+      const { data: progressData } = await (supabase as any)
         .from('user_progress')
         .select('onboarding_completed')
         .eq('user_id', userId)

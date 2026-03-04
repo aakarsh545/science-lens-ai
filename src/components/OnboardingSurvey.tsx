@@ -133,7 +133,7 @@ export default function OnboardingSurvey({ userId, onComplete }: OnboardingSurve
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('profiles')
         .update({
           onboarding_completed: true,

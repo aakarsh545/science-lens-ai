@@ -123,7 +123,7 @@ const Dashboard = ({ user }: DashboardProps) => {
           if (mounted) {
             // Refresh profile to get updated XP and level
             await loadProfile();
-            toast.success('XP updated! 🎉');
+            toast({ title: 'XP updated! 🎉' });
           }
         }
       )
@@ -148,7 +148,7 @@ const Dashboard = ({ user }: DashboardProps) => {
               loadProfile(),
               loadAchievements()
             ]);
-            toast.success('Lesson completed! +XP earned! 🌟');
+            toast({ title: 'Lesson completed! +XP earned! 🌟' });
           }
         }
       )

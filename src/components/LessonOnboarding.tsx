@@ -316,7 +316,7 @@ function LessonQuiz({ userId, lessonId, lessonTitle, onComplete }: LessonQuizPro
   const loadQuiz = async () => {
     try {
       // Fetch pre-generated quiz from database
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('course_quizzes')
         .select('questions')
         .eq('course_id', lessonId)
@@ -374,7 +374,7 @@ function LessonQuiz({ userId, lessonId, lessonTitle, onComplete }: LessonQuizPro
     // Below 50% starts from beginning (no section specified)
 
     // Save quiz results
-    await supabase
+    await (supabase as any)
       .from('user_progress')
       .update({
         quiz_score: score,

@@ -118,25 +118,25 @@ export default function ShopPage() {
   };
 
   const loadShopItems = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('shop_items')
       .select('*')
       .eq('type', 'theme')
       .order('price', { ascending: true });
 
     if (!error && data) {
-      setShopItems(data);
+      setShopItems(data as any);
     }
   };
 
   const loadPurchasedItems = async (uid: string) => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('user_inventory')
       .select('item_id, shop_items(*)')
       .eq('user_id', uid);
 
     if (!error && data) {
-      const purchasedIds = new Set(data.map((item: any) => item.item_id));
+      const purchasedIds = new Set<string>(data.map((item: any) => item.item_id));
       setPurchasedItemIds(purchasedIds);
 
       // Get purchased themes
@@ -171,7 +171,7 @@ export default function ShopPage() {
       if (creditError) throw creditError;
 
       // Add to inventory
-      const { error: inventoryError } = await supabase
+      const { error: inventoryError } = await (supabase as any)
         .from('user_inventory')
         .insert({ user_id: userId, item_id: item.id });
 

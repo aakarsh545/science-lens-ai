@@ -1,10 +1,8 @@
-// Temporarily disabled Three.js imports due to WebGL compatibility issues
-// import { Canvas } from '@react-three/fiber';
-// import { OrbitControls, Sphere, Box, Torus, MeshDistortMaterial, Cylinder, Cone, Ring } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Sphere, Box, Torus, MeshDistortMaterial, Cylinder, Cone, Ring } from '@react-three/drei';
 import { Suspense, useMemo, useRef } from 'react';
 import { Image as ImageIcon } from 'lucide-react';
-// import { useFrame } from '@react-three/fiber';
-// import * as THREE from 'three';
+import * as THREE from 'three';
 
 interface TopicVisualProps {
   topic: string;

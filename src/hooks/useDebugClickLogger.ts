@@ -61,7 +61,7 @@ export function useDebugClickLogger() {
           const hasClickHandler = button.onclick !== null ||
                                  button.getAttribute('onclick') !== null;
 
-          if (!hasClickHandler && !button.href) {
+          if (!hasClickHandler && !(button as any).href) {
             // Button has no handler and no href - it's a dead button!
             logDebugEvent(
               'error',

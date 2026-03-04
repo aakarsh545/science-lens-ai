@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Medal, Award, Flame, Target, Atom, Beaker, Leaf, Star } from "lucide-react";
+import { Trophy, Medal, Award, Flame, Target, Atom, Beaker, Leaf, Star, RefreshCw } from "lucide-react";
 import { HelixLoader } from "@/components/ui/helix-loader";
 import { Search } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

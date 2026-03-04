@@ -127,7 +127,6 @@ const topicCourseMapping: Record<string, string[]> = {
 
   // General science
   "science": ["classical-mechanics", "general-chemistry", "cellular-molecular-biology", "computer-science-fundamentals"],
-  "evolution": ["genetics-evolution", "cellular-molecular-biology"],
   "origin": ["cosmology", "genetics-evolution", "geology-plate-tectonics"],
   "earth": ["geology-plate-tectonics", "planetary-science"],
 };
