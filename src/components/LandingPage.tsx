@@ -48,10 +48,10 @@ const features = [
 ];
 
 const stats = [
-  { value: "10K+", label: "Questions Answered" },
-  { value: "500+", label: "Active Learners" },
-  { value: "95%", label: "Success Rate" },
-  { value: "24/7", label: "AI Availability" }
+  { value: "Built for curious minds", label: "" },
+  { value: "Free to start", label: "" },
+  { value: "AI-powered", label: "" },
+  { value: "Learn at your pace", label: "" }
 ];
 
 export default function LandingPage() {
@@ -543,7 +543,7 @@ export default function LandingPage() {
               </h2>
               
               <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-                Join thousands of learners who have already discovered the power of AI-assisted science education.
+                Learn at your pace with AI-powered science education.
               </p>
               
               <Button variant="hero" size="xl" className="group" onClick={handleGetStarted}>
