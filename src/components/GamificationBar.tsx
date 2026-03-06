@@ -83,20 +83,20 @@ export function GamificationBar({ userId }: GamificationBarProps) {
 
           if (profileError) throw profileError;
 
-          const { count, error: countError } = await supabase
+          const { data: achievements, error: achievementsError } = await supabase
             .from("achievements")
-            .select("*", { count: "exact", head: true })
+            .select("id")
             .eq("user_id", userId);
 
-          if (countError) throw countError;
+          if (achievementsError) throw achievementsError;
 
-          return { userStats, profile, count };
+          return { userStats, profile, achievementCount: achievements?.length ?? 0 };
         })();
 
-        const { userStats, profile, count } = await Promise.race([fetchPromise, timeoutPromise]) as {
+        const { userStats, profile, achievementCount } = await Promise.race([fetchPromise, timeoutPromise]) as {
           userStats: { credits: number; xp_total: number } | null;
           profile: { xp_points: number; level: number; total_questions: number } | null;
-          count: number | null;
+          achievementCount: number;
         };
 
         if (mounted && (userStats || profile)) {
@@ -112,7 +112,7 @@ export function GamificationBar({ userId }: GamificationBarProps) {
             xp_points: profile?.xp_points || 0,
             level: profile?.level || 1,
             total_questions: profile?.total_questions || 0,
-            achievementCount: count || 0,
+            achievementCount,
           });
           setLoading(false);
         }

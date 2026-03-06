@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Card } from "@/components/ui/card";
-import { HelixLoader } from "@/components/ui/helix-loader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Coins, Crown as CrownIcon, Zap } from "lucide-react";
 import { DummyPaymentCard } from "@/components/DummyPaymentCard";
@@ -35,8 +34,6 @@ export default function BillingPage() {
     checkAuth();
     if (location.state?.purchase) {
       setPurchase(location.state.purchase);
-    } else {
-      navigate('/pricing');
     }
   }, [location.state]);
 
@@ -79,9 +76,13 @@ export default function BillingPage() {
   if (!purchase) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-primary/5 p-6 flex items-center justify-center">
-        <div className="text-center">
-          <HelixLoader className="mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading billing details...</p>
+        <div className="text-center space-y-4">
+          <Coins className="w-10 h-10 mx-auto text-amber-500" />
+          <div>
+            <p className="text-muted-foreground">No purchase selected.</p>
+            <p className="text-sm text-muted-foreground">Choose a plan or credits to continue.</p>
+          </div>
+          <Button onClick={() => navigate('/pricing')}>Go to Pricing</Button>
         </div>
       </div>
     );
