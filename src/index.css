@@ -155,13 +155,12 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     BUTTONS (Theme primary/secondary colors with contrast-safe text)
+     BUTTONS (Only apply solid styles to explicit button classes)
      ═══════════════════════════════════════════════════════════════ */
-  button,
-  .btn,
-  [role="button"],
-  input[type="submit"],
-  input[type="button"] {
+  .btn-primary,
+  button.btn-primary,
+  [role="button"].btn-primary,
+  input[type="submit"].btn-primary {
     background: hsl(var(--button-bg));
     color: hsl(var(--button-foreground));
     border: 1px solid hsl(var(--button-border));
@@ -169,28 +168,36 @@
     transition: all 0.2s ease;
   }
 
-  button:hover,
-  .btn:hover,
-  [role="button"]:hover {
+  .btn-primary:hover,
+  button.btn-primary:hover,
+  [role="button"].btn-primary:hover {
     background: hsl(var(--primary-hover));
     border-color: hsl(var(--button-border-hover));
     box-shadow: var(--glow-strong), var(--shadow-md);
     transform: translateY(-1px);
   }
 
-  button:active,
-  .btn:active,
-  [role="button"]:active {
+  .btn-primary:active,
+  button.btn-primary:active,
+  [role="button"].btn-primary:active {
     background: hsl(var(--primary-hover));
     transform: translateY(0);
   }
 
   /* Secondary button style */
-  button.secondary,
-  .btn-secondary {
+  .btn-secondary,
+  button.btn-secondary {
     background: hsl(var(--button-secondary-bg));
     color: hsl(var(--button-secondary-foreground));
     border: 1px solid hsl(var(--button-border));
+  }
+
+  /* Ghost button - no background by default */
+  .btn-ghost,
+  button.btn-ghost {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   /* ═══════════════════════════════════════════════════════════════

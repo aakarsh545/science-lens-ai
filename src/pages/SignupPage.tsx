@@ -797,7 +797,7 @@ export default function SignupPage() {
             <div className="mt-8 flex gap-4">
               <button
                 onClick={handleBack}
-                className="px-6 py-3 text-slate-400 hover:text-white transition-colors"
+                className="btn-ghost px-6 py-3 text-slate-400 hover:text-white transition-colors"
               >
                 Back
               </button>
@@ -892,13 +892,13 @@ export default function SignupPage() {
             <div className="mt-6 flex gap-4">
               <button
                 onClick={handleBack}
-                className="px-6 py-3 text-slate-400 hover:text-white transition-colors"
+                className="btn-ghost px-6 py-3 text-slate-400 hover:text-white transition-colors"
               >
                 Back
               </button>
               <button
                 onClick={() => navigate('/login')}
-                className="ml-auto px-6 py-3 text-slate-400 hover:text-white transition-colors"
+                className="btn-ghost ml-auto px-6 py-3 text-slate-400 hover:text-white transition-colors"
               >
                 Already have an account?
               </button>
@@ -1042,7 +1042,7 @@ export default function SignupPage() {
             <div className="flex gap-4">
               <button
                 onClick={handleBack}
-                className="px-6 py-3 text-slate-400 hover:text-white transition-colors"
+                className="btn-ghost px-6 py-3 text-slate-400 hover:text-white transition-colors"
               >
                 Back
               </button>
@@ -1105,7 +1105,7 @@ export default function SignupPage() {
             <div className="flex gap-4">
               <button
                 onClick={handleBack}
-                className="px-6 py-3 text-slate-400 hover:text-white transition-colors"
+                className="btn-ghost px-6 py-3 text-slate-400 hover:text-white transition-colors"
               >
                 Back
               </button>
