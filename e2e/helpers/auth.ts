@@ -1,4 +1,25 @@
 import { Page } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+
+function readEnvFileValue(key: string): string | null {
+  try {
+    const envPath = path.resolve(__dirname, '..', '..', '.env');
+    const contents = fs.readFileSync(envPath, 'utf8');
+    const lines = contents.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const [k, ...rest] = trimmed.split('=');
+      if (k === key) {
+        return rest.join('=').trim();
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
 
 /**
  * Test Authentication Helper
@@ -34,9 +55,21 @@ function createMockSession(): SupabaseSession {
   const testUserId = '00000000-0000-0000-0000-000000000000';
   const now = Math.floor(Date.now() / 1000);
   const expiresAt = now + 3600; // 1 hour from now
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const payload = {
+    sub: testUserId,
+    email: 'test@example.com',
+    aud: 'authenticated',
+    role: 'authenticated',
+    iat: now,
+    exp: expiresAt,
+  };
+  const base64url = (obj: object) =>
+    Buffer.from(JSON.stringify(obj)).toString('base64url');
+  const fakeJwt = `${base64url(header)}.${base64url(payload)}.signature`;
 
   return {
-    access_token: 'test-access-token-' + Date.now(),
+    access_token: fakeJwt,
     refresh_token: 'test-refresh-token-' + Date.now(),
     expires_at: expiresAt,
     user: {
@@ -66,10 +99,7 @@ export async function authenticateTestUser(page: Page): Promise<void> {
   // Set the mock session in localStorage
   await page.evaluate((session) => {
     // Supabase stores session in localStorage with this key
-    const authData: SupabaseAuthData = {
-      currentSession: session,
-      expiresAt: session.expires_at,
-    };
+    const authData = session;
 
     // Store session data
     localStorage.setItem('sb-' + window.location.hostname + '-auth-token', JSON.stringify(authData));
@@ -78,10 +108,7 @@ export async function authenticateTestUser(page: Page): Promise<void> {
     localStorage.setItem('supabase.auth.token', JSON.stringify(session));
 
     // Set session in the format Supabase expects
-    const supabaseAuth = {
-      currentSession: session,
-      expiresAt: session.expires_at,
-    };
+    const supabaseAuth = session;
 
     // Try multiple possible storage keys
     const possibleKeys = [
@@ -136,6 +163,17 @@ export async function isAuthenticated(page: Page): Promise<boolean> {
  * This is the main helper function to use in tests
  */
 export async function setupAuth(page: Page): Promise<void> {
+  const supabaseUrl =
+    process.env.VITE_SUPABASE_URL ||
+    readEnvFileValue('VITE_SUPABASE_URL') ||
+    'https://pfrmkmlstzjexccmdkoc.supabase.co';
+  const projectRef = (() => {
+    try {
+      return new URL(supabaseUrl).hostname.split('.')[0];
+    } catch {
+      return null;
+    }
+  })();
   // First, set up context-level routing BEFORE any navigation
   const context = page.context();
 
@@ -168,6 +206,36 @@ export async function setupAuth(page: Page): Promise<void> {
     });
   });
 
+  await context.route('**/auth/v1/token*', async route => {
+    const mockSession = createMockSession();
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        access_token: mockSession.access_token,
+        refresh_token: mockSession.refresh_token,
+        expires_in: 3600,
+        token_type: 'bearer',
+        user: mockSession.user,
+      }),
+    });
+  });
+
+  await context.route('**/auth/v1/token?grant_type=refresh_token', async route => {
+    const mockSession = createMockSession();
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        access_token: mockSession.access_token,
+        refresh_token: mockSession.refresh_token,
+        expires_in: 3600,
+        token_type: 'bearer',
+        user: mockSession.user,
+      }),
+    });
+  });
+
   await context.route('**/rest/v1/user_stats*', async route => {
     await route.fulfill({
       status: 200,
@@ -192,21 +260,88 @@ export async function setupAuth(page: Page): Promise<void> {
     });
   });
 
-  // Navigate to base URL first to set localStorage
-  await page.goto('/');
+  await context.route('**/rest/v1/profiles*', async route => {
+    const url = route.request().url();
+    if (url.includes('select=credits') || url.includes('select=credits%2Clevel')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ credits: 2500, level: 3 }),
+      });
+      return;
+    }
+    if (url.includes('select=equipped_theme')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ equipped_theme: null, shop_items: null }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ credits: 2500, level: 3 }),
+    });
+  });
 
-  // Set localStorage with the correct Supabase storage key format
+  await context.route('**/rest/v1/conversations*', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([]),
+    });
+  });
+
+  await context.route('**/rest/v1/shop_items*', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        {
+          id: 'theme-cosmic',
+          type: 'theme',
+          name: 'Cosmic Default',
+          description: 'Deep space blues and subtle glows.',
+          price: 0,
+          icon_emoji: '🌌',
+          metadata: {
+            primary: '#3b82f6',
+            secondary: '#1e40af',
+            description: 'Deep space blues and subtle glows.',
+          },
+          rarity: 'common',
+          thumbnail_url: null,
+        },
+      ]),
+    });
+  });
+
+  await context.route('**/rest/v1/user_inventory*', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([]),
+    });
+  });
+
+  // Set localStorage before any page loads
   const mockSession = createMockSession();
-
-  await page.evaluate((session) => {
+  await context.addInitScript(({ session, supabaseUrl, projectRef }) => {
     // Supabase uses this specific format in localStorage
     // Storage key format: sb-{hostname}-auth-token
     const hostname = window.location.hostname;
-    const storageKey = `sb-${hostname}-auth-token`;
-    const authData = {
-      currentSession: session,
-      expiresAt: session.expires_at,
-    };
+    const resolvedProjectRef = projectRef || (() => {
+      try {
+        const url = new URL(supabaseUrl);
+        return url.hostname.split('.')[0];
+      } catch {
+        return null;
+      }
+    })();
+    const fallbackRef = 'kljndbehjwfdyewgxgaw';
+    const storageKey = resolvedProjectRef ? `sb-${resolvedProjectRef}-auth-token` : `sb-${hostname}-auth-token`;
+    const authData = session;
 
     // Clear any existing auth data first
     for (let i = 0; i < localStorage.length; i++) {
@@ -219,11 +354,37 @@ export async function setupAuth(page: Page): Promise<void> {
     // Set the auth data with BOTH possible key formats
     localStorage.setItem(storageKey, JSON.stringify(authData));
     localStorage.setItem('supabase.auth.token', JSON.stringify(session));
+    localStorage.setItem('supabase.auth.expires_at', String(session.expires_at));
+    localStorage.setItem('supabase.auth.refresh_token', session.refresh_token);
+    localStorage.setItem('supabase.auth.user', JSON.stringify(session.user));
     localStorage.setItem(`sb-${hostname}-auth-token`, JSON.stringify(authData));
+    if (resolvedProjectRef) {
+      localStorage.setItem(`sb-${resolvedProjectRef}-auth-token`, JSON.stringify(authData));
+      localStorage.setItem(`sb-${resolvedProjectRef}-auth-token-user`, JSON.stringify({ user: session.user }));
+    }
+    localStorage.setItem(`sb-${fallbackRef}-auth-token`, JSON.stringify(authData));
+    localStorage.setItem(`sb-${fallbackRef}-auth-token-user`, JSON.stringify({ user: session.user }));
 
-    console.log('Set localStorage with keys:', storageKey, 'supabase.auth.token');
+    // Store a test user marker for Playwright test mode
+    localStorage.setItem('playwright_test_user', JSON.stringify(session.user));
+
+    // Mark onboarding and intro as seen for test user to avoid blocking overlays
+    const userScopedOnboardingKey = `hasSeenOnboarding_${session.user.id}`;
+    const userScopedIntroKey = `hasSeenIntro_${session.user.id}`;
+    localStorage.setItem(userScopedOnboardingKey, 'true');
+    localStorage.setItem(userScopedIntroKey, 'true');
+    localStorage.setItem('hasSeenOnboarding', 'true');
+    localStorage.setItem('hasSeenIntro', 'true');
+
+    console.log('Set localStorage with keys:', storageKey, 'supabase.auth.token', resolvedProjectRef ? `sb-${resolvedProjectRef}-auth-token` : 'n/a');
     console.log('LocalStorage value:', localStorage.getItem(storageKey));
-  }, mockSession);
+  }, { session: mockSession, supabaseUrl, projectRef });
+
+  // Navigate to base URL to initialize app with stored session
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  const storedTestUser = await page.evaluate(() => localStorage.getItem('playwright_test_user'));
+  console.log('Playwright test user in storage:', storedTestUser ? 'SET' : 'MISSING');
 
   console.log('Test user authenticated successfully with API mocking and localStorage');
 }
@@ -239,8 +400,10 @@ export async function gotoAuthenticatedPage(page: Page, path: string): Promise<v
     await setupAuth(page);
   }
 
+  const target = path === '/' ? path : (path.includes('?') ? `${path}&playwright=1` : `${path}?playwright=1`);
+
   // Navigate to the requested path
-  await page.goto(path);
+  await page.goto(target);
   await page.waitForLoadState('networkidle');
 
   // Verify we're not redirected to home (which would indicate auth failure)

@@ -1,0 +1,9 @@
+{
+  "routeCount": 12,
+  "routesWithConsoleErrors": 0,
+  "routesWithRequestFailures": 0,
+  "routesWithPageErrors": 0,
+  "routesWithLayoutIssues": 0,
+  "routesWithDeadButtons": 0,
+  "reportPath": "/Users/akarsh545/Workspaces/science-lens-ai/science-lens-ai-code/test-results/ui-audit-live/ui-audit-live-report.json"
+}

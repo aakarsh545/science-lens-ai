@@ -25,6 +25,7 @@ import ProfilePage from "./pages/ProfilePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import ShopPage from "./pages/ShopPage";
 import BillingPage from "./pages/BillingPage";
+import PricingPage from "./pages/PricingPage";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,9 @@ function AppContent() {
           </Route>
           <Route path="billing" element={<AuthenticatedLayout />}>
             <Route index element={<BillingPage />} />
+          </Route>
+          <Route path="pricing" element={<AuthenticatedLayout />}>
+            <Route index element={<PricingPage />} />
           </Route>
           <Route path="achievements" element={<AuthenticatedLayout />}>
             <Route index element={<AchievementsPage />} />

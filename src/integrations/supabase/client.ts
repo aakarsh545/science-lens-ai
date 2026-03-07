@@ -29,3 +29,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+if (import.meta.env.DEV) {
+  (window as any).__supabase = supabase;
+}

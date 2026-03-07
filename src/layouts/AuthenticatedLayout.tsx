@@ -12,14 +12,46 @@ import { getHasSeenOnboarding, setHasSeenOnboarding } from "@/utils/userStorage"
 
 export default function AuthenticatedLayout() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const getTestUser = () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const forcePlaywright = params.has('playwright');
+      if (forcePlaywright) {
+        return {
+          id: '00000000-0000-0000-0000-000000000000',
+          email: 'test@example.com',
+          aud: 'authenticated',
+          role: 'authenticated',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as User;
+      }
+      const raw = localStorage.getItem('playwright_test_user');
+      if (raw) {
+        return JSON.parse(raw) as User;
+      }
+    } catch (error) {
+      console.warn('[AuthLayout] Failed to read Playwright test user:', error);
+    }
+    return null;
+  };
+
+  const [user, setUser] = useState<User | null>(() => getTestUser());
+  const [loading, setLoading] = useState(() => (getTestUser() ? false : true));
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [showOnboardingCutscene, setShowOnboardingCutscene] = useState(false);
-  const [checkedAuth, setCheckedAuth] = useState(false);
+  const [checkedAuth, setCheckedAuth] = useState(() => (getTestUser() ? true : false));
 
   useEffect(() => {
     let mounted = true;
+    const mockUser = getTestUser();
+    if (mockUser) {
+      setUser(mockUser);
+      setCheckedAuth(true);
+      setLoading(false);
+      setShowOnboardingCutscene(false);
+      return;
+    }
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {

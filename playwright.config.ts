@@ -43,5 +43,8 @@ export default defineConfig({
     url: 'http://localhost:8080',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
+    env: {
+      VITE_PLAYWRIGHT_TEST: 'true',
+    },
   },
 });

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,9 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [username, setUsername] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [checkingUsername, setCheckingUsername] = useState(false);
+  const [signInError, setSignInError] = useState("");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const checkUsernameAvailability = async (name: string): Promise<boolean> => {
     if (!name || name.length < 3) return false;
@@ -195,8 +198,9 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSignInError("");
     setIsLoading(true);
-    
+
     try {
       const { error, data } = await supabase.auth.signInWithPassword({
         email,
@@ -210,12 +214,16 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
         description: "You've successfully signed in.",
       });
       onOpenChange(false);
-      // Don't force navigation - let parent component decide
+      // Explicitly navigate to dashboard after successful sign in
+      navigate("/dashboard", { replace: true });
     } catch (error: unknown) {
+      // Set inline error and show toast
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      setSignInError(errorMessage);
       toast({
         variant: "destructive",
         title: "Sign in failed",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -264,6 +272,9 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                   required
                 />
               </div>
+              {signInError && (
+                <p className="text-sm text-red-500">{signInError}</p>
+              )}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>

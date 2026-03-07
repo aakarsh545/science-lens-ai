@@ -220,7 +220,7 @@ export default function ShopPage() {
   };
 
   const getThemePreview = (item: ShopItem) => {
-    const metadata = item.metadata as any;
+    const metadata = (item.metadata as any) ?? {};
     const primary = metadata.primary || '#3b82f6';
     const secondary = metadata.secondary || '#1e40af';
 
@@ -369,7 +369,7 @@ export default function ShopPage() {
                                     <div>
                                       <CardTitle className="text-base">{item.name}</CardTitle>
                                       <CardDescription className="text-xs line-clamp-2">
-                                        {(item.metadata as any).description || item.description}
+                                        {((item.metadata as any)?.description as string) || item.description}
                                       </CardDescription>
                                     </div>
                                   </div>
@@ -462,7 +462,7 @@ export default function ShopPage() {
                                 <div>
                                   <CardTitle className="text-base">{item.name}</CardTitle>
                                   <CardDescription className="text-xs line-clamp-2">
-                                    {(item.metadata as any).description || item.description}
+                                    {((item.metadata as any)?.description as string) || item.description}
                                   </CardDescription>
                                 </div>
                               </div>
