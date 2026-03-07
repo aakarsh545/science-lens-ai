@@ -114,7 +114,7 @@ const DECORATION_PRESETS: Record<string, DecorationPreset> = {
 /**
  * Extract color from theme
  */
-function getThemeColors(theme: { config?: { palette?: { primary?: string; secondary?: string; accent?: string; background?: string } } }) {
+function getThemeColors(theme: any) {
   return {
     primary: theme?.config?.palette?.primary || '#3b82f6',
     secondary: theme?.config?.palette?.secondary || '#1e40af',
