@@ -1,84 +1,56 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
-  Telescope,
+  Atom,
   Sparkles,
   Trophy,
   Zap,
   Brain,
-  Rocket,
-  Star,
+  Flame,
+  Heart,
   Target,
-  BookOpen
+  BookOpen,
+  GraduationCap,
+  Gift,
+  Beaker
 } from 'lucide-react';
-import SpaceBackground from './SpaceBackground';
 import AuthModal from './AuthModal';
-import { Suspense } from 'react';
 import { OnboardingCutscene } from './OnboardingCutscene';
 import { supabase } from '@/integrations/supabase/client';
 import { getHasSeenOnboarding, setHasSeenOnboarding, getHasSeenIntro, setHasSeenIntro } from '@/utils/userStorage';
 
-const features = [
-  {
-    icon: Brain,
-    title: "AI-Powered Q&A",
-    description: "Get instant answers to complex science questions powered by advanced AI",
-    gradient: "from-purple-500 to-blue-500",
-    glow: "shadow-purple-500/50",
-    bg: "bg-purple-500/10",
-    border: "border-purple-500/30",
-    iconColor: "text-purple-400"
-  },
-  {
-    icon: Trophy,
-    title: "Achievement System",
-    description: "Unlock badges and celebrate milestones in your learning journey",
-    gradient: "from-yellow-500 to-orange-500",
-    glow: "shadow-yellow-500/50",
-    bg: "bg-yellow-500/10",
-    border: "border-yellow-500/30",
-    iconColor: "text-yellow-400"
-  },
-  {
-    icon: Target,
-    title: "Daily Streaks",
-    description: "Build consistent learning habits with our streak tracking system",
-    gradient: "from-green-500 to-emerald-500",
-    glow: "shadow-green-500/50",
-    bg: "bg-green-500/10",
-    border: "border-green-500/30",
-    iconColor: "text-green-400"
-  },
-  {
-    icon: Rocket,
-    title: "Progressive Learning",
-    description: "Unlock new topics as you master the fundamentals",
-    gradient: "from-blue-500 to-cyan-500",
-    glow: "shadow-cyan-500/50",
-    bg: "bg-cyan-500/10",
-    border: "border-cyan-500/30",
-    iconColor: "text-cyan-400"
-  }
+// Feature cards row (4 cards)
+const featureCards = [
+  { icon: BookOpen, title: "Physics First", subtitle: "Foundation focused", color: "text-blue-400" },
+  { icon: Beaker, title: "All Sciences", subtitle: "Plus university", color: "text-purple-400" },
+  { icon: Zap, title: "XP & Streaks", subtitle: "Stay motivated", color: "text-yellow-400" },
+  { icon: Gift, title: "Free to Start", subtitle: "No credit card", color: "text-green-400" }
 ];
 
-const stats = [
-  { value: "Built for curious minds", label: "" },
-  { value: "Free to start", label: "" },
-  { value: "AI-powered", label: "" },
-  { value: "Learn at your pace", label: "" }
+// Features grid (6 cards)
+const gridFeatures = [
+  { icon: Brain, title: "AI-Powered Q&A" },
+  { icon: Flame, title: "Daily Streaks" },
+  { icon: Zap, title: "XP & Levels" },
+  { icon: Heart, title: "Lives System" },
+  { icon: Trophy, title: "Leaderboard" },
+  { icon: BookOpen, title: "Structured Lessons" }
+];
+
+// How it works steps
+const howItWorksSteps = [
+  { step: "1", title: "Sign up & customize" },
+  { step: "2", title: "Pick your track" },
+  { step: "3", title: "Learn & earn" }
 ];
 
 export default function LandingPage() {
   console.log('[LANDING PAGE] Rendering...');
   const [showAuthModal, setShowAuthModal] = useState(false);
-  // Initialize with default values, then read from localStorage in useEffect
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
-  const [initialAuthCheck, setInitialAuthCheck] = useState(true);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
 
   // Safely read localStorage after component mounts
@@ -92,7 +64,6 @@ export default function LandingPage() {
       setShowIntro(!hasSeenIntro);
     } catch (error) {
       console.warn('localStorage not available:', error);
-      // Keep default values (true) if localStorage fails
     }
   }, []);
 
@@ -100,74 +71,35 @@ export default function LandingPage() {
   useEffect(() => {
     let mounted = true;
 
-    // Reset theme CSS variables for landing page (remove custom user themes)
-    // This ensures the landing page always has consistent blue/purple/cyan appearance
+    // Apply landing page theme (deep dark navy)
     const root = document.documentElement;
-
-    // Only remove the theme system variables (prefixed with --color-)
-    // Don't remove Tailwind's base variables like --ring
-    const themeVarNames = [
-      '--color-primary', '--color-secondary', '--color-accent', '--color-surface', '--color-background',
-      '--color-text-primary', '--color-text-secondary', '--color-text-muted',
-      '--color-primary-hover', '--color-accent-hover',
-      '--color-border', '--color-border-subtle',
-      '--color-card', '--color-card-hover', '--color-popover', '--color-muted', '--color-input',
-      '--glow-primary', '--glow-accent',
-      '--gradient-primary', '--gradient-surface',
-      '--decoration-type', '--particle-intensity', '--animation-speed', '--bg-decoration'
-    ];
-    themeVarNames.forEach(varName => root.style.removeProperty(varName));
-
-    // Apply landing page defaults (blue/purple/cyan space theme)
-    const landingPageDefaults = {
-      '--color-primary': '217 91% 60%',        // blue-500
-      '--color-secondary': '262 83% 58%',      // purple-500
-      '--color-accent': '188 94% 47%',         // cyan-500
-      '--color-surface': '217 33% 17%',        // slate-800
-      '--color-background': '222 47% 11%',     // slate-900
-      '--color-text-primary': '0 0% 100%',     // white
-      '--color-text-secondary': '210 40% 95%', // slate-200
-      '--color-text-muted': '215 16% 70%',     // slate-400
-      '--color-primary-hover': '217 91% 50%',
-      '--color-accent-hover': '188 94% 40%',
-      '--color-border': '217 33% 25%',
-      '--color-border-subtle': '217 33% 30%',
-      '--color-card': '217 33% 17%',
-      '--color-muted': '217 33% 19%',
-      '--glow-primary': '0 0 20px hsla(217, 91%, 60%, 0.3)',
-      '--glow-accent': '0 0 20px hsla(188, 94%, 47%, 0.3)',
-      '--gradient-primary': 'linear-gradient(135deg, hsla(217, 91%, 60%, 0.8), hsla(262, 83%, 58%, 0.8))',
-      '--shadow-cosmic': '0 0 20px hsla(217, 91%, 60%, 0.3)',
-      '--shadow-achievement': '0 0 20px hsla(45, 93%, 47%, 0.4)',
-      '--shadow-glow': '0 0 30px hsla(217, 91%, 60%, 0.5)',
-      '--decoration-type': 'cosmic',
-      '--particle-intensity': 'subtle',
-      '--animation-speed': '3s',
-      '--bg-decoration': 'radial-gradient(circle at 15% 85%, hsla(217, 91%, 60%, 0.1) 0%, transparent 50%), radial-gradient(circle at 85% 15%, hsla(262, 83%, 58%, 0.1) 0%, transparent 50%)',
+    const landingPageTheme = {
+      '--color-background': '#0d0d1a',
+      '--color-surface': '#1a1a2e',
+      '--color-text-primary': '#ffffff',
+      '--color-text-secondary': '#a0a0b0',
+      '--color-primary': '#6366f1',
+      '--color-secondary': '#8b5cf6',
+      '--color-accent': '#06b6d4',
     };
 
-    Object.entries(landingPageDefaults).forEach(([key, value]) => {
+    Object.entries(landingPageTheme).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });
 
-    // Check initial session immediately on mount
+    // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
 
       if (session) {
-        // User is already logged in, redirect to dashboard immediately
         navigate('/dashboard', { replace: true });
-      } else {
-        setInitialAuthCheck(false);
       }
     });
 
-    // Listen for authentication state changes (for when user signs in through the form)
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
 
-      // Only handle SIGNED_IN event (user just signed in through form)
-      // INITIAL_SESSION is handled by getSession() above
       if (event === 'SIGNED_IN' && session) {
         navigate('/dashboard', { replace: true });
       }
@@ -179,420 +111,224 @@ export default function LandingPage() {
     };
   }, [navigate]);
 
-  // Starfield intro animation
-  useEffect(() => {
-    if (!showIntro || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const starObjects: { x: number; y: number; z: number; pz: number; reset: () => void; update: () => void; draw: () => void }[] = [];
-    const numStars = 200;
-
-    function createStar() {
-      const star = {
-        x: Math.random() * canvas.width - canvas.width / 2,
-        y: Math.random() * canvas.height - canvas.height / 2,
-        z: Math.random() * 1000 + 500,
-        pz: 0,
-        reset() {
-          this.x = Math.random() * canvas.width - canvas.width / 2;
-          this.y = Math.random() * canvas.height - canvas.height / 2;
-          this.z = Math.random() * 1000 + 500;
-          this.pz = this.z;
-        },
-        update() {
-          this.z -= 8;
-          if (this.z < 1) {
-            this.reset();
-            this.z = 1000;
-            this.pz = this.z;
-          }
-        },
-        draw() {
-          const sx = (this.x / this.z) * canvas.width + canvas.width / 2;
-          const sy = (this.y / this.z) * canvas.height + canvas.height / 2;
-          const px = (this.x / this.pz) * canvas.width + canvas.width / 2;
-          const py = (this.y / this.pz) * canvas.height + canvas.height / 2;
-          this.pz = this.z;
-
-          const size = (1 - this.z / 1000) * 3;
-          const alpha = 1 - this.z / 1000;
-
-          ctx.beginPath();
-          ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-          ctx.lineWidth = size;
-          ctx.moveTo(px, py);
-          ctx.lineTo(sx, sy);
-          ctx.stroke();
-        }
-      };
-      star.pz = star.z;
-      return star;
-    }
-
-    for (let i = 0; i < numStars; i++) {
-      starObjects.push(createStar());
-    }
-
-    let animationId: number;
-    const animate = () => {
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.2)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      starObjects.forEach(star => {
-        star.update();
-        star.draw();
-      });
-
-      animationId = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    // End intro after 4 seconds
-    const timer = setTimeout(() => {
-      localStorage.setItem('hasSeenIntro', 'true');
-      setShowIntro(false);
-    }, 4000);
-
-    return () => {
-      cancelAnimationFrame(animationId);
-      clearTimeout(timer);
-    };
-  }, [showIntro]);
-
   const handleGetStarted = () => {
     setShowOnboarding(true);
   };
 
   const handleOnboardingComplete = async () => {
-    // Save that user has completed onboarding
     localStorage.setItem('hasSeenOnboarding', 'true');
-    // Save that user has seen intro
     localStorage.setItem('hasSeenIntro', 'true');
-
     setShowOnboarding(false);
     setShowAuthModal(true);
   };
 
+  const scrollToHowItWorks = () => {
+    const element = document.getElementById('how-it-works');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Background with error fallback */}
-      <Suspense fallback={
-        <div className="fixed inset-0 -z-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
-      }>
-        <SpaceBackground />
-      </Suspense>
+    <div className="min-h-screen bg-[#0d0d1a] text-white relative overflow-hidden">
+      {/* Starfield background effect */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent" />
+        {/* Particle dots */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.3), transparent),
+                           radial-gradient(2px 2px at 60px 70px, rgba(255,255,255,0.2), transparent),
+                           radial-gradient(1px 1px at 50px 50px, rgba(255,255,255,0.3), transparent),
+                           radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.2), transparent),
+                           radial-gradient(2px 2px at 90px 10px, rgba(255,255,255,0.3), transparent)`,
+          backgroundSize: '200px 200px',
+          opacity: 0.5
+        }} />
+      </div>
 
-      {/* Intro Animation */}
+      {/* Onboarding Cutscene */}
       <AnimatePresence>
-        {showIntro && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900"
-          >
-            <canvas ref={canvasRef} className="absolute inset-0" />
-
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 1, delay: 0.5 }}
-              className="relative z-10 text-center"
-            >
-              <h1 className="text-7xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-4">
-                🔬 Science Lens
-              </h1>
-              <motion.p
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1, delay: 1.5 }}
-                className="text-2xl text-slate-300"
-              >
-                Your journey through science starts now
-              </motion.p>
-            </motion.div>
-
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 2.5 }}
-              onClick={() => {
-                localStorage.setItem('hasSeenIntro', 'true');
-                setShowIntro(false);
-              }}
-              className="absolute bottom-20 left-1/2 -translate-x-1/2 px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full font-semibold hover:scale-105 transition-transform shadow-lg shadow-purple-500/30 z-20"
-            >
-              Skip Intro →
-            </motion.button>
-          </motion.div>
+        {showOnboarding && (
+          <OnboardingCutscene
+            onComplete={handleOnboardingComplete}
+            onClose={() => {
+              localStorage.setItem('hasSeenOnboarding', 'true');
+              setShowOnboarding(false);
+            }}
+          />
         )}
       </AnimatePresence>
 
-      {/* Onboarding Cutscene */}
-      {showOnboarding && (
-        <OnboardingCutscene
-          onComplete={handleOnboardingComplete}
-          onClose={() => {
-            localStorage.setItem('hasSeenOnboarding', 'true');
-            setShowOnboarding(false);
-          }}
-        />
-      )}
-
-      {/* Main Landing Page */}
-      {/* Navigation */}
-      <motion.nav
+      {/* HEADER */}
+      <motion.header
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        className="relative z-10 flex items-center justify-between p-6 backdrop-blur-sm"
+        transition={{ duration: 0.6 }}
+        className="relative z-10 flex items-center justify-between px-6 py-4 md:px-12 md:py-6 bg-[#0d0d1a]/80 backdrop-blur-md border-b border-white/10"
       >
         <div className="flex items-center gap-2">
-          <Telescope className="w-8 h-8 text-primary" />
-          <span className="text-2xl font-bold bg-gradient-cosmic bg-clip-text text-transparent">
-            Science Lens
-          </span>
+          <Atom className="w-8 h-8 text-blue-500" />
+          <span className="text-xl font-bold text-white">Science Lens</span>
         </div>
-
-        <div className="flex gap-4">
-          <Button variant="ghostCosmic" onClick={() => setShowAuthModal(true)}>Sign In</Button>
-          <Button variant="cosmic" onClick={handleGetStarted}>Get Started</Button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+          >
+            Sign In
+          </button>
+          <Button
+            onClick={handleGetStarted}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium px-6 py-2 rounded-full"
+          >
+            Get Started
+          </Button>
         </div>
-      </motion.nav>
+      </motion.header>
 
-      {/* Hero Section */}
-      <section className="relative z-10 text-center py-20 px-6">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1, delay: 0.2 }}
-        >
-          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 mb-8">
-            <Sparkles className="w-4 h-4 text-primary animate-glow" />
-            <span className="text-sm text-primary font-medium">AI-Powered Science Learning</span>
-          </div>
-          
-          <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent mb-6 leading-tight">
-            Explore Science
-            <br />
-            <span className="bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">Like Never Before</span>
-          </h1>
-          
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            Unlock the mysteries of science with AI-powered learning. Ask questions, 
-            track progress, and achieve mastery through our revolutionary platform.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="xl" className="group" onClick={handleGetStarted}>
-              <Zap className="w-5 h-5 group-hover:animate-pulse" />
-              Start Learning
-            </Button>
-            <Button
-              variant="ghostCosmic"
-              size="xl"
-              onClick={() => {
-                const element = document.getElementById('how-it-works');
-                if (element) {
-                  const headerOffset = 80;
-                  const elementPosition = element.getBoundingClientRect().top;
-                  const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                  window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-                }
-              }}
-            >
-              How It Works
-              <Sparkles className="w-5 h-5" />
-            </Button>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="relative z-10 py-16 px-6">
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="max-w-4xl mx-auto"
-        >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map((stat, index) => {
-              const gradients = [
-                'from-purple-500/20 via-purple-500/5 to-transparent',
-                'from-blue-500/20 via-blue-500/5 to-transparent',
-                'from-cyan-500/20 via-cyan-500/5 to-transparent',
-                'from-pink-500/20 via-pink-500/5 to-transparent'
-              ];
-              const borders = [
-                'border-purple-500/50 shadow-purple-500/30',
-                'border-blue-500/50 shadow-blue-500/30',
-                'border-cyan-500/50 shadow-cyan-500/30',
-                'border-pink-500/50 shadow-pink-500/30'
-              ];
-              return (
-                <motion.div
-                  key={`${stat.value}-${index}`}
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.7 + index * 0.1 }}
-                  className="text-center"
-                >
-                  <div className={`relative p-6 rounded-xl bg-gradient-to-br ${gradients[index]} border ${borders[index]} backdrop-blur-sm hover:scale-105 transition-all duration-300 shadow-lg`}>
-                    <div className="text-lg md:text-xl font-bold bg-gradient-to-br from-white to-slate-300 bg-clip-text text-transparent">
-                      {stat.value}
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* How It Works Section */}
-      <section id="how-it-works" className="relative z-10 py-20 px-6">
-        <motion.div 
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="max-w-6xl mx-auto"
-        >
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              <span className="bg-gradient-cosmic bg-clip-text text-transparent">
-                How It Works
-              </span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Your journey to mastering science in three simple steps
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            {[
-              { step: '1', title: 'Choose Your Path', desc: 'Browse 18+ science courses from physics to biology', icon: BookOpen, color: 'purple', gradient: 'from-purple-500 to-purple-600', bg: 'bg-purple-500/20', border: 'border-purple-500/50', shadow: 'shadow-purple-500/30' },
-              { step: '2', title: 'Learn & Practice', desc: 'Interactive lessons with quizzes and AI hints', icon: Brain, color: 'blue', gradient: 'from-blue-500 to-blue-600', bg: 'bg-blue-500/20', border: 'border-blue-500/50', shadow: 'shadow-blue-500/30' },
-              { step: '3', title: 'Track Progress', desc: 'Earn XP, level up, and unlock achievements', icon: Trophy, color: 'green', gradient: 'from-green-500 to-green-600', bg: 'bg-green-500/20', border: 'border-green-500/50', shadow: 'shadow-green-500/30' }
-            ].map((item, idx) => {
-              const IconComp = item.icon;
-              return (
-                <Card key={idx} className={`${item.bg} ${item.border} ${item.shadow} backdrop-blur-sm border-2 hover:scale-105 transition-all duration-300`}>
-                  <CardContent className="p-8 text-center">
-                    <div className={`w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br ${item.gradient} flex items-center justify-center text-2xl font-bold text-white shadow-lg`}>
-                      {item.step}
-                    </div>
-                    <IconComp className={`w-8 h-8 mx-auto mb-4 text-${item.color}-400`} />
-                    <h3 className="text-xl font-semibold mb-2 text-white">{item.title}</h3>
-                    <p className="text-slate-300">{item.desc}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Features Section */}
-      <section className="relative z-10 py-20 px-6">
-        <motion.div 
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="max-w-6xl mx-auto"
-        >
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              <span className="bg-gradient-cosmic bg-clip-text text-transparent">
-                Powerful Features
-              </span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Everything you need to accelerate your science learning journey
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-8">
-            {features.map((feature, index) => {
-              const IconComponent = feature.icon;
-              return (
-                <motion.div
-                  key={feature.title}
-                  initial={{ x: index % 2 === 0 ? -50 : 50, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ duration: 0.6, delay: 1 + index * 0.2 }}
-                >
-                  <div className={`${feature.bg} ${feature.border} ${feature.glow} backdrop-blur-sm border-2 rounded-xl p-8 h-full hover:scale-105 transition-all duration-300 group shadow-xl`}>
-                    <div className={`inline-flex p-4 rounded-xl bg-gradient-to-br ${feature.gradient} mb-6 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
-                      <IconComponent className={`w-8 h-8 ${feature.iconColor} text-white`} />
-                    </div>
-                    <h3 className="text-xl font-semibold mb-3 text-white">{feature.title}</h3>
-                    <p className="text-slate-300 leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="relative z-10 py-20 px-6">
+      {/* HERO SECTION */}
+      <section className="relative z-10 text-center px-6 py-20 md:py-32 max-w-6xl mx-auto">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 1.5 }}
-          className="max-w-4xl mx-auto text-center"
+          transition={{ duration: 0.8 }}
         >
-          <div className="relative p-12 rounded-2xl bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-cyan-600/20 border-2 border-purple-500/50 backdrop-blur-sm shadow-2xl shadow-purple-500/30 overflow-hidden">
-            {/* Animated gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/30 via-blue-600/30 to-cyan-600/30 animate-pulse" />
-            <div className="relative z-10">
-              <div className="flex justify-center mb-6">
-                <div className="relative">
-                  <Star className="w-16 h-16 text-yellow-400 animate-float" />
-                  <div className="absolute inset-0 bg-yellow-400/20 blur-xl rounded-full animate-glow" />
-                </div>
-              </div>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
+            <span className="text-white">Explore Science.</span>
+            <br />
+            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+              One Lesson at a Time.
+            </span>
+          </h1>
 
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-                Ready to Begin Your Scientific Journey?
-              </h2>
+          <p className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
+            Gamified science lessons for all ages and beyond. Learn with streaks, XP, and AI-powered tutoring.
+          </p>
 
-              <p className="text-xl text-slate-200 mb-10 max-w-2xl mx-auto">
-                Learn at your pace with AI-powered science education designed for curious minds.
-              </p>
-
-              <Button variant="hero" size="xl" className="group" onClick={handleGetStarted}>
-                <Zap className="w-5 h-5 group-hover:animate-pulse" />
-                Start Learning Now
-                <Sparkles className="w-5 h-5 group-hover:animate-pulse" />
-              </Button>
-            </div>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              onClick={handleGetStarted}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-4 rounded-full text-lg"
+            >
+              Start Learning Free
+            </Button>
+            <Button
+              onClick={scrollToHowItWorks}
+              variant="outline"
+              className="border-2 border-slate-700 text-slate-300 hover:text-white hover:border-slate-600 font-semibold px-8 py-4 rounded-full text-lg bg-[#0d0d1a]/50 backdrop-blur-sm"
+            >
+              See How It Works
+            </Button>
           </div>
         </motion.div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-border/50 backdrop-blur-sm py-8 px-6 mt-20">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
-          <div className="flex items-center gap-2 mb-4 md:mb-0">
-            <Telescope className="w-6 h-6 text-primary" />
-            <span className="font-semibold">Science Lens</span>
+      {/* FEATURE CARDS ROW */}
+      <section className="relative z-10 px-6 py-16 max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {featureCards.map((card, index) => (
+            <motion.div
+              key={card.title}
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 text-center hover:border-white/20 transition-all"
+            >
+              <card.icon className={`w-8 h-8 mx-auto mb-3 ${card.color}`} />
+              <h3 className={`font-semibold text-white mb-1 ${card.color}`}>{card.title}</h3>
+              <p className="text-sm text-slate-400">{card.subtitle}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* FEATURES GRID */}
+      <section className="relative z-10 px-6 py-20 max-w-6xl mx-auto">
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+            Everything you need to master science
+          </h2>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {gridFeatures.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600/20 to-purple-600/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <feature.icon className="w-6 h-6 text-blue-400" />
+                </div>
+                <h3 className="font-semibold text-white text-lg">{feature.title}</h3>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section id="how-it-works" className="relative z-10 px-6 py-20 max-w-6xl mx-auto">
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+        >
+          <h2 className="text-3xl md:text-5xl font-bold text-white text-center mb-16">
+            How It Works
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {howItWorksSteps.map((item, index) => (
+              <motion.div
+                key={item.step}
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: index * 0.2 }}
+                className="text-center"
+              >
+                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg shadow-blue-500/30">
+                  {item.step}
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
+              </motion.div>
+            ))}
           </div>
-          
-          <div className="text-muted-foreground text-sm">
-            © 2024 Science Lens. Powered by AI and curiosity.
-          </div>
+        </motion.div>
+      </section>
+
+      {/* CTA SECTION */}
+      <section className="relative z-10 px-6 py-20 max-w-4xl mx-auto">
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          className="bg-gradient-to-br from-blue-600/20 via-purple-600/20 to-cyan-600/20 border-2 border-blue-500/30 rounded-3xl p-12 text-center backdrop-blur-sm"
+        >
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-8">
+            Ready to start your science journey?
+          </h2>
+          <Button
+            onClick={handleGetStarted}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-10 py-4 rounded-full text-lg"
+          >
+            Get Started Free
+          </Button>
+        </motion.div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="relative z-10 px-6 py-8 border-t border-white/10">
+        <div className="max-w-6xl mx-auto text-center text-slate-500 text-sm">
+          © 2025 Science Lens. Built for curious minds.
         </div>
       </footer>
 
