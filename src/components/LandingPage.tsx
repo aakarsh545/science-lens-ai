@@ -112,7 +112,7 @@ export default function LandingPage() {
   }, [navigate]);
 
   const handleGetStarted = () => {
-    setShowOnboarding(true);
+    navigate('/signup');
   };
 
   const handleOnboardingComplete = async () => {

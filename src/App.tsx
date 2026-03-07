@@ -9,6 +9,7 @@ import { DebugPanel } from "@/components/debug/DebugPanel";
 import { useDebugClickLogger } from "@/hooks/useDebugClickLogger";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import SignupPage from "./pages/SignupPage";
 import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
 import CourseLayout from "./layouts/CourseLayout";
 import AchievementsPage from "./pages/AchievementsPage";
@@ -43,6 +44,7 @@ function AppContent() {
         <Routes>
           {/* Public landing page - always accessible */}
           <Route path="/" element={<Index />} />
+          <Route path="/signup" element={<SignupPage />} />
 
           {/* Authenticated app routes - all under AuthenticatedLayout */}
           <Route path="/dashboard" element={<AuthenticatedLayout />}>
