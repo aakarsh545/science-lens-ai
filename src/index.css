@@ -87,8 +87,8 @@
     --particle-intensity: subtle;
     --animation-speed: 3s;
 
-    /* Focus ring */
-    --ring: 212 100% 60%;
+    /* Focus ring - neutral color for better UX */
+    --ring: 215 20.2% 65.1%;
 
     /* ═══════════════════════════════════════════════════════════════
        TAILWIND INTEGRATION (map to Tailwind's expected variables)
@@ -116,8 +116,30 @@
     --radius: var(--radius-md);
   }
 
+  /* ═══════════════════════════════════════════════════════════════
+     TEXT SELECTION - Use neutral color to avoid colored highlight boxes
+     ═══════════════════════════════════════════════════════════════ */
+  ::selection {
+    background-color: hsla(215 20.2% 65.1% / 0.3);
+    color: inherit;
+  }
+
+  ::-moz-selection {
+    background-color: hsla(215 20.2% 65.1% / 0.3);
+    color: inherit;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     FOCUS STYLES - Only apply to interactive elements
+     ═══════════════════════════════════════════════════════════════ */
   * {
     @apply border-border;
+  }
+
+  /* Remove focus styles from non-interactive elements */
+  *:not(button):not(input):not(textarea):not(select):not(a):not([role="button"]):not([tabindex]):focus {
+    outline: none !important;
+    box-shadow: none !important;
   }
 
   body {
