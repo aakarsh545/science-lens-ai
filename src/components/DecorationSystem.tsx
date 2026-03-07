@@ -454,7 +454,7 @@ export function DecorationSystem() {
 
   if (!theme) return null;
 
-  const colors = getThemeColors(theme);
+  const colors = getThemeColors(theme as any);
 
   return (
     <>
