@@ -26,25 +26,41 @@ const features = [
     icon: Brain,
     title: "AI-Powered Q&A",
     description: "Get instant answers to complex science questions powered by advanced AI",
-    color: "primary"
+    gradient: "from-purple-500 to-blue-500",
+    glow: "shadow-purple-500/50",
+    bg: "bg-purple-500/10",
+    border: "border-purple-500/30",
+    iconColor: "text-purple-400"
   },
   {
     icon: Trophy,
     title: "Achievement System",
     description: "Unlock badges and celebrate milestones in your learning journey",
-    color: "achievement"
+    gradient: "from-yellow-500 to-orange-500",
+    glow: "shadow-yellow-500/50",
+    bg: "bg-yellow-500/10",
+    border: "border-yellow-500/30",
+    iconColor: "text-yellow-400"
   },
   {
     icon: Target,
     title: "Daily Streaks",
     description: "Build consistent learning habits with our streak tracking system",
-    color: "success"
+    gradient: "from-green-500 to-emerald-500",
+    glow: "shadow-green-500/50",
+    bg: "bg-green-500/10",
+    border: "border-green-500/30",
+    iconColor: "text-green-400"
   },
   {
     icon: Rocket,
     title: "Progressive Learning",
     description: "Unlock new topics as you master the fundamentals",
-    color: "secondary"
+    gradient: "from-blue-500 to-cyan-500",
+    glow: "shadow-cyan-500/50",
+    bg: "bg-cyan-500/10",
+    border: "border-cyan-500/30",
+    iconColor: "text-cyan-400"
   }
 ];
 
@@ -363,10 +379,10 @@ export default function LandingPage() {
             <span className="text-sm text-primary font-medium">AI-Powered Science Learning</span>
           </div>
           
-          <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-foreground via-primary to-secondary bg-clip-text text-transparent mb-6">
+          <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent mb-6 leading-tight">
             Explore Science
             <br />
-            <span className="text-primary animate-glow">Like Never Before</span>
+            <span className="bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">Like Never Before</span>
           </h1>
           
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -401,29 +417,42 @@ export default function LandingPage() {
 
       {/* Stats Section */}
       <section className="relative z-10 py-16 px-6">
-        <motion.div 
+        <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.5 }}
           className="max-w-4xl mx-auto"
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={`${stat.value}-${index}`}
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.7 + index * 0.1 }}
-                className="text-center"
-              >
-                <Card className="card-cosmic p-6 hover:glow-primary transition-all duration-300">
-                  <CardContent className="p-0">
-                    <div className="text-3xl font-bold text-primary mb-2">{stat.value}</div>
-                    <div className="text-muted-foreground">{stat.label}</div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+            {stats.map((stat, index) => {
+              const gradients = [
+                'from-purple-500/20 via-purple-500/5 to-transparent',
+                'from-blue-500/20 via-blue-500/5 to-transparent',
+                'from-cyan-500/20 via-cyan-500/5 to-transparent',
+                'from-pink-500/20 via-pink-500/5 to-transparent'
+              ];
+              const borders = [
+                'border-purple-500/50 shadow-purple-500/30',
+                'border-blue-500/50 shadow-blue-500/30',
+                'border-cyan-500/50 shadow-cyan-500/30',
+                'border-pink-500/50 shadow-pink-500/30'
+              ];
+              return (
+                <motion.div
+                  key={`${stat.value}-${index}`}
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.7 + index * 0.1 }}
+                  className="text-center"
+                >
+                  <div className={`relative p-6 rounded-xl bg-gradient-to-br ${gradients[index]} border ${borders[index]} backdrop-blur-sm hover:scale-105 transition-all duration-300 shadow-lg`}>
+                    <div className="text-lg md:text-xl font-bold bg-gradient-to-br from-white to-slate-300 bg-clip-text text-transparent">
+                      {stat.value}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </motion.div>
       </section>
@@ -449,20 +478,20 @@ export default function LandingPage() {
           
           <div className="grid md:grid-cols-3 gap-8 mb-16">
             {[
-              { step: '1', title: 'Choose Your Path', desc: 'Browse 18+ science courses from physics to biology', icon: BookOpen },
-              { step: '2', title: 'Learn & Practice', desc: 'Interactive lessons with quizzes and AI hints', icon: Brain },
-              { step: '3', title: 'Track Progress', desc: 'Earn XP, level up, and unlock achievements', icon: Trophy }
+              { step: '1', title: 'Choose Your Path', desc: 'Browse 18+ science courses from physics to biology', icon: BookOpen, color: 'purple', gradient: 'from-purple-500 to-purple-600', bg: 'bg-purple-500/20', border: 'border-purple-500/50', shadow: 'shadow-purple-500/30' },
+              { step: '2', title: 'Learn & Practice', desc: 'Interactive lessons with quizzes and AI hints', icon: Brain, color: 'blue', gradient: 'from-blue-500 to-blue-600', bg: 'bg-blue-500/20', border: 'border-blue-500/50', shadow: 'shadow-blue-500/30' },
+              { step: '3', title: 'Track Progress', desc: 'Earn XP, level up, and unlock achievements', icon: Trophy, color: 'green', gradient: 'from-green-500 to-green-600', bg: 'bg-green-500/20', border: 'border-green-500/50', shadow: 'shadow-green-500/30' }
             ].map((item, idx) => {
               const IconComp = item.icon;
               return (
-                <Card key={idx} className="card-cosmic p-8 text-center">
-                  <CardContent className="p-0">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary">
+                <Card key={idx} className={`${item.bg} ${item.border} ${item.shadow} backdrop-blur-sm border-2 hover:scale-105 transition-all duration-300`}>
+                  <CardContent className="p-8 text-center">
+                    <div className={`w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br ${item.gradient} flex items-center justify-center text-2xl font-bold text-white shadow-lg`}>
                       {item.step}
                     </div>
-                    <IconComp className="w-8 h-8 mx-auto mb-4 text-primary" />
-                    <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                    <p className="text-muted-foreground">{item.desc}</p>
+                    <IconComp className={`w-8 h-8 mx-auto mb-4 text-${item.color}-400`} />
+                    <h3 className="text-xl font-semibold mb-2 text-white">{item.title}</h3>
+                    <p className="text-slate-300">{item.desc}</p>
                   </CardContent>
                 </Card>
               );
@@ -500,17 +529,15 @@ export default function LandingPage() {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ duration: 0.6, delay: 1 + index * 0.2 }}
                 >
-                  <Card className="card-cosmic p-8 h-full hover:scale-105 transition-all duration-300 group">
-                    <CardContent className="p-0">
-                      <div className={`inline-flex p-3 rounded-lg bg-${feature.color}/10 border border-${feature.color}/20 mb-6 group-hover:glow-primary transition-all duration-300`}>
-                        <IconComponent className={`w-6 h-6 text-${feature.color}`} />
-                      </div>
-                      <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                      <p className="text-muted-foreground leading-relaxed">
-                        {feature.description}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <div className={`${feature.bg} ${feature.border} ${feature.glow} backdrop-blur-sm border-2 rounded-xl p-8 h-full hover:scale-105 transition-all duration-300 group shadow-xl`}>
+                    <div className={`inline-flex p-4 rounded-xl bg-gradient-to-br ${feature.gradient} mb-6 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
+                      <IconComponent className={`w-8 h-8 ${feature.iconColor} text-white`} />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3 text-white">{feature.title}</h3>
+                    <p className="text-slate-300 leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
                 </motion.div>
               );
             })}
@@ -526,34 +553,32 @@ export default function LandingPage() {
           transition={{ duration: 0.8, delay: 1.5 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <Card className="card-cosmic p-12 bg-gradient-card border border-primary/20">
-            <CardContent className="p-0">
+          <div className="relative p-12 rounded-2xl bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-cyan-600/20 border-2 border-purple-500/50 backdrop-blur-sm shadow-2xl shadow-purple-500/30 overflow-hidden">
+            {/* Animated gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/30 via-blue-600/30 to-cyan-600/30 animate-pulse" />
+            <div className="relative z-10">
               <div className="flex justify-center mb-6">
                 <div className="relative">
-                  <Star className="w-16 h-16 text-achievement animate-float" />
-                  <div className="absolute inset-0 bg-achievement/20 blur-xl rounded-full animate-glow" />
+                  <Star className="w-16 h-16 text-yellow-400 animate-float" />
+                  <div className="absolute inset-0 bg-yellow-400/20 blur-xl rounded-full animate-glow" />
                 </div>
               </div>
-              
-              <h2 className="text-4xl font-bold mb-6">
-                Ready to Begin Your
-                <br />
-                <span className="bg-gradient-cosmic bg-clip-text text-transparent">
-                  Scientific Journey?
-                </span>
+
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+                Ready to Begin Your Scientific Journey?
               </h2>
-              
-              <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-                Learn at your pace with AI-powered science education.
+
+              <p className="text-xl text-slate-200 mb-10 max-w-2xl mx-auto">
+                Learn at your pace with AI-powered science education designed for curious minds.
               </p>
-              
+
               <Button variant="hero" size="xl" className="group" onClick={handleGetStarted}>
                 <Zap className="w-5 h-5 group-hover:animate-pulse" />
                 Start Learning Now
                 <Sparkles className="w-5 h-5 group-hover:animate-pulse" />
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </motion.div>
       </section>
 
