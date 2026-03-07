@@ -618,11 +618,19 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
 
-    // Debug: Log userId before insert
-    console.log('Creating profile with userId:', userId)
+    // Ensure we have an active session before inserting
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      setError('Session not established. Please try signing in.')
+      setLoading(false)
+      return
+    }
+
+    console.log('Creating profile with userId:', session.user.id)
 
     const { error: profileError } = await supabase.from('profiles').insert({
-      user_id: userId!,  // make sure this is the id from supabase.auth.signUp response
+      user_id: session.user.id,
       display_name: username.trim(),
       avatar_url: JSON.stringify(avatarState),
     })
