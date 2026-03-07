@@ -430,7 +430,7 @@ export function DecorationSystem() {
     }
 
     // Determine preset from theme name
-    const name = (theme.name || '').toLowerCase();
+    const name = (typeof theme === 'string' ? theme : '').toLowerCase();
     let presetKey = 'geometric';
 
     if (name.includes('forest') || name.includes('green') || name.includes('mint') || name.includes('nature')) {
