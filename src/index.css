@@ -101,7 +101,8 @@
     --secondary-foreground: var(--button-secondary-foreground);
     --accent: var(--accent);
     --accent-foreground: var(--button-foreground);
-    --destructive: 0 72% 51%;
+    /* Use a neutral dark tone for destructive to avoid red borders bleeding globally */
+    --destructive: 217 33% 20%;
     --destructive-foreground: 210 40% 98%;
     --card: var(--card);
     --card-foreground: var(--card-foreground);
