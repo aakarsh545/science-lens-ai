@@ -618,20 +618,11 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
 
-    // Ensure we have an active session before inserting
-    // This is required for RLS policies to work correctly
-    const { data: { session } } = await supabase.auth.getSession()
-
-    if (!session) {
-      setError('Session not established. Please try signing in.')
-      setLoading(false)
-      return
-    }
-
-    console.log('Creating profile with userId:', session.user.id)
+    // Debug: Log userId before insert
+    console.log('Creating profile with userId:', userId)
 
     const { error: profileError } = await supabase.from('profiles').insert({
-      user_id: session.user.id,
+      user_id: userId!,  // make sure this is the id from supabase.auth.signUp response
       display_name: username.trim(),
       avatar_url: JSON.stringify(avatarState),
     })

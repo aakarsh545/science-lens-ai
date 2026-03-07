@@ -40,7 +40,7 @@ function AppContent() {
       <Toaster />
       <Sonner />
       <DebugPanel enabled={debugMode} onClose={() => {}} />
-      <BrowserRouter basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <BrowserRouter basename={basename}>
         <Routes>
           {/* Public landing page - always accessible */}
           <Route path="/" element={<Index />} />
