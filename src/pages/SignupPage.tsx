@@ -712,7 +712,7 @@ export default function SignupPage() {
             </p>
             <button
               onClick={() => setStep(2)}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-500 hover:to-indigo-500 transition-all fade-in-btn"
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-500 hover:to-indigo-500 transition-all fade-in-btn focus:outline-none"
             >
               Begin →
             </button>
@@ -736,7 +736,7 @@ export default function SignupPage() {
                 <button
                   key={option.id}
                   onClick={() => setSelectedGrade(option.id)}
-                  className={`p-6 rounded-2xl border cursor-pointer transition-all ${
+                  className={`p-6 rounded-2xl border cursor-pointer transition-all focus:outline-none ${
                     selectedGrade === option.id
                       ? 'border-blue-500 bg-blue-500/10'
                       : 'border-slate-700 bg-slate-800/60 hover:bg-slate-800'
@@ -753,7 +753,7 @@ export default function SignupPage() {
               <button
                 onClick={handleContinue}
                 disabled={!canContinue()}
-                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-500 hover:to-indigo-500 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-500 hover:to-indigo-500 transition-all disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none"
               >
                 Continue
               </button>
@@ -777,7 +777,7 @@ export default function SignupPage() {
                 <button
                   key={option.id}
                   onClick={() => setSelectedExperience(option.id)}
-                  className={`w-full p-6 rounded-2xl border text-left transition-all ${
+                  className={`w-full p-6 rounded-2xl border text-left transition-all focus:outline-none ${
                     selectedExperience === option.id
                       ? 'border-blue-500 bg-blue-500/10'
                       : 'border-slate-700 bg-slate-800/60 hover:bg-slate-800'
@@ -804,7 +804,7 @@ export default function SignupPage() {
               <button
                 onClick={handleContinue}
                 disabled={!canContinue()}
-                className="ml-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-500 hover:to-indigo-500 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                className="ml-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-500 hover:to-indigo-500 transition-all disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none"
               >
                 Continue
               </button>
@@ -877,7 +877,7 @@ export default function SignupPage() {
               <button
                 onClick={handleContinue}
                 disabled={loading || !canContinue()}
-                className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-medium text-white hover:from-blue-500 hover:to-indigo-500 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-medium text-white hover:from-blue-500 hover:to-indigo-500 transition-all disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
@@ -966,7 +966,7 @@ export default function SignupPage() {
                         setSearchQuery('')
                         setShowSearchDropdown(false)
                       }}
-                      className="w-full px-4 py-2 text-left hover:bg-slate-700"
+                      className="w-full px-4 py-2 text-left hover:bg-slate-700 focus:outline-none"
                     >
                       <span className="font-medium text-white">{el.symbol}</span>
                       <span className="ml-2 text-slate-400">{el.name}</span>
@@ -980,13 +980,13 @@ export default function SignupPage() {
             <div className="flex gap-2 mb-6">
               <button
                 onClick={() => setAvatarState({ ...avatarState, elementN: Math.max(1, avatarState.elementN - 1) })}
-                className="flex-1 rounded-lg border border-slate-700 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                className="flex-1 rounded-lg border border-slate-700 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 focus:outline-none"
               >
                 -
               </button>
               <button
                 onClick={() => setAvatarState({ ...avatarState, elementN: Math.min(118, avatarState.elementN + 1) })}
-                className="flex-1 rounded-lg border border-slate-700 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                className="flex-1 rounded-lg border border-slate-700 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 focus:outline-none"
               >
                 +
               </button>
@@ -1026,7 +1026,7 @@ export default function SignupPage() {
                     <button
                       key={acc}
                       onClick={() => setAvatarState({ ...avatarState, accessory: acc })}
-                      className={`rounded-lg border py-2 text-xs font-medium transition-colors ${
+                      className={`rounded-lg border py-2 text-xs font-medium transition-colors focus:outline-none ${
                         avatarState.accessory === acc
                           ? 'border-blue-500 bg-blue-500/10 text-blue-400'
                           : 'border-slate-700 text-slate-400 hover:bg-slate-800'
@@ -1112,7 +1112,7 @@ export default function SignupPage() {
               <button
                 onClick={handleContinue}
                 disabled={loading || !canContinue()}
-                className="ml-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-500 hover:to-indigo-500 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                className="ml-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-500 hover:to-indigo-500 transition-all disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
