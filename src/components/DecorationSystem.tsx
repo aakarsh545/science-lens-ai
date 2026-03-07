@@ -114,7 +114,7 @@ const DECORATION_PRESETS: Record<string, DecorationPreset> = {
 /**
  * Extract color from theme
  */
-function getThemeColors(theme: { config?: { palette?: { primary?: string; secondary?: string; accent?: string; background?: string } } }) {
+function getThemeColors(theme: any) {
   return {
     primary: theme?.config?.palette?.primary || '#3b82f6',
     secondary: theme?.config?.palette?.secondary || '#1e40af',
@@ -430,7 +430,7 @@ export function DecorationSystem() {
     }
 
     // Determine preset from theme name
-    const name = (theme.name || '').toLowerCase();
+    const name = (typeof theme === 'string' ? theme : '').toLowerCase();
     let presetKey = 'geometric';
 
     if (name.includes('forest') || name.includes('green') || name.includes('mint') || name.includes('nature')) {
@@ -454,7 +454,7 @@ export function DecorationSystem() {
 
   if (!theme) return null;
 
-  const colors = getThemeColors(theme);
+  const colors = getThemeColors(theme as any);
 
   return (
     <>

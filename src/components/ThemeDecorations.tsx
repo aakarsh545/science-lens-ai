@@ -43,7 +43,7 @@ export function ThemeDecorations() {
 
     const decorationCount = 8;
     const newDecorations: React.ReactNode[] = [];
-    const themeName = theme.name;
+    const themeName = typeof theme === 'string' ? theme : '';
 
     // Determine decoration type based on theme name
     let decorationType: DecorationProps['type'] = 'sparkle';
