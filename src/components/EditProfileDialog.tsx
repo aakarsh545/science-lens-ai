@@ -214,11 +214,6 @@ export function EditProfileDialog({
                   </button>
                 ))}
               </div>
-              {ownedAvatars.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  No avatars owned. Visit the shop to purchase avatars!
-                </p>
-              )}
             </div>
 
             {/* Username */}

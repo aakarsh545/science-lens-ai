@@ -158,13 +158,6 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                 <Button
-                  onClick={() => navigate("/pricing")}
-                  className="flex items-center gap-2"
-                >
-                  <Zap className="w-4 h-4" />
-                  Get Credits Now
-                </Button>
-                <Button
                   variant="outline"
                   onClick={() => navigate("/")}
                 >
@@ -186,14 +179,7 @@ export default function CreditGuard({ userId, children, onCreditsLow }: CreditGu
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Low Credits Warning</AlertTitle>
           <AlertDescription className="flex items-center justify-between">
-            <span>You only have {credits} credit{credits !== 1 ? 's' : ''} remaining. Get more to keep learning!</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/pricing")}
-            >
-              Get More
-            </Button>
+            <span>You only have {credits} credit{credits !== 1 ? 's' : ''} remaining. You'll receive 5 free credits daily!</span>
           </AlertDescription>
         </Alert>
         {children}

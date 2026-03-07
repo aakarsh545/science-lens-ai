@@ -7,8 +7,7 @@ import {
   Settings as SettingsIcon,
   LogOut,
   User,
-  Award,
-  ShoppingBag
+  Award
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -33,7 +32,6 @@ const menuItems = [
   { title: "Learning", icon: GraduationCap, path: "/learning" },
   { title: "Challenges", icon: Target, path: "/challenges" },
   { title: "Leaderboard", icon: Award, path: "/leaderboard" },
-  { title: "Shop", icon: ShoppingBag, path: "/shop" },
   { title: "Ask Questions", icon: MessageSquare, path: "/ask" },
   { title: "Profile", icon: User, path: "/profile" },
   { title: "Achievements", icon: Trophy, path: "/achievements" },

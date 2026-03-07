@@ -70,20 +70,6 @@ const BUTTON_DESCRIPTIONS: Record<string, { description: string; location: strin
     location: 'LessonPlayer - Chapter Quiz card'
   },
 
-  // Shop buttons
-  'equip-theme': {
-    description: 'Should apply the selected theme to the entire website and update user profile',
-    location: 'Shop - Theme card'
-  },
-  'buy-theme': {
-    description: 'Should deduct credits and unlock the theme for the user',
-    location: 'Shop - Premium theme card'
-  },
-  'select-theme': {
-    description: 'Should preview the theme and allow equipping it',
-    location: 'Shop - Theme card'
-  },
-
   // Challenges page buttons
   'challenge-start': {
     description: 'Should begin a new challenge session with the selected difficulty',
@@ -128,10 +114,6 @@ const BUTTON_DESCRIPTIONS: Record<string, { description: string; location: strin
   'sidebar-challenges': {
     description: 'Should navigate to the challenges page',
     location: 'Sidebar - Challenges link'
-  },
-  'sidebar-shop': {
-    description: 'Should navigate to the shop to buy themes with credits',
-    location: 'Sidebar - Shop link'
   },
   'sidebar-profile': {
     description: 'Should navigate to the user profile page',
@@ -599,15 +581,6 @@ export function identifyButton(element: HTMLElement): { name: string; descriptio
   }
   if (lowerText.includes('start chapter quiz') || lowerText.includes('chapter quiz')) {
     return { name: buttonText, ...BUTTON_DESCRIPTIONS['start-chapter-quiz'] };
-  }
-  if (lowerText.includes('equip') || lowerText.includes('apply theme')) {
-    return { name: buttonText, ...BUTTON_DESCRIPTIONS['equip-theme'] };
-  }
-  if (lowerText.includes('buy') || lowerText.includes('purchase')) {
-    return { name: buttonText, ...BUTTON_DESCRIPTIONS['buy-theme'] };
-  }
-  if (lowerText.includes('select theme')) {
-    return { name: buttonText, ...BUTTON_DESCRIPTIONS['select-theme'] };
   }
   if (lowerText.includes('sign out') || lowerText.includes('logout')) {
     return { name: buttonText, ...BUTTON_DESCRIPTIONS['sign-out'] };

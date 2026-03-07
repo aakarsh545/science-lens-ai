@@ -1,7 +1,6 @@
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { CreditsBar } from "@/components/CreditsBar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -186,7 +185,6 @@ export default function AuthenticatedLayout() {
             onNewConversation={() => setConversationId(null)}
           />
           <div className="flex-1 flex flex-col">
-            <CreditsBar userId={user.id} />
             <main className="flex-1 overflow-auto">
               <Outlet />
             </main>
