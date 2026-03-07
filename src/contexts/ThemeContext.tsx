@@ -52,11 +52,11 @@ function applyDefaultTheme() {
   console.log('[ThemeContext] Applied default dark theme');
 }
 
-export function ThemeProvider({ children, userId }: { children: ReactNode; userId: string }) {
+export function ThemeProvider({ children, userId }: { children: ReactNode; userId?: string }) {
   useEffect(() => {
     // Apply default dark theme on mount
     applyDefaultTheme();
-  }, [userId]);
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme: 'dark' }}>
