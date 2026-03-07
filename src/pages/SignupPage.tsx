@@ -192,11 +192,12 @@ export default function SignupPage() {
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('onboarding_completed')
+          .select('display_name')
           .eq('user_id', session.user.id)
           .maybeSingle()
 
-        if (profile?.onboarding_completed) {
+        // If user has a display_name set, they've completed onboarding
+        if (profile?.display_name) {
           navigate('/dashboard', { replace: true })
         }
       }
@@ -226,8 +227,8 @@ export default function SignupPage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('username')
-        .eq('username', username)
+        .select('display_name')
+        .eq('display_name', username)
         .maybeSingle()
 
       if (error) {
@@ -622,15 +623,8 @@ export default function SignupPage() {
 
     const { error: profileError } = await supabase.from('profiles').insert({
       user_id: userId!,  // make sure this is the id from supabase.auth.signUp response
-      username: username.trim(),
+      display_name: username.trim(),
       avatar_url: JSON.stringify(avatarState),
-      grade: selectedGrade,
-      experience: selectedExperience,
-      onboarding_completed: true,
-      xp: 0,
-      streak: 0,
-      hearts: 5,
-      is_premium: false,
     })
 
     if (profileError) {
