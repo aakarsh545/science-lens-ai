@@ -137,6 +137,16 @@
     @apply border-border;
   }
 
+  *:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  *:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
   /* Remove focus styles from non-interactive elements */
   *:not(button):not(input):not(textarea):not(select):not(a):not([role="button"]):not([tabindex]):focus {
     outline: none !important;
