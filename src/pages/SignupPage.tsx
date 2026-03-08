@@ -740,8 +740,8 @@ export default function SignupPage() {
                   onClick={() => setSelectedGrade(option.id)}
                   className={`p-6 rounded-2xl border cursor-pointer transition-all focus:outline-none ${
                     selectedGrade === option.id
-                      ? 'border-indigo-500 bg-indigo-500/10'
-                      : 'border-slate-700 bg-slate-800/60 hover:bg-slate-800'
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : 'border-white/10 bg-slate-800/60 hover:bg-slate-800'
                   }`}
                 >
                   <div className="text-4xl mb-3">{option.icon}</div>
@@ -781,8 +781,8 @@ export default function SignupPage() {
                   onClick={() => setSelectedExperience(option.id)}
                   className={`w-full p-6 rounded-2xl border text-left transition-all focus:outline-none ${
                     selectedExperience === option.id
-                      ? 'border-indigo-500 bg-indigo-500/10'
-                      : 'border-slate-700 bg-slate-800/60 hover:bg-slate-800'
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : 'border-white/10 bg-slate-800/60 hover:bg-slate-800'
                   }`}
                 >
                   <div className="flex items-center gap-4">
