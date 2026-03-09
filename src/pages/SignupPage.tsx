@@ -629,14 +629,16 @@ export default function SignupPage() {
 
     console.log('Creating profile with userId:', session.user.id)
 
-    const { error: profileError } = await supabase.from('profiles').insert({
+    const { error: profileError } = await supabase.from('profiles').upsert({
       user_id: session.user.id,
       display_name: username.trim(),
       avatar_url: JSON.stringify(avatarState),
+    }, {
+      onConflict: 'user_id'
     })
 
     if (profileError) {
-      console.error('Profile insert error:', JSON.stringify(profileError))
+      console.error('Profile upsert error:', JSON.stringify(profileError))
       setError(profileError.message)
       setLoading(false)
       return
