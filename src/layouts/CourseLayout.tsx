@@ -4,13 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { HelixLoader } from "@/components/ui/helix-loader";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { OnboardingCutscene } from "@/components/OnboardingCutscene";
-import { getHasSeenOnboarding, setHasSeenOnboarding } from "@/utils/userStorage";
 
 export default function CourseLayout() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showOnboardingCutscene, setShowOnboardingCutscene] = useState(false);
   const [checkedAuth, setCheckedAuth] = useState(false);
 
   useEffect(() => {
@@ -22,16 +19,6 @@ export default function CourseLayout() {
 
       if (session) {
         setUser(session.user);
-
-        // Safely check if user has seen visual onboarding cutscene
-        try {
-          const hasSeenOnboarding = getHasSeenOnboarding(session.user.id);
-          if (!hasSeenOnboarding) {
-            setShowOnboardingCutscene(true);
-          }
-        } catch (error) {
-          console.warn('localStorage not available:', error);
-        }
       }
       setCheckedAuth(true);
       setLoading(false);
@@ -50,15 +37,6 @@ export default function CourseLayout() {
 
       if (session) {
         setUser(session.user);
-        // Safely check if user has seen onboarding
-        try {
-          const hasSeenOnboarding = getHasSeenOnboarding(session.user.id);
-          if (!hasSeenOnboarding) {
-            setShowOnboardingCutscene(true);
-          }
-        } catch (error) {
-          console.warn('localStorage not available:', error);
-        }
         setLoading(false);
       }
       setCheckedAuth(true);
@@ -69,20 +47,6 @@ export default function CourseLayout() {
       subscription.unsubscribe();
     };
   }, []);
-
-  const handleOnboardingComplete = () => {
-    if (user) {
-      setHasSeenOnboarding(user.id, true);
-    }
-    setShowOnboardingCutscene(false);
-  };
-
-  const handleOnboardingClose = () => {
-    if (user) {
-      setHasSeenOnboarding(user.id, true);
-    }
-    setShowOnboardingCutscene(false);
-  };
 
   if (loading) {
     return (
@@ -103,18 +67,6 @@ export default function CourseLayout() {
       <div className="min-h-screen flex items-center justify-center">
         <HelixLoader className="text-primary" />
       </div>
-    );
-  }
-
-  // Show visual onboarding cutscene for logged-in users who haven't seen it
-  if (showOnboardingCutscene) {
-    return (
-      <ThemeProvider userId={user.id}>
-        <OnboardingCutscene
-          onComplete={handleOnboardingComplete}
-          onClose={handleOnboardingClose}
-        />
-      </ThemeProvider>
     );
   }
 

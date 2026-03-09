@@ -6,8 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { HelixLoader } from "@/components/ui/helix-loader";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { OnboardingCutscene } from "@/components/OnboardingCutscene";
-import { getHasSeenOnboarding, setHasSeenOnboarding } from "@/utils/userStorage";
 
 export default function AuthenticatedLayout() {
   const navigate = useNavigate();
@@ -38,7 +36,6 @@ export default function AuthenticatedLayout() {
   const [user, setUser] = useState<User | null>(() => getTestUser());
   const [loading, setLoading] = useState(() => (getTestUser() ? false : true));
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [showOnboardingCutscene, setShowOnboardingCutscene] = useState(false);
   const [checkedAuth, setCheckedAuth] = useState(() => (getTestUser() ? true : false));
 
   useEffect(() => {
@@ -48,7 +45,6 @@ export default function AuthenticatedLayout() {
       setUser(mockUser);
       setCheckedAuth(true);
       setLoading(false);
-      setShowOnboardingCutscene(false);
       return;
     }
 
@@ -58,17 +54,6 @@ export default function AuthenticatedLayout() {
 
       if (session) {
         setUser(session.user);
-
-        // Safely check if user has seen visual onboarding cutscene
-        try {
-          const hasSeenOnboarding = getHasSeenOnboarding(session.user.id);
-          if (!hasSeenOnboarding) {
-            setShowOnboardingCutscene(true);
-          }
-        } catch (error) {
-          console.warn('localStorage not available:', error);
-          setShowOnboardingCutscene(true);
-        }
       }
       setCheckedAuth(true);
       setLoading(false);
@@ -105,16 +90,6 @@ export default function AuthenticatedLayout() {
 
       if (session) {
         setUser(session.user);
-        // Safely check if user has seen onboarding
-        try {
-          const hasSeenOnboarding = getHasSeenOnboarding(session.user.id);
-          if (!hasSeenOnboarding) {
-            setShowOnboardingCutscene(true);
-          }
-        } catch (error) {
-          console.warn('localStorage not available:', error);
-          setShowOnboardingCutscene(true);
-        }
         setLoading(false);
       }
       setCheckedAuth(true);
@@ -125,20 +100,6 @@ export default function AuthenticatedLayout() {
       subscription.unsubscribe();
     };
   }, [navigate]);
-
-  const handleOnboardingComplete = () => {
-    if (user) {
-      setHasSeenOnboarding(user.id, true);
-    }
-    setShowOnboardingCutscene(false);
-  };
-
-  const handleOnboardingClose = () => {
-    if (user) {
-      setHasSeenOnboarding(user.id, true);
-    }
-    setShowOnboardingCutscene(false);
-  };
 
   if (loading) {
     return (
@@ -159,18 +120,6 @@ export default function AuthenticatedLayout() {
       <div className="min-h-screen flex items-center justify-center">
         <HelixLoader className="text-primary" />
       </div>
-    );
-  }
-
-  // Show visual onboarding cutscene for logged-in users who haven't seen it
-  if (showOnboardingCutscene) {
-    return (
-      <ThemeProvider userId={user.id}>
-        <OnboardingCutscene
-          onComplete={handleOnboardingComplete}
-          onClose={handleOnboardingClose}
-        />
-      </ThemeProvider>
     );
   }
 
