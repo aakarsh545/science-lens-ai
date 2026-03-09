@@ -25,8 +25,21 @@ export default function LoginPage() {
       if (signInError) {
         // Check for "Invalid login credentials" error
         if (signInError.message === 'Invalid login credentials') {
-          setError('This email is not registered. Please create a new account for free!')
-          setIsNotRegisteredError(true)
+          // Follow-up: Check if email is registered in profiles table
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('user_id')
+            .eq('email', email.trim())
+            .maybeSingle()
+
+          if (!profile) {
+            // No profile found - email not registered
+            setError('This email is not registered. Please create a new account for free!')
+            setIsNotRegisteredError(true)
+          } else {
+            // Profile exists - wrong password
+            setError('Incorrect password. Please try again.')
+          }
         } else {
           setError(signInError.message)
         }
@@ -67,7 +80,7 @@ export default function LoginPage() {
                     to="/signup"
                     className="inline-block rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white hover:from-blue-500 hover:to-indigo-500 transition-all"
                   >
-                    Create Account
+                    Create Account →
                   </Link>
                 </div>
               )}
