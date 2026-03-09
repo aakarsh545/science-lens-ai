@@ -64,8 +64,6 @@ function applyDefaultTheme() {
       console.warn(`[ThemeContext] Failed to set CSS variable ${key}:`, error);
     }
   });
-
-  console.log('[ThemeContext] Applied default dark theme');
 }
 
 export function ThemeProvider({ children, userId }: { children: ReactNode; userId?: string }) {

@@ -6,7 +6,6 @@ import { HelixLoader } from "@/components/ui/helix-loader";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { DecorationSystem } from "@/components/DecorationSystem";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { clearUserData, migrateUserData } from "@/utils/userStorage";
@@ -107,7 +106,6 @@ export default function AppLayout() {
     <ThemeProvider userId={user.id}>
       <SidebarProvider defaultOpen={true}>
         <div className="min-h-screen flex w-full">
-          <DecorationSystem />
           <AppSidebar
             userId={user.id}
             conversationId={conversationId}

@@ -7,11 +7,9 @@
  * COMPREHENSIVE THEME SYSTEM WITH CONTRAST SAFETY
  * ═══════════════════════════════════════════════════════════════
  *
- * All theme colors are set by ThemeContext using palette from shop_items.
+ * Theme colors are set by ThemeContext with default dark theme values.
  * The theme applies globally: background, cards, buttons, sidebar, etc.
  * Contrast is automatically maintained: text is always readable.
- *
- * Default values below are overridden when a theme is equipped.
  */
 
 @layer base {
