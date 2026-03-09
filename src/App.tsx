@@ -10,6 +10,7 @@ import { useDebugClickLogger } from "@/hooks/useDebugClickLogger";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SignupPage from "./pages/SignupPage";
+import LoginPage from "./pages/LoginPage";
 import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
 import CourseLayout from "./layouts/CourseLayout";
 import AchievementsPage from "./pages/AchievementsPage";
@@ -45,6 +46,7 @@ function AppContent() {
           {/* Public landing page - always accessible */}
           <Route path="/" element={<Index />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/login" element={<LoginPage />} />
 
           {/* Authenticated app routes - all under AuthenticatedLayout */}
           <Route path="/dashboard" element={<AuthenticatedLayout />}>
