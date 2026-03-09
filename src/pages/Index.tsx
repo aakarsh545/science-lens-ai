@@ -90,7 +90,7 @@ export default function Index() {
             </div>
             <div className="flex items-center gap-4">
               <Link
-                to="/login"
+                to="/signup"
                 className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
               >
                 Sign In
