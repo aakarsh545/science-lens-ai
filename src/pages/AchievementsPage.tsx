@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { HelixLoader } from "@/components/ui/helix-loader";
-import { AchievementsView } from "@/components/AchievementsView";
 
 export default function AchievementsPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -41,8 +40,8 @@ export default function AchievementsPage() {
   }
 
   return (
-    <div className="h-full">
-      <AchievementsView user={user} />
+    <div className="h-full flex items-center justify-center">
+      <p className="text-muted-foreground">Achievements view is unavailable.</p>
     </div>
   );
 }

@@ -7,8 +7,8 @@
  * COMPREHENSIVE THEME SYSTEM WITH CONTRAST SAFETY
  * ═══════════════════════════════════════════════════════════════
  *
- * Theme colors are set by ThemeContext with default dark theme values.
- * The theme applies globally: background, cards, buttons, sidebar, etc.
+ * Base theme: hardcoded dark
+ * Applies globally: background, cards, buttons, sidebar, etc.
  * Contrast is automatically maintained: text is always readable.
  */
 
@@ -22,7 +22,7 @@
     --text-secondary: 215 20.2% 65.1%;
     --text-muted: 215 20.2% 65.1%;
 
-    /* Core palette (from shop_items metadata) */
+    /* Core palette */
     --primary: 212 100% 60%;
     --secondary: 263 85% 70%;
     --accent: 189 94% 43%;

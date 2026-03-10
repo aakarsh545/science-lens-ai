@@ -124,7 +124,7 @@ export default function AuthenticatedLayout() {
   }
 
   return (
-    <ThemeProvider userId={user.id}>
+    <ThemeProvider>
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <AppSidebar

@@ -72,7 +72,7 @@ export default function CourseLayout() {
 
   // Full-width layout without sidebar
   return (
-    <ThemeProvider userId={user.id}>
+    <ThemeProvider>
       <Outlet />
     </ThemeProvider>
   );

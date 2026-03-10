@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { HelixLoader } from "@/components/ui/helix-loader";
-import Settings from "@/components/Settings";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -37,8 +36,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6">
-      <Settings />
+    <div className="p-6 text-muted-foreground">
+      Settings view is unavailable.
     </div>
   );
 }

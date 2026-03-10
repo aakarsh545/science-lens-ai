@@ -6,7 +6,6 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import QuizResults from "@/pages/QuizResults";
 import {
   Heart,
   Trophy,
@@ -474,7 +473,37 @@ export default function ChallengeSession() {
   }
 
   if (sessionEnded && finalResults && detailedResults) {
-    return <QuizResults results={detailedResults} onRetry={handleRetry} onReturn={handleReturnToChallenges} />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+        <Card className="w-full max-w-3xl mx-4">
+          <CardHeader>
+            <CardTitle>Challenge summary</CardTitle>
+            <CardDescription>
+              {detailedResults.challengeTitle || "Challenge"} • {detailedResults.totalQuestions} questions •{" "}
+              {detailedResults.difficultyLevel}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              <Badge variant="secondary">Correct: {detailedResults.correctAnswers}</Badge>
+              <Badge variant="outline">Incorrect: {detailedResults.incorrectAnswers}</Badge>
+              <Badge variant="outline">Accuracy: {detailedResults.accuracyPercentage}%</Badge>
+              <Badge variant="outline">XP earned: {detailedResults.xpEarned}</Badge>
+            </div>
+            <div className="flex gap-3">
+              <Button onClick={handleRetry}>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Retry
+              </Button>
+              <Button variant="ghost" onClick={handleReturnToChallenges}>
+                <Home className="w-4 h-4 mr-2" />
+                Return to Learning
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (!question || !sessionActive) {

@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import confetti from "canvas-confetti";
-import { VoiceReader } from "./VoiceReader";
 import { exportChatToPDF } from "@/utils/pdfExport";
 import { ChatProgress } from "./ChatProgress";
 import { AIService } from "@/services/aiService";
@@ -474,7 +473,6 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
                   <p className="whitespace-pre-wrap">{message.content}</p>
                   {message.role === "assistant" && message.content && (
                     <div className="flex items-center gap-2 mt-2">
-                      <VoiceReader text={message.content} />
                       <span className="text-xs opacity-70">
                         {new Date(message.created_at).toLocaleTimeString()}
                       </span>
