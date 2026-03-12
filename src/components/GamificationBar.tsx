@@ -61,27 +61,34 @@ export function GamificationBar({ userId }: GamificationBarProps) {
         const timeoutPromise = createTimeout(5000, "Stats loading timed out");
 
         const fetchPromise = (async () => {
-          // Load credits and xp_total from user_stats (authoritative source)
-          const { data: userStats, error: userStatsError } = await supabase
-            .from("user_stats")
-            .select("credits, xp_total")
-            .eq("user_id", userId)
-            .single();
+	          // Load credits and xp_total from user_stats (authoritative source)
+	          const { data: userStatsData, error: userStatsError } = await supabase
+	            .from("user_stats")
+	            .select("credits, xp_total")
+	            .eq("user_id", userId)
+	            .maybeSingle();
 
-          if (userStatsError && userStatsError.code !== 'PGRST116') {
-            throw userStatsError;
-          }
+	          if (userStatsError) throw userStatsError;
 
-          // Load other fields from profiles
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("xp_points, level, total_questions")
-            .eq("user_id", userId)
-            .single();
+	          let userStats = userStatsData;
+	          if (!userStats) {
+	            userStats = { credits: 0, xp_total: 0 };
+	          }
 
-          if (profileError) throw profileError;
-          return { userStats, profile };
-        })();
+	          // Load other fields from profiles
+	          const { data: profileData, error: profileError } = await supabase
+	            .from("profiles")
+	            .select("xp_points, level, total_questions")
+	            .eq("user_id", userId)
+	            .maybeSingle();
+
+	          if (profileError) throw profileError;
+	          let profile = profileData;
+	          if (!profile) {
+	            profile = { xp_points: 0, level: 1, total_questions: 0 };
+	          }
+	          return { userStats, profile };
+	        })();
 
         const { userStats, profile } = await Promise.race([fetchPromise, timeoutPromise]) as {
           userStats: { credits: number; xp_total: number } | null;

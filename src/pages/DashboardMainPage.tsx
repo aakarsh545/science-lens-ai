@@ -95,24 +95,27 @@ export default function DashboardMainPage() {
         setTimeout(() => reject(new Error("Profile loading timed out")), 8000);
       });
 
-      const fetchPromise = supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+	      const fetchPromise = supabase
+	        .from("profiles")
+	        .select("*")
+	        .eq("user_id", userId)
+	        .maybeSingle();
 
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as { data: Profile | null; error: unknown };
+	      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as { data: Profile | null; error: unknown };
 
-      if (error) throw error;
+	      if (error) throw error;
 
-      if (data) {
-        setProfile(data);
-      }
-    } catch (err) {
-      console.error("Error loading profile:", err);
-      throw err;
-    }
-  };
+	      if (!data) {
+	        navigate('/signup');
+	        return;
+	      }
+
+	      setProfile(data);
+	    } catch (err) {
+	      console.error("Error loading profile:", err);
+	      throw err;
+	    }
+	  };
 
   if (loading) {
     return (
