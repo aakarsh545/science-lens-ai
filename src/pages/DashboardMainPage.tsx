@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { Zap, Trophy, Flame, Target, BookOpen, MessageSquare, Clock } from "lucide-react";
+import { Zap, Trophy, Flame, Target, BookOpen, Clock } from "lucide-react";
 import { HelixLoader } from "@/components/ui/helix-loader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -265,21 +265,6 @@ export default function DashboardMainPage() {
           </CardHeader>
           <CardContent>
             <Button variant="outline" className="w-full">Start Learning</Button>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-cosmic transition-all duration-300 cursor-pointer group" onClick={() => navigate("/ask")}>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <MessageSquare className="w-8 h-8 text-secondary group-hover:scale-110 transition-transform" />
-              <div>
-                <CardTitle>Ask Questions</CardTitle>
-                <p className="text-sm text-muted-foreground">Get instant AI-powered answers</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">Ask Now</Button>
           </CardContent>
         </Card>
 

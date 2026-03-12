@@ -15,7 +15,6 @@ import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
 import CourseLayout from "./layouts/CourseLayout";
 import SettingsPage from "./pages/SettingsPage";
 import AccountInformationPage from "./pages/AccountInformationPage";
-import AskPage from "./pages/AskPage";
 import LessonPlayer from "./pages/LessonPlayer";
 import DashboardMainPage from "./pages/DashboardMainPage";
 import UnifiedLearningPage from "./pages/UnifiedLearningPage";
@@ -56,9 +55,6 @@ function AppContent() {
           </Route>
           <Route path="learning/:courseSlug/:lessonSlug" element={<AuthenticatedLayout />}>
             <Route index element={<LessonPlayer />} />
-          </Route>
-          <Route path="ask" element={<AuthenticatedLayout />}>
-            <Route index element={<AskPage />} />
           </Route>
           <Route path="profile" element={<AuthenticatedLayout />}>
             <Route index element={<ProfilePage />} />

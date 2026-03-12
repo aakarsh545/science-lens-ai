@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { LogOut, MessageSquare, Flame, Target, Zap, BookOpen, ArrowLeft, Settings as SettingsIcon, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import ChatInterface from "./ChatInterface";
 import TopicSelector from "./TopicSelector";
 import ProgressRing from "./ProgressRing";
 import ThemeToggle from "./ThemeToggle";
@@ -190,7 +189,6 @@ const Dashboard = ({ user }: DashboardProps) => {
             </Button>
             <ThemeToggle user={user} />
           </div>
-          <ChatInterface user={user} topic={selectedTopic} />
         </div>
       </div>
     );
