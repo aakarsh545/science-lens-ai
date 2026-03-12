@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
+import AuthCallback from "./pages/AuthCallback";
 import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
 import CourseLayout from "./layouts/CourseLayout";
 import SettingsPage from "./pages/SettingsPage";
@@ -42,6 +43,7 @@ function AppContent() {
           <Route path="/" element={<Index />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
           {/* Authenticated app routes - all under AuthenticatedLayout */}
           <Route path="/dashboard" element={<AuthenticatedLayout />}>

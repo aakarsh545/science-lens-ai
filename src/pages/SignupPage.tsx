@@ -539,6 +539,23 @@ export default function SignupPage() {
     }
   }, [step, drawAtom])
 
+  const handleGoogleSignIn = async () => {
+    setError(null)
+    setLoading(true)
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/auth/callback',
+      },
+    })
+
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+    }
+  }
+
   const canContinue = () => {
     switch (step) {
       case 2:
@@ -711,13 +728,37 @@ export default function SignupPage() {
             <h1 className="text-4xl md:text-5xl font-semibold text-white mb-4 fade-in tracking-tight">
               Welcome to Science Lens
             </h1>
-            <p className="text-lg text-slate-400 mb-12 fade-in-delay">
-              Your science journey starts here.
-            </p>
-            <button
-              onClick={() => setStep(2)}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-500 hover:to-indigo-500 transition-all fade-in-btn focus:outline-none"
-            >
+	            <p className="text-lg text-slate-400 mb-12 fade-in-delay">
+	              Your science journey starts here.
+	            </p>
+	            <div className="mx-auto w-full max-w-sm fade-in-delay">
+	              <button
+	                type="button"
+	                onClick={handleGoogleSignIn}
+	                disabled={loading}
+	                className="w-full rounded-lg bg-white px-4 py-3 text-sm font-medium text-slate-900 hover:bg-slate-100 transition-all disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none"
+	              >
+	                <span className="flex items-center justify-center gap-3">
+	                  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+	                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.73 1.22 9.24 3.61l6.9-6.9C36.02 2.38 30.37 0 24 0 14.62 0 6.51 5.38 2.56 13.22l8.02 6.23C12.47 13.38 17.77 9.5 24 9.5z" />
+	                    <path fill="#4285F4" d="M46.5 24c0-1.6-.14-3.14-.4-4.64H24v9.06h12.66c-.55 2.96-2.22 5.48-4.73 7.18l7.27 5.64C43.2 37.06 46.5 31.04 46.5 24z" />
+	                    <path fill="#FBBC05" d="M10.58 28.55A14.5 14.5 0 0 1 9.5 24c0-1.58.27-3.1.75-4.55l-8.02-6.23A23.95 23.95 0 0 0 0 24c0 3.87.93 7.53 2.56 10.78l8.02-6.23z" />
+	                    <path fill="#34A853" d="M24 48c6.37 0 11.72-2.1 15.62-5.76l-7.27-5.64c-2.03 1.36-4.63 2.16-8.35 2.16-6.23 0-11.53-3.88-13.42-9.21l-8.02 6.23C6.51 42.62 14.62 48 24 48z" />
+	                  </svg>
+	                  Continue with Google
+	                </span>
+	              </button>
+
+	              <div className="my-6 flex items-center gap-3">
+	                <div className="h-px flex-1 bg-slate-800" />
+	                <span className="text-xs uppercase tracking-widest text-slate-500">or</span>
+	                <div className="h-px flex-1 bg-slate-800" />
+	              </div>
+	            </div>
+	            <button
+	              onClick={() => setStep(2)}
+	              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-500 hover:to-indigo-500 transition-all fade-in-btn focus:outline-none"
+	            >
               Begin →
             </button>
           </div>
