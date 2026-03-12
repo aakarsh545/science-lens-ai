@@ -30,7 +30,6 @@ import { clearUserDataById } from "@/utils/userStorage";
 const menuItems = [
   { title: "Home", icon: Compass, path: "/dashboard" },
   { title: "Learning", icon: GraduationCap, path: "/learning" },
-  { title: "Leaderboard", icon: Award, path: "/leaderboard" },
   { title: "Ask Questions", icon: MessageSquare, path: "/ask" },
   { title: "Profile", icon: User, path: "/profile" },
   { title: "Achievements", icon: Trophy, path: "/achievements" },
