@@ -8,12 +8,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isNotRegisteredError, setIsNotRegisteredError] = useState(false)
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    setIsNotRegisteredError(false)
     setLoading(true)
 
     try {
@@ -23,23 +21,8 @@ export default function LoginPage() {
       })
 
       if (signInError) {
-        // Check for "Invalid login credentials" error
         if (signInError.message === 'Invalid login credentials') {
-          // Follow-up: Check if email is registered in profiles table
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('user_id')
-            .eq('email', email.trim())
-            .maybeSingle()
-
-          if (!profile) {
-            // No profile found - email not registered
-            setError('This email is not registered. Please create a new account for free!')
-            setIsNotRegisteredError(true)
-          } else {
-            // Profile exists - wrong password
-            setError('Incorrect password. Please try again.')
-          }
+          setError('Invalid email or password')
         } else {
           setError(signInError.message)
         }
@@ -74,16 +57,6 @@ export default function LoginPage() {
           {error && (
             <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/50 p-3 text-sm text-red-400">
               {error}
-              {isNotRegisteredError && (
-                <div className="mt-3">
-                  <Link
-                    to="/signup"
-                    className="inline-block rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white hover:from-blue-500 hover:to-indigo-500 transition-all"
-                  >
-                    Create Account →
-                  </Link>
-                </div>
-              )}
             </div>
           )}
 
