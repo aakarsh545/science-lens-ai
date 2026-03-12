@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
 import { GamificationBar } from "@/components/GamificationBar";
-import { ChallengePanel } from "@/components/ChallengePanel";
 
 interface Profile {
   username?: string | null;
@@ -284,7 +283,6 @@ export default function DashboardMainPage() {
           </CardContent>
         </Card>
 
-        <ChallengePanel userId={user.id} />
       </div>
     </div>
   );

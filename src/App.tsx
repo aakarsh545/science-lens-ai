@@ -21,8 +21,6 @@ import LessonPlayer from "./pages/LessonPlayer";
 import DashboardMainPage from "./pages/DashboardMainPage";
 import UnifiedLearningPage from "./pages/UnifiedLearningPage";
 import CoursePage from "./pages/CoursePage";
-import ChallengesPage from "./pages/ChallengesPage";
-import ChallengeSession from "./pages/ChallengeSession";
 import ProfilePage from "./pages/ProfilePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 
@@ -60,12 +58,6 @@ function AppContent() {
           </Route>
           <Route path="learning/:courseSlug/:lessonSlug" element={<AuthenticatedLayout />}>
             <Route index element={<LessonPlayer />} />
-          </Route>
-          <Route path="challenges" element={<AuthenticatedLayout />}>
-            <Route index element={<ChallengesPage />} />
-          </Route>
-          <Route path="challenges/session/:sessionId" element={<AuthenticatedLayout />}>
-            <Route index element={<ChallengeSession />} />
           </Route>
           <Route path="leaderboard" element={<AuthenticatedLayout />}>
             <Route index element={<LeaderboardPage />} />
