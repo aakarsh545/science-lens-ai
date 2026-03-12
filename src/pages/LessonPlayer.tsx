@@ -29,7 +29,6 @@ import { calculateLevel, didLevelUp } from "@/utils/levelCalculations";
 import { HelixLoader } from "@/components/ui/helix-loader";
 import { triggerLevelUpConfetti, triggerLessonCompleteConfetti } from "@/utils/confettiEffects";
 import { logLessonCompleted, logLevelUp } from "@/utils/activityLogging";
-import { checkLessonAchievements, checkLevelAchievements } from "@/utils/achievements";
 
 interface LessonExample {
   title: string;
@@ -383,7 +382,6 @@ export default function LessonPlayer() {
         const newLevel = calculateLevel(newXp);
         toast.success(`🎊 Level Up! You're now level ${newLevel}!`);
         await logLevelUp(userId, newLevel, newXp);
-        await checkLevelAchievements(userId, newLevel);
       } else {
         triggerLessonCompleteConfetti();
       }
@@ -403,7 +401,6 @@ export default function LessonPlayer() {
           .eq('status', 'completed');
 
         const lessonCount = completedLessons?.length || 0;
-        await checkLessonAchievements(userId, lessonCount);
       }
 
       if (data?.alreadyCompleted) {

@@ -17,7 +17,6 @@ import XPProgressGraph from "@/components/profile/XPProgressGraph";
 import TopicMasteryRadar from "@/components/profile/TopicMasteryRadar";
 import LearningStreakHeatMap from "@/components/profile/LearningStreakHeatMap";
 import RecentActivityTimeline from "@/components/profile/RecentActivityTimeline";
-import AchievementsGrid from "@/components/profile/AchievementsGrid";
 import PerformanceBySubject from "@/components/profile/PerformanceBySubject";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 
@@ -48,18 +47,6 @@ interface TopicProgress {
   updated_at: string;
 }
 
-interface Achievement {
-  id: string;
-  user_id: string;
-  achievement_type: string;
-  title: string;
-  description: string | null;
-  icon: string | null;
-  category: string | null;
-  points: number | null;
-  earned_at: string;
-}
-
 interface ActivityLog {
   id: string;
   activity_type: string;
@@ -73,7 +60,6 @@ interface UserStats {
   quizzesTaken: number;
   challengesCompleted: number;
   topicProgress: TopicProgress[];
-  achievements: Achievement[];
   activityLogs: ActivityLog[];
   streakCount: number;
   totalQuestions: number;
@@ -126,12 +112,10 @@ export default function ProfilePage() {
       // Load stats (we'll aggregate from various tables)
       const [
         lessonsCompleted,
-        topicProgress,
-        achievements
+        topicProgress
       ] = await Promise.all([
         supabase.from("user_progress").select("*").eq("user_id", userId).eq("status", "completed"),
-        supabase.from("user_topic_progress").select("*").eq("user_id", userId),
-        supabase.from("achievements").select("*").eq("user_id", userId)
+        supabase.from("user_topic_progress").select("*").eq("user_id", userId)
       ]);
 
       setStats({
@@ -139,7 +123,6 @@ export default function ProfilePage() {
         quizzesTaken: 0,
         challengesCompleted: 0,
         topicProgress: topicProgress.data || [],
-        achievements: achievements.data || [],
         activityLogs: [],
         streakCount: profileData?.streak_count || 0,
         totalQuestions: profileData?.total_questions || 0,
@@ -190,12 +173,11 @@ export default function ProfilePage() {
 
         {/* Analytics Dashboard */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 lg:w-[700px] lg:mx-auto">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[700px] lg:mx-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="achievements">Achievements</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6 mt-6">
@@ -377,10 +359,6 @@ export default function ProfilePage() {
           <TabsContent value="activity" className="space-y-6 mt-6">
             <LearningStreakHeatMap userId={user.id} />
             <RecentActivityTimeline activities={stats.activityLogs} />
-          </TabsContent>
-
-          <TabsContent value="achievements" className="space-y-6 mt-6">
-            <AchievementsGrid achievements={stats.achievements} />
           </TabsContent>
         </Tabs>
 

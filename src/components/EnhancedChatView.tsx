@@ -8,7 +8,6 @@ import { HelixLoader } from "@/components/ui/helix-loader";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import confetti from "canvas-confetti";
 import { exportChatToPDF } from "@/utils/pdfExport";
 import { ChatProgress } from "./ChatProgress";
 import { AIService } from "@/services/aiService";
@@ -103,53 +102,6 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
       supabase.removeChannel(channel);
     };
   }, [conversationId]);
-
-  const triggerConfetti = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ["#3b82f6", "#8b5cf6", "#ec4899"],
-    });
-  };
-
-  const checkForAchievements = async (questionCount: number) => {
-    // Client-side threshold checking only - no achievement data here
-    // Server owns all achievement definitions, credits, titles, etc.
-    const eventTriggers = [
-      { event: "first_question", threshold: 1 },
-      { event: "curious_mind", threshold: 10 },
-      { event: "knowledge_seeker", threshold: 50 },
-    ];
-
-    for (const trigger of eventTriggers) {
-      if (questionCount === trigger.threshold) {
-        // Call edge function with ONLY the event type
-        // Server validates, checks eligibility, and awards achievement
-        const { data: achievementData, error: awardError } = await supabase.functions.invoke('award-achievement', {
-          body: {
-            event: trigger.event,
-          }
-        });
-
-        if (awardError) {
-          // 409 = already earned (not an error, just ignore)
-          if (awardError.message?.includes('Achievement already earned')) {
-            return;
-          }
-          console.error('Failed to award achievement:', awardError);
-          return;
-        }
-
-        // Server approved - display server-provided data
-        triggerConfetti();
-        toast({
-          title: "🏆 Achievement Unlocked!",
-          description: `${achievementData.achievement.title}: ${achievementData.achievement.description} (+${achievementData.achievement.credits} credits)`,
-        });
-      }
-    }
-  };
 
   const toggleBookmark = async (questionId: string) => {
     if (bookmarkedQuestions.has(questionId)) {
@@ -284,16 +236,6 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
           return newMessages;
         });
       }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("total_questions")
-        .eq("user_id", user.id)
-        .single();
-
-      if (profile) {
-        await checkForAchievements(profile.total_questions);
-      }
     } catch (error: unknown) {
       console.error("Chat error:", error);
       toast({
@@ -359,17 +301,6 @@ export function EnhancedChatView({ user, selectedTopic, conversationId, onConver
 
     try {
       await streamChat(trimmedInput, currentConvoId);
-      
-      // Check achievements
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("total_questions")
-        .eq("user_id", user.id)
-        .single();
-
-      if (profile) {
-        await checkForAchievements(profile.total_questions);
-      }
     } catch (error: unknown) {
       console.error("Chat error:", error);
       toast({

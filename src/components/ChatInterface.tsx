@@ -8,7 +8,6 @@ import { HelixLoader } from "@/components/ui/helix-loader";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import confetti from "canvas-confetti";
 import { TIMEOUT_VALUES, API_ENDPOINTS } from "@/utils/constants";
 
 interface Topic {
@@ -43,42 +42,6 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
   };
 
   useEffect(scrollToBottom, [messages]);
-
-  const triggerConfetti = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ["#3b82f6", "#8b5cf6", "#ec4899"],
-    });
-  };
-
-  const checkForAchievements = async (questionCount: number) => {
-    const achievements = [
-      { type: "first_question", title: "First Steps", description: "Asked your first question", threshold: 1 },
-      { type: "curious_mind", title: "Curious Mind", description: "Asked 10 questions", threshold: 10 },
-      { type: "knowledge_seeker", title: "Knowledge Seeker", description: "Asked 50 questions", threshold: 50 },
-    ];
-
-    for (const achievement of achievements) {
-      if (questionCount === achievement.threshold) {
-        const { error } = await supabase.from("achievements").insert({
-          user_id: user.id,
-          achievement_type: achievement.type,
-          title: achievement.title,
-          description: achievement.description,
-        });
-
-        if (!error) {
-          triggerConfetti();
-          toast({
-            title: "🏆 Achievement Unlocked!",
-            description: `${achievement.title}: ${achievement.description}`,
-          });
-        }
-      }
-    }
-  };
 
   const toggleBookmark = async (questionId: string) => {
     if (bookmarkedQuestions.has(questionId)) {
@@ -262,16 +225,6 @@ const ChatInterface = ({ user, topic }: ChatInterfaceProps) => {
           newMessages[newMessages.length - 2].questionId = questionData.id;
           return newMessages;
         });
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("total_questions")
-        .eq("user_id", user.id)
-        .single();
-
-      if (profile) {
-        await checkForAchievements(profile.total_questions);
       }
     } catch (error: unknown) {
       console.error("Chat error:", error);

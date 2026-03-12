@@ -3,7 +3,7 @@ import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogOut, MessageSquare, Trophy, Flame, Target, Zap, BookOpen, ArrowLeft, Settings as SettingsIcon, Loader2, AlertCircle } from "lucide-react";
+import { LogOut, MessageSquare, Flame, Target, Zap, BookOpen, ArrowLeft, Settings as SettingsIcon, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import ChatInterface from "./ChatInterface";
@@ -38,15 +38,8 @@ interface Profile {
   xp_points: number;
 }
 
-interface Achievement {
-  title: string;
-  description: string | null;
-  earned_at: string;
-}
-
 const Dashboard = ({ user }: DashboardProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [showChat, setShowChat] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [showTopicSelector, setShowTopicSelector] = useState(false);
@@ -68,7 +61,6 @@ const Dashboard = ({ user }: DashboardProps) => {
 
         const dataPromise = Promise.all([
           loadProfile(),
-          loadAchievements()
         ]);
 
         await Promise.race([dataPromise, timeoutPromise]);
@@ -143,10 +135,8 @@ const Dashboard = ({ user }: DashboardProps) => {
         async (payload) => {
           console.log('[Dashboard] Progress updated, refreshing:', payload.new);
           if (mounted) {
-            // Reload profile and achievements when progress changes
             await Promise.all([
               loadProfile(),
-              loadAchievements()
             ]);
             toast({ title: 'Lesson completed! +XP earned! 🌟' });
           }
@@ -171,17 +161,6 @@ const Dashboard = ({ user }: DashboardProps) => {
 
     if (error) throw error;
     if (data) setProfile(data);
-  }, [user.id]);
-
-  const loadAchievements = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("achievements")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("earned_at", { ascending: false });
-
-    if (error) throw error;
-    if (data) setAchievements(data);
   }, [user.id]);
 
   const handleSignOut = async () => {
@@ -421,29 +400,6 @@ const Dashboard = ({ user }: DashboardProps) => {
             </Card>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            <Card className="card-cosmic hover:shadow-cosmic transition-shadow p-6">
-              <div className="flex flex-col items-center space-y-4">
-                <ProgressRing
-                  progress={Math.min(((achievements.length || 0) / 20) * 100, 100)}
-                  value={achievements.length}
-                  label="badges"
-                  size={100}
-                />
-                <div className="text-center">
-                  <h3 className="font-semibold flex items-center gap-2 justify-center">
-                    <Trophy className="h-4 w-4 text-achievement" />
-                    Achievements
-                  </h3>
-                  <p className="text-xs text-muted-foreground">Unlocked badges</p>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
         </div>
 
         {/* Learning Actions */}
@@ -483,39 +439,6 @@ const Dashboard = ({ user }: DashboardProps) => {
           </Tabs>
         </motion.div>
 
-        {/* Achievements */}
-        {achievements.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <Card className="card-cosmic">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-achievement" />
-                  Your Achievements
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {achievements.slice(0, 6).map((achievement, idx) => (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className="p-4 rounded-lg bg-gradient-achievement border border-achievement/30"
-                    >
-                      <h4 className="font-bold mb-1">{achievement.title}</h4>
-                      <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
       </div>
     </div>
   );

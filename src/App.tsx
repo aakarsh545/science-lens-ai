@@ -13,7 +13,6 @@ import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
 import CourseLayout from "./layouts/CourseLayout";
-import AchievementsPage from "./pages/AchievementsPage";
 import SettingsPage from "./pages/SettingsPage";
 import AccountInformationPage from "./pages/AccountInformationPage";
 import AskPage from "./pages/AskPage";
@@ -60,9 +59,6 @@ function AppContent() {
           </Route>
           <Route path="ask" element={<AuthenticatedLayout />}>
             <Route index element={<AskPage />} />
-          </Route>
-          <Route path="achievements" element={<AuthenticatedLayout />}>
-            <Route index element={<AchievementsPage />} />
           </Route>
           <Route path="profile" element={<AuthenticatedLayout />}>
             <Route index element={<ProfilePage />} />

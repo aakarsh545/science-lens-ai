@@ -32,7 +32,6 @@ const menuItems = [
   { title: "Learning", icon: GraduationCap, path: "/learning" },
   { title: "Ask Questions", icon: MessageSquare, path: "/ask" },
   { title: "Profile", icon: User, path: "/profile" },
-  { title: "Achievements", icon: Trophy, path: "/achievements" },
   { title: "Settings", icon: SettingsIcon, path: "/settings" },
 ];
 

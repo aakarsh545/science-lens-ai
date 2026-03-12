@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, Zap, Target } from "lucide-react";
+import { Zap, Target } from "lucide-react";
 import { HelixLoader } from "@/components/ui/helix-loader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { calculateLevel, getXpRemainingToNextLevel, getProgressToNextLevel, getTotalXpForLevel } from "@/utils/levelCalculations";
@@ -17,7 +17,6 @@ interface Stats {
   xp_points: number;
   level: number;
   total_questions: number;
-  achievementCount: number;
   xp_total: number;
 }
 
@@ -27,7 +26,6 @@ export function GamificationBar({ userId }: GamificationBarProps) {
     xp_points: 0,
     level: 1,
     total_questions: 0,
-    achievementCount: 0,
     xp_total: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -82,21 +80,12 @@ export function GamificationBar({ userId }: GamificationBarProps) {
             .single();
 
           if (profileError) throw profileError;
-
-          const { data: achievements, error: achievementsError } = await supabase
-            .from("achievements")
-            .select("id")
-            .eq("user_id", userId);
-
-          if (achievementsError) throw achievementsError;
-
-          return { userStats, profile, achievementCount: achievements?.length ?? 0 };
+          return { userStats, profile };
         })();
 
-        const { userStats, profile, achievementCount } = await Promise.race([fetchPromise, timeoutPromise]) as {
+        const { userStats, profile } = await Promise.race([fetchPromise, timeoutPromise]) as {
           userStats: { credits: number; xp_total: number } | null;
           profile: { xp_points: number; level: number; total_questions: number } | null;
-          achievementCount: number;
         };
 
         if (mounted && (userStats || profile)) {
@@ -112,7 +101,6 @@ export function GamificationBar({ userId }: GamificationBarProps) {
             xp_points: profile?.xp_points || 0,
             level: profile?.level || 1,
             total_questions: profile?.total_questions || 0,
-            achievementCount,
           });
           setLoading(false);
         }
@@ -179,24 +167,6 @@ export function GamificationBar({ userId }: GamificationBarProps) {
       )
       .subscribe();
 
-    const achievementChannel = supabase
-      .channel("achievement-updates")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "achievements",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          const timestamp = Date.now();
-          console.log('[GamificationBar] Achievement update received', timestamp);
-          debouncedLoadStats(timestamp);
-        }
-      )
-      .subscribe();
-
     return () => {
       mounted = false;
       if (debounceTimerRef.current) {
@@ -204,7 +174,6 @@ export function GamificationBar({ userId }: GamificationBarProps) {
       }
       supabase.removeChannel(statsChannel);
       supabase.removeChannel(profileChannel);
-      supabase.removeChannel(achievementChannel);
     };
   }, [userId]);
 
@@ -272,11 +241,6 @@ export function GamificationBar({ userId }: GamificationBarProps) {
               <Zap className="h-4 w-4 text-yellow-500" />
               <span className="text-sm font-semibold">{stats.credits}</span>
               <span className="text-xs text-muted-foreground">credits</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Trophy className="h-4 w-4 text-amber-500" />
-              <span className="text-sm font-semibold">{stats.achievementCount}</span>
-              <span className="text-xs text-muted-foreground">badges</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Target className="h-4 w-4 text-blue-500" />

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle, Trophy, Flame, Target, BookOpen, Zap } from "lucide-react";
+import { Clock, CheckCircle, Trophy, Flame, BookOpen, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface Activity {
@@ -29,8 +29,6 @@ export default function RecentActivityTimeline({ activities }: RecentActivityTim
         return <Zap className="h-4 w-4 text-purple-500" />;
       case "streak_milestone":
         return <Flame className="h-4 w-4 text-orange-500" />;
-      case "achievement_unlocked":
-        return <Target className="h-4 w-4 text-pink-500" />;
       default:
         return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
@@ -48,8 +46,6 @@ export default function RecentActivityTimeline({ activities }: RecentActivityTim
         return `Reached Level ${activity.metadata?.new_level || "?"}`;
       case "streak_milestone":
         return `${activity.metadata?.streak_days || "?"} day streak!`;
-      case "achievement_unlocked":
-        return `Unlocked: ${activity.metadata?.achievement_title || "Achievement"}`;
       default:
         return "Activity logged";
     }
