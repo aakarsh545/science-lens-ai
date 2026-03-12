@@ -63,7 +63,7 @@ export function AppSidebar({ userId, conversationId, onSelectConversation, onNew
     <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-lg font-bold">Learnex</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-lg font-bold">Scico</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration for Learnex testing
+ * Playwright configuration for Scico testing
  *
  * Authentication:
  * All tests under /science-lens/* require authentication.

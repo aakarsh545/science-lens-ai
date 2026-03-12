@@ -140,7 +140,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
       }
 
       toast({
-        title: "Welcome to Learnex! 🚀",
+        title: "Welcome to Scico! 🚀",
         description: "Your account has been created successfully.",
       });
       onOpenChange(false);
@@ -235,7 +235,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Welcome to Learnex
+            Welcome to Scico
           </DialogTitle>
           <DialogDescription>
             Start your journey of scientific discovery

@@ -726,7 +726,7 @@ export default function SignupPage() {
             </div>
 
             <h1 className="text-4xl md:text-5xl font-semibold text-white mb-4 fade-in tracking-tight">
-	              Welcome to Learnex
+		              Welcome to Scico
             </h1>
 	            <p className="text-lg text-slate-400 mb-12 fade-in-delay">
 	              Your science journey starts here.

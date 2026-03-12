@@ -86,7 +86,7 @@ export default function Index() {
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600">
                 <span className="text-sm">⚛️</span>
               </div>
-              <span className="text-xl font-semibold text-white tracking-tight">Learnex</span>
+              <span className="text-xl font-semibold text-white tracking-tight">Scico</span>
             </div>
             <div className="flex items-center gap-4">
               <Link
@@ -351,7 +351,7 @@ export default function Index() {
       <footer className="relative z-10 py-8 px-4 sm:px-6 lg:px-8 border-t border-slate-800/50">
         <div className="mx-auto max-w-7xl text-center">
           <p className="text-sm text-slate-500">
-            © 2025 Learnex. Built for curious minds.
+            © 2025 Scico. Built for curious minds.
           </p>
         </div>
       </footer>
