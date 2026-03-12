@@ -10,7 +10,7 @@ test.describe('Landing Page', () => {
   });
 
   test('should load without errors', async ({ page }) => {
-    await expect(page).toHaveTitle(/Science Lens/i);
+    await expect(page).toHaveTitle(/Learnex/i);
   });
 
   test('should display main navigation elements', async ({ page }) => {

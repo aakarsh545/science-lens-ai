@@ -16,7 +16,7 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // Custom Science Lens variants
+        // Custom Learnex variants
         cosmic: "btn-cosmic shadow-cosmic hover:shadow-glow font-semibold",
         achievement: "btn-achievement shadow-achievement font-semibold",
         ghostCosmic: "btn-ghost-cosmic font-medium",
