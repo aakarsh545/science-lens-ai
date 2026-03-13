@@ -185,6 +185,10 @@ export default function SignupPage() {
   const currentElement = ELEMENT_LIST.find((e) => e.atomicNumber === avatarState.elementN) || ELEMENT_LIST[0]
 
   useEffect(() => {
+    window.history.replaceState(null, '', `/signup?step=${step}`)
+  }, [step])
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const stepParam = params.get('step')
     if (!stepParam) return
@@ -244,13 +248,24 @@ export default function SignupPage() {
       setUsernameError(null)
 
       const normalizedUsername = username.toLowerCase()
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
-        .select('username')
+        .select('user_id')
         .eq('username', normalizedUsername)
-        .maybeSingle()
+
+      if (userId) {
+        query = query.neq('user_id', userId)
+      }
+
+      const { data, error } = await query.maybeSingle()
 
       if (error) {
+        // If multiple rows exist (shouldn't happen once DB uniqueness is enforced), treat as taken.
+        if ((error as any)?.code === 'PGRST116') {
+          setUsernameStatus('taken')
+          return
+        }
+
         setUsernameStatus('invalid')
         setUsernameError('Failed to check username')
         return
@@ -260,7 +275,7 @@ export default function SignupPage() {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [username])
+  }, [username, userId])
 
   // Draw accessory function
   function drawAccessory(ctx: CanvasRenderingContext2D, acc: string, CX: number, CY: number, nucleusR: number, color: string) {
