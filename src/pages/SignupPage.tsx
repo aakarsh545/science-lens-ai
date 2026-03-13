@@ -184,6 +184,24 @@ export default function SignupPage() {
 
   const currentElement = ELEMENT_LIST.find((e) => e.atomicNumber === avatarState.elementN) || ELEMENT_LIST[0]
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const stepParam = params.get('step')
+    if (!stepParam) return
+
+    const stepNum = Number(stepParam)
+    if (![1, 2, 3, 4, 5, 6].includes(stepNum)) return
+
+    setStep(stepNum as Step)
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const sessionEmail = session?.user?.email
+      if (sessionEmail) {
+        setEmail(sessionEmail)
+      }
+    })
+  }, [])
+
   // Check if user has already completed onboarding
   useEffect(() => {
     const checkOnboardingStatus = async () => {
@@ -192,12 +210,12 @@ export default function SignupPage() {
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('display_name')
+          .select('username')
           .eq('user_id', session.user.id)
           .maybeSingle()
 
-        // If user has a display_name set, they've completed onboarding
-        if (profile?.display_name) {
+        // If user has a username set, they've completed onboarding
+        if (profile?.username) {
           navigate('/dashboard', { replace: true })
         }
       }
@@ -225,10 +243,11 @@ export default function SignupPage() {
       setUsernameStatus('checking')
       setUsernameError(null)
 
+      const normalizedUsername = username.toLowerCase()
       const { data, error } = await supabase
         .from('profiles')
-        .select('display_name')
-        .eq('display_name', username)
+        .select('username')
+        .eq('username', normalizedUsername)
         .maybeSingle()
 
       if (error) {
@@ -646,8 +665,10 @@ export default function SignupPage() {
 
     console.log('Creating profile with userId:', session.user.id)
 
+    const normalizedUsername = username.trim().toLowerCase()
     const { error: profileError } = await supabase.from('profiles').upsert({
       user_id: session.user.id,
+      username: normalizedUsername,
       display_name: username.trim(),
       avatar_url: JSON.stringify(avatarState),
     }, {

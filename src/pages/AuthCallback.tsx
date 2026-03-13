@@ -10,25 +10,18 @@ export default function AuthCallback() {
       if (session) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('user_id')
+          .select('user_id, username')
           .eq('user_id', session.user.id)
           .maybeSingle()
 
-        if (!profile) {
-          await supabase.from('profiles').insert({
-            user_id: session.user.id,
-            display_name:
-              session.user.user_metadata?.full_name ||
-              session.user.user_metadata?.name ||
-              'User',
-            avatar_url: session.user.user_metadata?.avatar_url || null,
-            credits: 100,
-            level: 1,
-          })
+        if (!profile || !profile.username) {
+          navigate('/signup?step=5', { replace: true })
+          return
         }
-        navigate('/dashboard')
+
+        navigate('/dashboard', { replace: true })
       } else {
-        navigate('/login')
+        navigate('/login', { replace: true })
       }
     })
   }, [navigate])
@@ -39,4 +32,3 @@ export default function AuthCallback() {
     </div>
   )
 }
-
