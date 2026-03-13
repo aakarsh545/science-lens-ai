@@ -101,34 +101,24 @@ export function EditProfileDialog({
 
       const trimmedUsername = username.trim();
 
-      // Update username using RPC (with validation)
-      // Only call RPC if username actually changed
-      if (trimmedUsername !== currentProfile.username) {
-        console.log('[EditProfileDialog] Updating display_name to:', trimmedUsername);
-        const { error: usernameError } = await supabase
-          .from('profiles')
-          .update({ display_name: trimmedUsername })
-          .eq('user_id', userId);
+      const normalizedUsername = trimmedUsername.toLowerCase();
 
-        if (usernameError) {
-          throw new Error(usernameError.message);
-        }
-
-        console.log('[EditProfileDialog] Display name updated successfully');
-      }
-
-      // Update other profile fields (avatar, full_name, bio)
-      // Note: username is handled by the RPC above, not here
+      // Update only safe user-editable columns.
+      // If this fails with an RLS error (e.g. 42501), review UPDATE policies on public.profiles in Supabase.
       const { error } = await supabase
         .from('profiles')
         .update({
-          full_name: fullName,
-          bio: bio,
-          equipped_avatar: avatarValue,
+          username: normalizedUsername,
+          full_name: fullName.trim() || null,
+          avatar_url: avatarValue,
+          bio: bio.trim() || null,
         })
         .eq('user_id', userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Profile update error:', JSON.stringify(error, null, 2));
+        throw error;
+      }
 
       // Only show success toast if we actually got here
       toast({
