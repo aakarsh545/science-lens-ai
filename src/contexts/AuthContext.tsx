@@ -60,83 +60,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [hasUsername, setHasUsername] = useState(false);
 
   const settledRef = useRef(false);
+  const subscriptionRef = useRef(null);
 
   useEffect(() => {
-    const mockUser = getPlaywrightTestUser();
-    if (mockUser) {
-      setSession({ user: mockUser } as unknown as Session);
-      setHasUsername(true);
-      setLoading(false);
-      settledRef.current = true;
-      return;
-    }
+    let mounted = true
 
-    let mounted = true;
+    // Step 1: get session first, THEN subscribe to changes
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return
+      setSession(session)
+
+      if (session) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('user_id', session.user.id)
+          .maybeSingle()
+        if (mounted) setHasUsername(!!data?.username)
+      }
+
+      if (mounted) setLoading(false)
+
+      // Step 2: ONLY subscribe to future changes AFTER initial session is set
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (!mounted) return
+        setSession(session)
+        if (!session) {
+          setHasUsername(false)
+          setLoading(false)
+        }
+      })
+
+      // Store subscription ref for cleanup
+      subscriptionRef.current = subscription
+
+    }).catch(() => {
+      if (mounted) {
+        setSession(null)
+        setLoading(false)
+      }
+    })
+
     const timeout = setTimeout(() => {
-      if (!mounted || settledRef.current) return;
-      setSession(null);
-      setHasUsername(false);
-      setLoading(false);
-      settledRef.current = true;
-    }, 5000);
-
-    const loadHasUsername = async (s: Session | null) => {
-      if (!s?.user) {
-        setHasUsername(false);
-        return;
-      }
-
-      const { data } = await supabase
-        .from("profiles")
-        .select("username")
-        .eq("user_id", s.user.id)
-        .maybeSingle();
-
-      setHasUsername(!!data?.username && !!String(data.username).trim());
-    };
-
-    // Subscribe first so we don't miss any auth event between subscription and getSession().
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
-      if (!mounted) return;
-
-      setSession(nextSession ?? null);
-
-      try {
-        await loadHasUsername(nextSession ?? null);
-      } catch {
-        setHasUsername(false);
-      } finally {
-        if (!mounted) return;
-        if (event === "SIGNED_OUT") clearThemeVarsOnSignOut();
-        setLoading(false);
-        settledRef.current = true;
-      }
-    });
-
-    (async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!mounted) return;
-
-        setSession(session ?? null);
-        await loadHasUsername(session ?? null);
-      } catch (e) {
-        console.error("Session check failed:", e);
-        if (!mounted) return;
-        setSession(null);
-        setHasUsername(false);
-      } finally {
-        if (!mounted) return;
-        setLoading(false);
-        settledRef.current = true;
-      }
-    })();
+      if (mounted) setLoading(false)
+    }, 5000)
 
     return () => {
-      mounted = false;
-      clearTimeout(timeout);
-      subscription.unsubscribe();
-    };
+      mounted = false
+      clearTimeout(timeout)
+      subscriptionRef.current?.unsubscribe()
+    }
   }, []);
 
   return (
