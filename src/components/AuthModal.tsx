@@ -31,11 +31,12 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('display_name')
-      .eq('display_name', name)
+      .select('id')
+      .eq('username', name.trim().toLowerCase())
       .maybeSingle();
 
-    return !!error || !data;
+    if (error) return false;
+    return !data;
   };
 
   const handleUsernameChange = async (value: string) => {
@@ -104,7 +105,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
         password,
         options: {
           data: {
-            username: username.trim(),
+            username: username.trim().toLowerCase(),
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         }
@@ -112,25 +113,26 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
       if (error) throw error;
 
-      if (data.user && data.session) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            user_id: data.user.id,
-            username: username,
-            display_name: username,
-          });
+        if (data.user && data.session) {
+          const normalizedUsername = username.trim().toLowerCase();
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .insert({
+              user_id: data.user.id,
+              username: normalizedUsername,
+              display_name: username.trim(),
+            });
 
-        if (profileError) {
-          // If username is duplicate, try with a unique suffix
-          if (profileError.message.includes('duplicate') || profileError.message.includes('unique')) {
-            const { error: retryError } = await supabase
-              .from("profiles")
-              .insert({
-                user_id: data.user.id,
-                username: `${username}_${data.user.id.slice(0, 4)}`,
-                display_name: username,
-              });
+          if (profileError) {
+            // If username is duplicate, try with a unique suffix
+            if (profileError.message.includes('duplicate') || profileError.message.includes('unique')) {
+              const { error: retryError } = await supabase
+                .from("profiles")
+                .insert({
+                  user_id: data.user.id,
+                  username: `${normalizedUsername}_${data.user.id.slice(0, 4)}`,
+                  display_name: username.trim(),
+                });
 
             if (retryError) throw retryError;
           } else {

@@ -254,38 +254,28 @@ export default function SignupPage() {
         return
       }
 
-      setUsernameStatus('checking')
-      setUsernameError(null)
+	      setUsernameStatus('checking')
+	      setUsernameError(null)
 
-      const normalizedUsername = username.toLowerCase()
-      let query = supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('username', normalizedUsername)
+	      const usernameValue = username.trim().toLowerCase()
+	      const { data, error } = await supabase
+	        .from('profiles')
+	        .select('id')
+	        .eq('username', usernameValue)
+	        .maybeSingle()
 
-      if (userId) {
-        query = query.neq('user_id', userId)
-      }
+	      if (error) {
+	        setUsernameStatus('invalid')
+	        setUsernameError('Failed to check username')
+	        return
+	      }
 
-      const { data, error } = await query.maybeSingle()
+	      const isAvailable = !data
+	      setUsernameStatus(isAvailable ? 'available' : 'taken')
+	    }, 500)
 
-      if (error) {
-        // If multiple rows exist (shouldn't happen once DB uniqueness is enforced), treat as taken.
-        if ((error as any)?.code === 'PGRST116') {
-          setUsernameStatus('taken')
-          return
-        }
-
-        setUsernameStatus('invalid')
-        setUsernameError('Failed to check username')
-        return
-      }
-
-      setUsernameStatus(data ? 'taken' : 'available')
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [username, userId])
+	    return () => clearTimeout(timer)
+	  }, [username])
 
   // Draw accessory function
   function drawAccessory(ctx: CanvasRenderingContext2D, acc: string, CX: number, CY: number, nucleusR: number, color: string) {
