@@ -187,14 +187,6 @@ export default function SignupPage() {
   const currentElement = ELEMENT_LIST.find((e) => e.atomicNumber === avatarState.elementN) || ELEMENT_LIST[0]
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user && step === 1) {
-        setStep(2)
-      }
-    })
-  }, [])
-
-  useEffect(() => {
     window.history.replaceState(null, '', `/signup?step=${step}`)
   }, [step])
 
@@ -229,7 +221,7 @@ export default function SignupPage() {
           .maybeSingle()
 
         // If user has a username set, they've completed onboarding
-        if (profile?.username) {
+        if (profile?.username && profile.username.trim()) {
           navigate('/dashboard', { replace: true })
         }
       }
