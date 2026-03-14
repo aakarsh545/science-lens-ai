@@ -186,10 +186,6 @@ export default function SettingsPage() {
                   <AvatarImage src={profile?.avatar_url || undefined} alt="Avatar" />
                   <AvatarFallback className="text-sm font-medium">{avatarFallback}</AvatarFallback>
                 </Avatar>
-                <div>
-                  <div className="text-sm text-muted-foreground">Avatar</div>
-                  <div className="text-sm text-foreground">Profile picture</div>
-                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
