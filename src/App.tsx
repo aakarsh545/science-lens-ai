@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,6 +41,19 @@ function AppContent() {
   const [session, setSession] = useState<Session | null>(null);
   const [username, setUsername] = useState<string | null>(null);
 
+  // Safety: ensure we don't stay stuck on the global loader forever.
+  const authSettledRef = useRef(false);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (authSettledRef.current) return;
+      setSession(null);
+      setUsername(null);
+      setAuthLoading(false);
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     let sessionFromEvent: Session | null | undefined = undefined;
@@ -68,30 +81,42 @@ function AppContent() {
       } else {
         setUsername(null);
       }
+
+      authSettledRef.current = true;
+      setAuthLoading(false);
     });
 
     // Hydrate initial session. Do not mark loading false until this resolves.
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!mounted) return;
-
-      const hydratedSession = session ?? null;
-
-      // Avoid overwriting a non-null session from an auth event with null from getSession().
-      const effectiveSession =
-        sessionFromEvent && hydratedSession === null ? sessionFromEvent : hydratedSession;
-
-      setSession(effectiveSession);
-
-      if (effectiveSession?.user) {
-        const nextUsername = await loadUsername(effectiveSession.user.id);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         if (!mounted) return;
-        setUsername(nextUsername);
-      } else {
-        setUsername(null);
-      }
 
-      setAuthLoading(false);
+        const hydratedSession = session ?? null;
+
+        // Avoid overwriting a non-null session from an auth event with null from getSession().
+        const effectiveSession =
+          sessionFromEvent && hydratedSession === null ? sessionFromEvent : hydratedSession;
+
+        setSession(effectiveSession);
+
+        if (effectiveSession?.user) {
+          const nextUsername = await loadUsername(effectiveSession.user.id);
+          if (!mounted) return;
+          setUsername(nextUsername);
+        } else {
+          setUsername(null);
+        }
+      } catch (e) {
+        console.error("Session check failed:", e);
+        if (!mounted) return;
+        setSession(null);
+        setUsername(null);
+      } finally {
+        if (!mounted) return;
+        authSettledRef.current = true;
+        setAuthLoading(false);
+      }
     })();
 
     return () => {
