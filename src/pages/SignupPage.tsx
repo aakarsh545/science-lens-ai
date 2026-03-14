@@ -150,7 +150,9 @@ const ELEMENT_LIST = Object.values(ELEMENTS)
 export default function SignupPage() {
   const navigate = useNavigate()
 
-  const [step, setStep] = useState<Step>(1)
+  const searchParams = new URLSearchParams(window.location.search)
+  const initialStep = parseInt(searchParams.get('step') || '1', 10)
+  const [step, setStep] = useState(initialStep)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -183,6 +185,14 @@ export default function SignupPage() {
   const [usernameError, setUsernameError] = useState<string | null>(null)
 
   const currentElement = ELEMENT_LIST.find((e) => e.atomicNumber === avatarState.elementN) || ELEMENT_LIST[0]
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user && step === 1) {
+        setStep(2)
+      }
+    })
+  }, [])
 
   useEffect(() => {
     window.history.replaceState(null, '', `/signup?step=${step}`)
