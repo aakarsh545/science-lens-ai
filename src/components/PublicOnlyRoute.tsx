@@ -7,7 +7,7 @@ type Props = {
   children: ReactNode;
 };
 
-export default function ProtectedRoute({ children }: Props) {
+export default function PublicOnlyRoute({ children }: Props) {
   const { session, loading, hasUsername } = useAuth();
 
   if (loading) {
@@ -18,10 +18,8 @@ export default function ProtectedRoute({ children }: Props) {
     );
   }
 
-  if (!session) return <Navigate to="/" replace />;
-
-  // Logged in but mid-onboarding (no username yet): force onboarding completion.
-  if (!hasUsername) return <Navigate to="/signup?step=5" replace />;
+  if (session && hasUsername) return <Navigate to="/dashboard" replace />;
 
   return <>{children}</>;
 }
+
