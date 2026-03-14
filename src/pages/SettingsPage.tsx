@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
+import { useToast } from "@/hooks/use-toast";
 
 type Profile = {
   username: string | null;
@@ -13,16 +14,20 @@ type Profile = {
   bio: string | null;
   avatar_url: string | null;
   created_at: string | null;
+  profile_visibility?: string | null;
 };
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileVisibility, setProfileVisibility] = useState<"public" | "limited" | "private">("public");
+  const [visibilitySaving, setVisibilitySaving] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const memberSince = useMemo(() => {
     if (!profile?.created_at) return null;
@@ -40,6 +45,15 @@ export default function SettingsPage() {
     return initials.toUpperCase();
   }, [profile?.full_name, profile?.username, email]);
 
+  const visibilityOptions = useMemo(
+    () => [
+      { value: "public", title: "Public", description: "Anyone can view your profile" },
+      { value: "limited", title: "Limited", description: "Only registered users can see your profile" },
+      { value: "private", title: "Private", description: "Only you can view your profile" },
+    ] as const,
+    [],
+  );
+
   const loadAccountInfo = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -56,7 +70,7 @@ export default function SettingsPage() {
     const [{ data: profileData, error: profileError }, { data: userData, error: userError }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("username, full_name, bio, avatar_url, created_at")
+        .select("username, full_name, bio, avatar_url, created_at, profile_visibility")
         .eq("user_id", sessionUser.id)
         .maybeSingle(),
       supabase.auth.getUser(),
@@ -76,8 +90,36 @@ export default function SettingsPage() {
     }
 
     setProfile((profileData as Profile | null) ?? null);
+    setProfileVisibility(((profileData as Profile | null)?.profile_visibility as "public" | "limited" | "private") ?? "public");
     setLoading(false);
   }, [navigate]);
+
+  const handleVisibilityChange = async (value: "public" | "limited" | "private") => {
+    if (!userId || visibilitySaving) return;
+    if (profileVisibility === value) return;
+    setVisibilitySaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ profile_visibility: value }) // TODO: add profile_visibility column to profiles table in Supabase
+        .eq("user_id", userId);
+      if (error) throw error;
+      setProfileVisibility(value);
+      toast({
+        title: "Visibility updated",
+        description: `Your profile visibility is now ${value}.`
+      });
+    } catch (updateError) {
+      console.error("Failed to update visibility:", updateError);
+      toast({
+        title: "Save failed",
+        description: (updateError as Error).message || "Unable to save visibility",
+        variant: "destructive",
+      });
+    } finally {
+      setVisibilitySaving(false);
+    }
+  };
 
   useEffect(() => {
     loadAccountInfo();
@@ -183,6 +225,39 @@ export default function SettingsPage() {
           <Button variant="link" className="px-0" onClick={() => setEditDialogOpen(true)} disabled={loading || !!error}>
             Edit Profile
           </Button>
+        </CardFooter>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Profile Visibility</CardTitle>
+          <CardDescription>Control who can see your profile</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {visibilityOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleVisibilityChange(option.value)}
+                disabled={visibilitySaving}
+                aria-pressed={profileVisibility === option.value}
+                className={`rounded-xl border p-4 text-left transition ${
+                  profileVisibility === option.value
+                    ? "border-primary bg-primary/5 shadow-lg"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <p className="text-sm font-semibold text-foreground">{option.title}</p>
+                <p className="text-xs text-muted-foreground mt-1">{option.description}</p>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+        <CardFooter className="justify-end">
+          <span className="text-xs text-muted-foreground">
+            {visibilitySaving ? "Saving visibility…" : "Changes save automatically"}
+          </span>
         </CardFooter>
       </Card>
 

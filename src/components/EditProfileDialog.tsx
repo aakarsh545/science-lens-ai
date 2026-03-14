@@ -6,10 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { User, Camera } from "lucide-react";
+import { User } from "lucide-react";
 import { HelixLoader } from "@/components/ui/helix-loader";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 
 interface EditProfileDialogProps {
   open: boolean;
@@ -24,12 +23,6 @@ interface EditProfileDialogProps {
   onProfileUpdate?: () => void;
 }
 
-interface AvatarItem {
-  id: string;
-  name: string;
-  type: string;
-}
-
 export function EditProfileDialog({
   open,
   onOpenChange,
@@ -42,8 +35,6 @@ export function EditProfileDialog({
   const [bio, setBio] = useState(currentProfile.bio || "");
   const [username, setUsername] = useState(currentProfile.username || "");
   const [usernameError, setUsernameError] = useState<string>("");
-  const [ownedAvatars, setOwnedAvatars] = useState<AvatarItem[]>([]);
-  const [selectedAvatar, setSelectedAvatar] = useState(currentProfile.avatar_url || "");
   const { toast } = useToast();
 
   // Derived validation states
@@ -71,19 +62,12 @@ export function EditProfileDialog({
 
   useEffect(() => {
     if (open) {
-      loadOwnedAvatars();
       setFullName(currentProfile.full_name || "");
       setBio(currentProfile.bio || "");
       setUsername(currentProfile.username || "");
-      setSelectedAvatar(currentProfile.avatar_url || "");
       setUsernameError(""); // Clear any previous validation errors
     }
   }, [open, currentProfile]);
-
-  const loadOwnedAvatars = async () => {
-    // No shop_items/user_inventory tables exist - skip avatar loading
-    setOwnedAvatars([]);
-  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -94,8 +78,6 @@ export function EditProfileDialog({
       }
 
       // Convert empty string back to null for database
-      const avatarValue = selectedAvatar === "" ? null : selectedAvatar;
-
       // Client-side validation (double-check)
       const validationError = validateUsername(username);
       if (validationError) {
@@ -115,7 +97,6 @@ export function EditProfileDialog({
         .update({
           username: normalizedUsername,
           full_name: fullName.trim() || null,
-          avatar_url: avatarValue,
           bio: bio.trim() || null,
         })
         .eq('user_id', session.user.id);
@@ -167,50 +148,6 @@ export function EditProfileDialog({
 
         <ScrollArea className="max-h-[calc(90vh-140px)] px-1">
           <div className="space-y-6 py-4">
-            {/* Avatar Selection */}
-            <div className="space-y-3">
-              <Label className="flex items-center gap-2">
-                <Camera className="w-4 h-4" />
-                Profile Avatar
-              </Label>
-              <div className="grid grid-cols-5 gap-3">
-                {/* Default avatar option */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedAvatar("")}
-                  className={`relative aspect-square rounded-lg border-2 flex items-center justify-center text-2xl transition-all hover:border-primary/50 ${
-                    selectedAvatar === "" ? "border-primary bg-primary/10" : "border-border"
-                  }`}
-                >
-                  <User className="w-8 h-8 text-muted-foreground" />
-                  {selectedAvatar === "" && (
-                    <Badge className="absolute -top-2 -right-2 text-xs">Current</Badge>
-                  )}
-                </button>
-
-                {/* Owned avatars */}
-                {ownedAvatars.map((avatar) => (
-                  <button
-                    key={avatar.id}
-                    type="button"
-                    onClick={() => setSelectedAvatar(avatar.id)}
-                    className={`relative aspect-square rounded-lg border-2 overflow-hidden transition-all hover:border-primary/50 ${
-                      selectedAvatar === avatar.id ? "border-primary bg-primary/10" : "border-border"
-                    }`}
-                  >
-                    <img
-                      src={`/icons/avatars/avatar-${avatar.name.toLowerCase().replace(/\s+/g, '-')}.png`}
-                      alt={avatar.name}
-                      className="w-full h-full object-cover"
-                    />
-                    {selectedAvatar === avatar.id && (
-                      <Badge className="absolute -top-2 -right-2 text-xs">Current</Badge>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Username */}
             <div className="space-y-2">
               <Label htmlFor="username">Username <span className="text-destructive">*</span></Label>

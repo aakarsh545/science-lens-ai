@@ -4,8 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Award } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useMemo } from "react";
 
 interface ProfileHeaderProps {
   user: User;
@@ -16,16 +15,12 @@ interface ProfileHeaderProps {
     level?: number;
     xp_points?: number;
     streak_count?: number;
-    equipped_avatar?: string | null;
+    avatar_url?: string | null;
   };
   onEdit?: () => void;
 }
 
 export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderProps) {
-  const [avatarImagePath, setAvatarImagePath] = useState<string | null>(null);
-
-  // Priority: username > full_name > display_name > "Unnamed User"
-  // NEVER fall back to email or user_id - this was causing "aakarsh545" to appear
   const displayName = profile?.username || profile?.full_name || profile?.display_name || "Unnamed User";
   const initials = displayName
     .split(" ")
@@ -39,37 +34,7 @@ export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderPr
     month: "long",
   });
 
-  // Load avatar image path from equipped_avatar
-  const loadAvatar = useCallback(async () => {
-    if (profile?.equipped_avatar) {
-      setAvatarImagePath(profile.equipped_avatar);
-    } else {
-      setAvatarImagePath(null);
-    }
-  }, [profile?.equipped_avatar]);
-
-  // Load avatar on mount or when equipped_avatar changes
-  useEffect(() => {
-    loadAvatar();
-  }, [loadAvatar]);
-
-  // Listen for profile updates to refresh avatar
-  useEffect(() => {
-    const handleProfileUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail?.userId === user.id) {
-        console.log('[ProfileHeader] Profile update detected, refreshing avatar');
-        // Reload avatar from database
-        loadAvatar();
-      }
-    };
-
-    window.addEventListener('profile-updated', handleProfileUpdate);
-
-    return () => {
-      window.removeEventListener('profile-updated', handleProfileUpdate);
-    };
-  }, [user.id, loadAvatar]);
+  const avatarUrl = useMemo(() => profile?.avatar_url || null, [profile?.avatar_url]);
 
   return (
     <>
@@ -78,14 +43,14 @@ export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderPr
           <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Avatar */}
             <Avatar className="h-24 w-24 border-4 border-primary/20">
-              {avatarImagePath ? (
+              {avatarUrl ? (
                 <>
                   <AvatarImage
-                    src={avatarImagePath}
+                    src={avatarUrl}
                     alt="Avatar"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
+                      target.style.display = "none";
                     }}
                   />
                   <AvatarFallback className="text-5xl bg-gradient-to-br from-primary/20 to-purple-500/20">
@@ -93,11 +58,9 @@ export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderPr
                   </AvatarFallback>
                 </>
               ) : (
-                <>
-                  <AvatarFallback className="text-5xl bg-gradient-to-br from-primary to-primary/60 text-white">
-                    {initials}
-                  </AvatarFallback>
-                </>
+                <AvatarFallback className="text-5xl bg-gradient-to-br from-primary to-primary/60 text-white">
+                  {initials}
+                </AvatarFallback>
               )}
             </Avatar>
 
@@ -110,23 +73,17 @@ export default function ProfileHeader({ user, profile, onEdit }: ProfileHeaderPr
                   Level {profile?.level || 1}
                 </Badge>
               </div>
-              <p className="text-muted-foreground mb-3">
-                Member since {joinDate}
-              </p>
+              <p className="text-muted-foreground mb-3">Member since {joinDate}</p>
 
               {/* XP Display */}
               <div className="flex items-center justify-center md:justify-start gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
-                    {profile?.xp_points || 0}
-                  </div>
+                  <div className="text-2xl font-bold text-primary">{profile?.xp_points || 0}</div>
                   <div className="text-xs text-muted-foreground">Total XP</div>
                 </div>
                 <div className="h-8 w-px bg-border" />
                 <div className="text-center">
-                  <div className="text-lg font-semibold">
-                    {profile?.streak_count || 0}
-                  </div>
+                  <div className="text-lg font-semibold">{profile?.streak_count || 0}</div>
                   <div className="text-xs text-muted-foreground">Day Streak</div>
                 </div>
               </div>

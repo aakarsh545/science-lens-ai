@@ -13,9 +13,8 @@ interface UserProfile {
   username?: string;
   full_name?: string;
   bio?: string;
-  equipped_avatar?: string;
+  avatar_url?: string | null;
   created_at: string;
-  avatar_name?: string;
 }
 
 export default function AccountInformationPage() {
@@ -50,30 +49,24 @@ export default function AccountInformationPage() {
     try {
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
+        .select("username, full_name, bio, avatar_url, created_at")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
 
       setProfile({
-        username: profileData?.display_name,
-        full_name: profileData?.display_name,
+        username: profileData?.username,
+        full_name: profileData?.full_name,
         bio: profileData?.bio,
-        equipped_avatar: profileData?.avatar_url,
+        avatar_url: profileData?.avatar_url,
         created_at: profileData?.created_at,
-        avatar_name: undefined
       });
     } catch (error) {
       console.error("Error loading profile data:", error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatAvatarPath = (avatarName: string | undefined): string | null => {
-    if (!avatarName) return null;
-    return `/icons/avatars/avatar-${avatarName.toLowerCase().replace(/\s+/g, '-')}.png`;
   };
 
   const formatDate = (dateString: string): string => {
@@ -95,8 +88,6 @@ export default function AccountInformationPage() {
       </div>
     );
   }
-
-  const avatarPath = formatAvatarPath(profile.avatar_name);
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,10 +114,10 @@ export default function AccountInformationPage() {
                 <div className="flex items-center justify-between py-3 border-b">
                   <span className="text-sm font-medium text-muted-foreground">Current Avatar</span>
                   <Avatar className="h-16 w-16">
-                    {avatarPath ? (
+                    {profile.avatar_url ? (
                       <>
                         <AvatarImage
-                          src={avatarPath}
+                          src={profile.avatar_url}
                           alt="Avatar"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
