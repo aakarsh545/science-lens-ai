@@ -1,12 +1,17 @@
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DebugProvider, useDebug } from "@/contexts/DebugContext";
 import { DebugErrorBoundary } from "@/components/debug/DebugErrorBoundary";
 import { DebugPanel } from "@/components/debug/DebugPanel";
 import { useDebugClickLogger } from "@/hooks/useDebugClickLogger";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
+import { HelixLoader } from "@/components/ui/helix-loader";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SignupPage from "./pages/SignupPage";
@@ -32,45 +37,166 @@ function AppContent() {
   const { debugMode } = useDebug();
   useDebugClickLogger();
 
+  const [authLoading, setAuthLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    let sessionFromEvent: Session | null | undefined = undefined;
+
+    const loadUsername = async (userId: string) => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("user_id", userId)
+        .maybeSingle();
+      return profile?.username ?? null;
+    };
+
+    // Subscribe first to avoid missing any auth event between subscription and getSession().
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
+
+      sessionFromEvent = session ?? null;
+      setSession(session ?? null);
+
+      if (session?.user) {
+        const nextUsername = await loadUsername(session.user.id);
+        if (!mounted) return;
+        setUsername(nextUsername);
+      } else {
+        setUsername(null);
+      }
+    });
+
+    // Hydrate initial session. Do not mark loading false until this resolves.
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!mounted) return;
+
+      const hydratedSession = session ?? null;
+
+      // Avoid overwriting a non-null session from an auth event with null from getSession().
+      const effectiveSession =
+        sessionFromEvent && hydratedSession === null ? sessionFromEvent : hydratedSession;
+
+      setSession(effectiveSession);
+
+      if (effectiveSession?.user) {
+        const nextUsername = await loadUsername(effectiveSession.user.id);
+        if (!mounted) return;
+        setUsername(nextUsername);
+      } else {
+        setUsername(null);
+      }
+
+      setAuthLoading(false);
+    })();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const isFullyOnboarded = !!(session?.user && username && username.trim());
+
   return (
     <>
       <Toaster />
       <Sonner />
       <DebugPanel enabled={debugMode} onClose={() => {}} />
-      <BrowserRouter basename={basename}>
-        <Routes>
-          {/* Public landing page - always accessible */}
-          <Route path="/" element={<Index />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
+      {authLoading ? (
+        <div className="min-h-screen flex items-center justify-center">
+          <HelixLoader className="text-primary" />
+        </div>
+      ) : (
+        <BrowserRouter basename={basename}>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={isFullyOnboarded ? <Navigate to="/dashboard" replace /> : <Index />} />
+            <Route path="/signup" element={isFullyOnboarded ? <Navigate to="/dashboard" replace /> : <SignupPage />} />
+            <Route path="/login" element={isFullyOnboarded ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
 
-          {/* Authenticated app routes - all under AuthenticatedLayout */}
-          <Route path="/dashboard" element={<AuthenticatedLayout />}>
-            <Route index element={<DashboardMainPage />} />
-          </Route>
-          <Route path="learning" element={<AuthenticatedLayout />}>
-            <Route index element={<UnifiedLearningPage />} />
-          </Route>
-          <Route path="learning/:courseSlug" element={<CourseLayout />}>
-            <Route index element={<CoursePage />} />
-          </Route>
-          <Route path="learning/:courseSlug/:lessonSlug" element={<AuthenticatedLayout />}>
-            <Route index element={<LessonPlayer />} />
-          </Route>
-          <Route path="profile" element={<AuthenticatedLayout />}>
-            <Route index element={<ProfilePage />} />
-          </Route>
-          <Route path="settings" element={<AuthenticatedLayout />}>
-            <Route index element={<SettingsPage />} />
-          </Route>
-          <Route path="settings/account" element={<AuthenticatedLayout />}>
-            <Route index element={<AccountInformationPage />} />
-          </Route>
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+            {/* Protected routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute loading={authLoading} session={session} username={username}>
+                  <AuthenticatedLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<DashboardMainPage />} />
+            </Route>
+            <Route
+              path="learning"
+              element={
+                <ProtectedRoute loading={authLoading} session={session} username={username}>
+                  <AuthenticatedLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<UnifiedLearningPage />} />
+            </Route>
+            <Route
+              path="learning/:courseSlug"
+              element={
+                <ProtectedRoute loading={authLoading} session={session} username={username}>
+                  <CourseLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<CoursePage />} />
+            </Route>
+            <Route
+              path="learning/:courseSlug/:lessonSlug"
+              element={
+                <ProtectedRoute loading={authLoading} session={session} username={username}>
+                  <AuthenticatedLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<LessonPlayer />} />
+            </Route>
+            <Route
+              path="profile"
+              element={
+                <ProtectedRoute loading={authLoading} session={session} username={username}>
+                  <AuthenticatedLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<ProfilePage />} />
+            </Route>
+            <Route
+              path="settings"
+              element={
+                <ProtectedRoute loading={authLoading} session={session} username={username}>
+                  <AuthenticatedLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<SettingsPage />} />
+            </Route>
+            <Route
+              path="settings/account"
+              element={
+                <ProtectedRoute loading={authLoading} session={session} username={username}>
+                  <AuthenticatedLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<AccountInformationPage />} />
+            </Route>
+
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      )}
     </>
   );
 }
