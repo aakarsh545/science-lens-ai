@@ -88,6 +88,11 @@ export function EditProfileDialog({
   const handleSave = async () => {
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        throw new Error("Not authenticated");
+      }
+
       // Convert empty string back to null for database
       const avatarValue = selectedAvatar === "" ? null : selectedAvatar;
 
@@ -113,7 +118,7 @@ export function EditProfileDialog({
           avatar_url: avatarValue,
           bio: bio.trim() || null,
         })
-        .eq('user_id', userId);
+        .eq('user_id', session.user.id);
 
       if (error) {
         console.error('Profile update error:', JSON.stringify(error, null, 2));
@@ -149,7 +154,7 @@ export function EditProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] bg-card text-foreground">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
