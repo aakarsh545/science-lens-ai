@@ -254,10 +254,8 @@ export default function SettingsPage() {
             ))}
           </div>
         </CardContent>
-        <CardFooter className="justify-end">
-          <span className="text-xs text-muted-foreground">
-            {visibilitySaving ? "Saving visibility…" : "Changes save automatically"}
-          </span>
+        <CardFooter className="justify-end text-xs text-muted-foreground px-5 pb-4 pt-0">
+          {visibilitySaving ? "Saving visibility…" : "Changes save automatically"}
         </CardFooter>
       </Card>
 
